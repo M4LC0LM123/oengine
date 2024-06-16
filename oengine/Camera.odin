@@ -1,0 +1,112 @@
+package oengine
+
+import rl "vendor:raylib"
+
+Camera :: struct {
+    fov, near, far: f32,
+
+    rl_matrix: rl.Camera,
+
+    position, rotation, target: rl.Vector3,
+    up, right, front: rl.Vector3,
+
+    prev_mp, curr_mp: rl.Vector2,
+
+    raycast: Raycast
+}
+
+cm_init :: proc(s_position: rl.Vector3, s_fov: f32 = 60, s_near: f32 = 0.1, s_far: f32 = 100) -> Camera {
+    using res: Camera;
+    
+    fov = s_fov;
+    near = s_near;
+    far = s_far;
+
+    position = s_position;
+    target = vec3_zero();
+    up = vec3_y();
+
+    prev_mp = {};
+    curr_mp = {};
+
+    right = vec3_zero();
+    rotation = vec3_zero();
+    front = -vec3_z();
+
+    raycast = Raycast {
+        position,
+        position * front * far,
+    };
+
+    return res;
+}
+
+cm_update :: proc(using self: ^Camera) {
+    rl_matrix.position = position;
+    rl_matrix.target = target;
+    rl_matrix.up = up;
+    rl_matrix.fovy = fov;
+
+    raycast.position = position;
+    raycast.target = position + vec3_normalize(front) * far;
+}
+
+cm_set_fps :: proc(using self: ^Camera, sensitivity: f32, is_mouse_locked: bool) {
+    if (is_mouse_locked) {
+        rl.HideCursor();
+        curr_mp = rl.GetMousePosition();
+        mouseDelta := rl.Vector2 {curr_mp.x - prev_mp.x, -(curr_mp.y - prev_mp.y)};
+        rotation.y += mouseDelta.x * sensitivity;
+        rotation.x -= mouseDelta.y * sensitivity;
+
+        // Clamp camera pitch to avoid flipping
+        if (rotation.x > 89.0) do rotation.x = 89.0;
+        if (rotation.x < -89.0) do rotation.x = -89.0;
+
+        prev_mp = curr_mp;
+        rl.SetMousePosition(rl.GetScreenWidth() / 2, rl.GetScreenHeight() / 2);
+        prev_mp = rl.GetMousePosition();
+    } else {
+        rl.ShowCursor();
+    }
+    
+    cameraRotation: Mat4 = mat4_rotate_XYZ(rl.DEG2RAD * rotation.x, rl.DEG2RAD * rotation.y, rl.DEG2RAD * rotation.z);
+    front = vec3_transform(-vec3_z(), cameraRotation);
+    right = vec3_transform(vec3_x(), cameraRotation);
+    up = vec3_transform(vec3_y(), cameraRotation);
+}
+
+cm_set_fps_controls :: proc(using self: ^Camera, speed: f32, is_mouse_locked, fly: bool) {
+    if (rl.IsKeyDown(rl.KeyboardKey.W) && is_mouse_locked) {
+        position.x += front.x * speed * rl.GetFrameTime();
+        position.z += front.z * speed * rl.GetFrameTime();
+    }
+
+    if (rl.IsKeyDown(rl.KeyboardKey.S) && is_mouse_locked) {
+        position.x -= front.x * speed * rl.GetFrameTime();
+        position.z -= front.z * speed * rl.GetFrameTime();
+    }
+    
+    if (rl.IsKeyDown(rl.KeyboardKey.A) && is_mouse_locked) {
+        position.x -= right.x * speed * rl.GetFrameTime();
+        position.z -= right.z * speed * rl.GetFrameTime();
+    }
+
+    if (rl.IsKeyDown(rl.KeyboardKey.D) && is_mouse_locked) {
+        position.x += right.x * speed * rl.GetFrameTime();
+        position.z += right.z * speed * rl.GetFrameTime();
+    }
+    
+    if (fly) {
+        if (rl.IsKeyDown(rl.KeyboardKey.SPACE) && is_mouse_locked) {
+            position.y += speed * rl.GetFrameTime();
+        }
+        if (rl.IsKeyDown(rl.KeyboardKey.LEFT_CONTROL) || (rl.IsKeyDown(rl.KeyboardKey.LEFT_SUPER)) && is_mouse_locked) {
+            position.y -= speed * rl.GetFrameTime();
+        }
+    }
+}
+
+cm_default_fps_matrix :: proc(using self: ^Camera) {
+    target = position + front;
+}
