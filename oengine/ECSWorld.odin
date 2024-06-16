@@ -30,7 +30,7 @@ ew_exists :: proc(tag: string) -> bool {
 ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     using ecs_world;
     ents = make(map[string]^Entity);
-    asset_manager.assets = make(map[string]Asset);
+    asset_manager.registry = make(map[string]Asset);
     pw_init(&physics, s_gravity, s_iter);
 
     accumulator = 0;
@@ -105,6 +105,6 @@ ew_deinit :: proc() {
 
     pw_deinit(&physics);
 
-    delete(asset_manager.assets);
+    delete(asset_manager.registry);
     delete(ents);
 }

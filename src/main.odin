@@ -139,6 +139,9 @@ main :: proc() {
     msc := oe.msc_init();
     oe.msc_from_json(msc, "../assets/maps/test.json");
 
+    oe.save_registry("registry.json");
+    oe.load_registry("registry.json");
+
     for (oe.w_tick()) {
         // update
         oe.ew_update();
