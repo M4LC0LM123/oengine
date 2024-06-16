@@ -481,8 +481,6 @@ draw_slope :: proc(slope: Slope, pos, rot, scale: Vec3, tex: Texture, color: rl.
     rl.rlRotatef(rot.z, 0, 0, 1);
     rl.rlScalef(scale.x, scale.y, scale.z);
 
-    rl.rlColor4ub(color.r, color.g, color.b, color.a);
-
     res := slope;
     normal := Vec3 {-1, 1, 0};
 
@@ -501,10 +499,11 @@ draw_slope :: proc(slope: Slope, pos, rot, scale: Vec3, tex: Texture, color: rl.
 
     }
    
-    rl.rlSetTexture(tex.id);
-
     // quad
+    rl.rlColor4ub(color.r, color.g, color.b, color.a);
     rl.rlBegin(rl.RL_QUADS);
+
+    rl.rlSetTexture(tex.id);
 
     rl.rlNormal3f(normal.x, normal.y, normal.z);
     rl.rlTexCoord2f(0, 0); rl.rlVertex3f(-0.5, res[0][0] - 0.5, 0.5);
@@ -516,27 +515,28 @@ draw_slope :: proc(slope: Slope, pos, rot, scale: Vec3, tex: Texture, color: rl.
 
     // sides (left then right)
     rl.rlBegin(rl.RL_TRIANGLES);
+    rl.rlSetTexture(tex.id);
 
     if (slope_negative(slope)) {
         rl.rlNormal3f(-1, 0, 0);
-        rl.rlTexCoord2f(0, 0); rl.rlVertex3f(-0.5, res[0][1] - 0.5, -0.5);
+        rl.rlTexCoord2f(0, 1); rl.rlVertex3f(-0.5, res[0][1] - 0.5, -0.5);
         rl.rlTexCoord2f(1, 0); rl.rlVertex3f(0.5, res[1][0] - 0.5, -0.5);
-        rl.rlTexCoord2f(0, 1); rl.rlVertex3f(-0.5, -0.5, -0.5);
+        rl.rlTexCoord2f(0, 0); rl.rlVertex3f(-0.5, -0.5, -0.5);
 
         rl.rlNormal3f(1, 0, 0);
-        rl.rlTexCoord2f(0, 0); rl.rlVertex3f(0.5, res[1][0] - 0.5, 0.5);
+        rl.rlTexCoord2f(0, 1); rl.rlVertex3f(0.5, res[1][0] - 0.5, 0.5);
         rl.rlTexCoord2f(1, 0); rl.rlVertex3f(-0.5, res[0][1] - 0.5, 0.5);
-        rl.rlTexCoord2f(0, 1); rl.rlVertex3f(-0.5, -0.5, 0.5);
+        rl.rlTexCoord2f(0, 0); rl.rlVertex3f(-0.5, -0.5, 0.5);
     } else {
         rl.rlNormal3f(-1, 0, 0);
         rl.rlTexCoord2f(0, 0); rl.rlVertex3f(0.5, -0.5, -0.5);
-        rl.rlTexCoord2f(0, 1); rl.rlVertex3f(-0.5, res[0][1] - 0.5, -0.5);
-        rl.rlTexCoord2f(1, 0); rl.rlVertex3f(0.5, res[1][0] - 0.5, -0.5);
+        rl.rlTexCoord2f(1, 0); rl.rlVertex3f(-0.5, res[0][1] - 0.5, -0.5);
+        rl.rlTexCoord2f(0, 1); rl.rlVertex3f(0.5, res[1][0] - 0.5, -0.5);
 
         rl.rlNormal3f(1, 0, 0);
-        rl.rlTexCoord2f(0, 0); rl.rlVertex3f(0.5, res[1][0] - 0.5, 0.5);
+        rl.rlTexCoord2f(0, 1); rl.rlVertex3f(0.5, res[1][0] - 0.5, 0.5);
         rl.rlTexCoord2f(1, 0); rl.rlVertex3f(-0.5, res[0][1] - 0.5, 0.5);
-        rl.rlTexCoord2f(0, 1); rl.rlVertex3f(0.5, -0.5, 0.5);
+        rl.rlTexCoord2f(0, 0); rl.rlVertex3f(0.5, -0.5, 0.5);
     }
 
     rl.rlEnd();

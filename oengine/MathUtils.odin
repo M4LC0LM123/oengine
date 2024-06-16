@@ -88,3 +88,52 @@ closest_point_on_triangle :: proc(p, a, b, c: Vec3) -> Vec3 {
     w := vc * denom
     return a + ab * v + ac * w // = u*a + v*b + w*c, u = va * denom = 1.0-v-w
 }
+
+triangle_uvs :: proc(v1, v2, v3: Vec3) -> (Vec2, Vec2, Vec2) {
+    // default XY plane
+    cp1 := v1.xy;
+    cp2 := v2.xy;
+    cp3 := v3.xy;
+    min_x := math.min(v1.x, min(v2.x, v3.x));
+    max_x := math.max(v1.x, max(v2.x, v3.x));
+    min_y := math.min(v1.y, min(v2.y, v3.y));
+    max_y := math.max(v1.y, max(v2.y, v3.y));
+
+    // ZY plane
+    if (v1.x == v2.x && v1.x == v3.x) {
+        cp1 = v1.zy;
+        cp2 = v2.zy;
+        cp3 = v3.zy;
+        min_x = math.min(v1.z, min(v2.z, v3.z));
+        max_x = math.max(v1.z, max(v2.z, v3.z));
+    } else if (v1.y == v2.y && v1.y == v3.y) { // XZ plane
+        cp1 = v1.xz;
+        cp2 = v2.xz;
+        cp3 = v3.xz;
+        min_y = math.min(v1.z, min(v2.z, v3.z));
+        max_y = math.max(v1.z, max(v2.z, v3.z));
+    }
+
+    delta_x := max_x - min_x;
+    delta_y := max_y - min_y;
+
+    if (delta_x == 0) do delta_x = 1;
+    if (delta_y == 0) do delta_y = 1;
+
+    uv1 := Vec2 {
+        (cp1.x - min_x) / delta_x,
+        (cp1.y - min_y) / delta_y
+    };
+
+    uv2 := Vec2 {
+        (cp2.x - min_x) / delta_x,
+        (cp2.y - min_y) / delta_y
+    };
+
+    uv3 := Vec2 {
+        (cp3.x - min_x) / delta_x,
+        (cp3.y - min_y) / delta_y
+    };
+
+    return uv1, uv2, uv3;
+}

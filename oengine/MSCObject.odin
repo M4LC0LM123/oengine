@@ -6,6 +6,7 @@ import rl "vendor:raylib"
 import "core:encoding/json"
 import "core:io"
 import "core:os"
+import strs "core:strings"
 
 /*
 EXAMPLE
@@ -37,24 +38,27 @@ msc_init :: proc() -> ^MSCObject {
     return self;
 }
 
-msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = BLACK) {
+msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = BLACK, texture_tag: string = "") {
     t: TriangleCollider;
     t.pts = {a + offs, b + offs, c + offs};
     t.color = color;
+    t.texture_tag = texture_tag;
     append(&tris, t);
 
     _aabb = tris_to_aabb(tris);
 }
 
-msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: rl.Vector3, offs: rl.Vector3 = {}, color : Color = BLACK) {
+msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: rl.Vector3, offs: rl.Vector3 = {}, color : Color = BLACK, texture_tag: string = "") {
     t: TriangleCollider;
     t.pts = {b + offs, a + offs, c + offs};
     t.color = color;
+    t.texture_tag = texture_tag;
     append(&tris, t);
 
     t2: TriangleCollider;
     t2.pts = {b + offs, c + offs, d + offs};
     t2.color = color;
+    t2.texture_tag = texture_tag;
     append(&tris, t2);
 
     _aabb = tris_to_aabb(tris);
@@ -146,17 +150,51 @@ msc_from_json :: proc(using self: ^MSCObject, path: string) {
             u8(colors[3].(json.Float)),
         };
 
-        msc_append_tri(self, tri[0], tri[1], tri[2], color = color);
+        tex_tag := obj.(json.Object)["texture_tag"].(json.String);
+
+        if (!asset_exists(tex_tag)) {
+            dbg_log(
+                str_add({"Texture ", tex_tag, " doesn't exist in the asset manager"}), 
+                DebugType.WARNING
+            );
+        }
+
+        msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag));
     }
 }
 
 msc_render :: proc(using self: ^MSCObject) {
     for tri in tris {
         t := tri.pts;
-        rl.DrawTriangle3D(t[0], t[1], t[2], tri.color)
-        rl.DrawLine3D(t[0], t[1], rl.RED)
-        rl.DrawLine3D(t[0], t[2], rl.GREEN)
-        rl.DrawLine3D(t[1], t[2], rl.BLUE)
+
+        v1 := t[0];
+        v2 := t[1];
+        v3 := t[2];
+        color := tri.color;
+
+
+        uv1, uv2, uv3 := triangle_uvs(v1, v2, v3);
+
+        rl.rlColor4ub(color.r, color.g, color.b, color.a);
+        rl.rlBegin(rl.RL_TRIANGLES);
+
+        if (asset_exists(tri.texture_tag)) {
+            rl.rlSetTexture(get_asset_var(tri.texture_tag, Texture).id);
+        }
+
+        rl.rlTexCoord2f(uv1.x, uv1.y); rl.rlVertex3f(v1.x, v1.y, v1.z);
+        rl.rlTexCoord2f(uv2.x, uv2.y); rl.rlVertex3f(v2.x, v2.y, v2.z);
+        rl.rlTexCoord2f(uv3.x, uv3.y); rl.rlVertex3f(v3.x, v3.y, v3.z);
+
+        rl.rlEnd();
+
+        rl.rlSetTexture(0);
+
+        if (!PHYS_DEBUG) do continue;
+
+        rl.DrawLine3D(t[0], t[1], rl.RED);
+        rl.DrawLine3D(t[0], t[2], rl.GREEN);
+        rl.DrawLine3D(t[1], t[2], rl.BLUE);
     }
 
     if (PHYS_DEBUG) {
@@ -169,9 +207,5 @@ msc_render :: proc(using self: ^MSCObject) {
 }
 
 msc_deinit :: proc(using self: ^MSCObject) {
-    for t in tris {
-        deinit_texture(t.texture);
-    }
-
     delete(tris);
 }

@@ -11,7 +11,7 @@ DAMPING_VEL_FACTOR :: 0.994
 TriangleCollider :: struct {
     using pts: [3]Vec3,
     color: Color,
-    texture: Texture,
+    texture_tag: string,
 }
 
 PhysicsWorld :: struct {
