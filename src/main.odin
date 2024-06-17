@@ -13,6 +13,7 @@ main :: proc() {
     oe.window.debug_stats = true;
 
     oe.ew_init(oe.vec3_y() * 50);
+    oe.load_registry("registry.json");
 
     camera := oe.cm_init(oe.vec3_zero());
     is_mouse_locked: bool = false;
@@ -23,9 +24,6 @@ main :: proc() {
         oe.load_texture("../assets/skybox/leftx.png"), oe.load_texture("../assets/skybox/rightx.png"),
         oe.load_texture("../assets/skybox/topx.png"), oe.load_texture("../assets/skybox/bottomx.png"),
     });
-
-    oe.reg_asset("albedo", oe.load_texture("../assets/albedo.png"));
-    oe.reg_asset("troll", oe.load_texture("../assets/trollface.png"));
 
     skybox := oe.get_asset_var("skybox", oe.SkyBox);
     oe.set_skybox_filtering(skybox);
@@ -110,7 +108,7 @@ main :: proc() {
     water := oe.ent_init("water");
     oe.ent_set_pos_z(water, 37.5);
     oe.ent_set_scale(water, {25, 1, 25});
-    oe.ent_add_component(water, oe.f_init(oe.load_texture("../assets/water.png"), water.transform));
+    oe.ent_add_component(water, oe.f_init(oe.get_asset_var("water", oe.Texture), water.transform));
 
     car := oe.ent_init("car");
     oe.ent_add_component(car, oe.rb_init(car.starting, 1.0, 0.5, false, oe.ShapeType.BOX));
@@ -139,8 +137,7 @@ main :: proc() {
     msc := oe.msc_init();
     oe.msc_from_json(msc, "../assets/maps/test.json");
 
-    oe.save_registry("registry.json");
-    oe.load_registry("registry.json");
+    // oe.save_registry("registry.json");
 
     for (oe.w_tick()) {
         // update

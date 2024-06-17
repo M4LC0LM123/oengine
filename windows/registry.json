@@ -1,5 +1,15 @@
 
 {
-   "troll": "../assets/trollface.png"
-   "albedo": "../assets/albedo.png"
+	"albedo": {
+  		"path": "../assets/albedo.png",
+		"type": "Texture"
+	},
+	"troll": {
+  		"path": "../assets/trollface.png",
+		"type": "Texture"
+	},
+	"water": {
+		"path": "../assets/water.png",
+		"type": "Texture"
+	},
 }

@@ -27,9 +27,19 @@ save_registry :: proc(path: string) {
     for tag, asset in registry {
         #partial switch var in asset {
             case Texture:
-                res = str_add({res, "\n   \"", tag, "\": ", "\"", var.path, "\""});
+                res = str_add(
+                    {res, "\n\t\"", tag, "\": {\n  ", 
+                        "\t\t\"path\": \"", var.path, "\",\n",
+                        "\t\t\"type\": \"", "Texture", "\"",
+                    "\n\t},"}
+                );
             case Model:
-                res = str_add({res, "\n   \"", tag, "\": ", "\"", var.path, "\""});
+                res = str_add(
+                    {res, "\n\t\"", tag, "\": {\n  ", 
+                        "\t\t\"path\": \"", var.path, "\",\n",
+                        "\t\t\"type\": \"", "Model", "\"",
+                    "\n\t},"}
+                );
         }
     }
 
@@ -56,8 +66,15 @@ load_registry :: proc(path: string) {
 
     root := json_data.(json.Object);
 
-    for tag, asset_path in root {
-        fmt.println(tag, asset_path);
+    for tag, asset in root {
+        path := asset.(json.Object)["path"].(json.String);
+        type := asset.(json.Object)["type"].(json.String);
+
+        if (type == "Texture") {
+            reg_asset(tag, load_texture(path));
+        } else if (type == "Model") {
+            reg_asset(tag, load_model(path));
+        }
     }
 }
 
