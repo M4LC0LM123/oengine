@@ -19,16 +19,11 @@ main :: proc() {
     is_mouse_locked: bool = false;
     oe.ecs_world.camera = &camera;
 
-    oe.reg_asset("skybox", oe.SkyBox {
-        oe.load_texture("../assets/skybox/frontx.png"), oe.load_texture("../assets/skybox/backx.png"),
-        oe.load_texture("../assets/skybox/leftx.png"), oe.load_texture("../assets/skybox/rightx.png"),
-        oe.load_texture("../assets/skybox/topx.png"), oe.load_texture("../assets/skybox/bottomx.png"),
-    });
-
     skybox := oe.get_asset_var("skybox", oe.SkyBox);
     oe.set_skybox_filtering(skybox);
     albedo := oe.get_asset_var("albedo", oe.Texture);
     troll := oe.get_asset_var("troll", oe.Texture);
+    water_tex := oe.get_asset_var("water", oe.Texture);
 
     floor := oe.ent_init();
     oe.ent_add_component(floor, oe.rb_init(floor.starting, 1.0, 0.5, true, oe.ShapeType.BOX));
@@ -108,7 +103,7 @@ main :: proc() {
     water := oe.ent_init("water");
     oe.ent_set_pos_z(water, 37.5);
     oe.ent_set_scale(water, {25, 1, 25});
-    oe.ent_add_component(water, oe.f_init(oe.get_asset_var("water", oe.Texture), water.transform));
+    oe.ent_add_component(water, oe.f_init(water_tex, water.transform));
 
     car := oe.ent_init("car");
     oe.ent_add_component(car, oe.rb_init(car.starting, 1.0, 0.5, false, oe.ShapeType.BOX));

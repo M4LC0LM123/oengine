@@ -2,6 +2,10 @@ package oengine
 
 import "core:fmt"
 import "core:os"
+import "core:unicode"
+import "core:unicode/tools"
+import "core:unicode/utf8"
+import "core:unicode/utf16"
 import strs "core:strings"
 
 /* simple example
@@ -30,7 +34,7 @@ file_to_string_arr :: proc(path: string) -> []string {
     }
     defer delete(data);
 
-    str_data, ok2 := strs.split_lines(string(data));
+    str_data, ok2 := strs.split_lines(strs.clone(string(data)));
     return str_data;
 }
 
@@ -63,7 +67,7 @@ file_handle :: proc(path: string, mode: FileMode = .READ_AND_WRITE | .APPEND | .
 }
 
 file_write :: proc(file: File, text: string) {
-    n, err := os.write_string(file.handle, str_add({"\n", text}));
+    n, err := os.write_string(file.handle, str_add({"\n", strs.clone(text)}));
 
     if (err != 0) {
         dbg_log(str_add("Failed to write to file: ", err), .WARNING);
