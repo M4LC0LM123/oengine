@@ -21,5 +21,13 @@
 		"path": "../assets/trollface.png",
 		"type": "Texture"
 	},
+	"normal": {
+		"path": "../assets/normal.png",
+		"type": "Texture"
+	},
+	"orm": {
+		"path": "../assets/orm.png",
+		"type": "Texture"
+	},
 }}
 }

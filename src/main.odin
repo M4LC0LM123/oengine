@@ -27,7 +27,7 @@ main :: proc() {
 
     floor := oe.ent_init();
     oe.ent_add_component(floor, oe.rb_init(floor.starting, 1.0, 0.5, true, oe.ShapeType.BOX));
-    oe.ent_add_component(floor, oe.sm_init(oe.cube_map_identity(albedo)));
+    oe.ent_add_component(floor, oe.sm_init(oe.cube_map_identity(oe.get_asset_var("orm", oe.Texture))));
     oe.ent_set_scale(floor, {50, 1, 50});
     oe.sm_set_tiling(oe.ent_get_component_var(floor, ^oe.SimpleMesh), 10, oe.CubeMapSide.TOP);
 
