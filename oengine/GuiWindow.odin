@@ -13,7 +13,7 @@ GuiWindow :: struct {
 
     top_bar: rl.Rectangle,
 
-    active, resizing, moving: bool,
+    active, resizing, moving, can_exit: bool,
 
     _mouse_over: bool,
 }
@@ -30,7 +30,7 @@ gw_render :: proc(using self: ^GuiWindow) {
         gui_exit_scale,
         mouse_pressed(.LEFT),
         false,
-    );
+    ) && can_exit;
 
     if (mouse_down(.LEFT) && rl.CheckCollisionPointRec(window.mouse_position, top_bar) && !exit) {
         if (gui._active_window_id == 0 || gui._active_window_id == id) {
@@ -89,7 +89,7 @@ gw_render :: proc(using self: ^GuiWindow) {
     );
 }
 
-gui_begin :: proc(title: string, x: f32 = 10, y: f32 = 10, w: f32 = 300, h: f32 = 200) {
+gui_begin :: proc(title: string, x: f32 = 10, y: f32 = 10, w: f32 = 300, h: f32 = 200, can_exit: bool = true) {
     if (!gui_window_exists(title)) {
         instance := new(GuiWindow);
         instance.id = u32(len(gui.windows)) + 1;
@@ -103,6 +103,7 @@ gui_begin :: proc(title: string, x: f32 = 10, y: f32 = 10, w: f32 = 300, h: f32 
         instance.active = true;
         instance.resizing = false;
         instance.moving = false;
+        instance.can_exit = can_exit;
 
         instance.top_bar = rl.Rectangle {
             instance.x, instance.y, instance.width, gui_top_bar_height

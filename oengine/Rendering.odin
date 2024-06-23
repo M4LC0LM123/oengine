@@ -71,6 +71,24 @@ tile_texture :: proc(texture: Texture, tx: i32) -> Texture {
     return load_texture(target.texture);
 }
 
+draw_grid2D :: proc(slices, spacing: i32, color: Color) {
+    rl.rlPushMatrix();
+            
+    rl.rlTranslatef(f32(-slices * spacing) * 0.5, f32(-slices * spacing) * 0.5, 0);
+    
+    for i: i32 = 0; i <= slices; i += 1 {
+        y := i * spacing;
+        rl.DrawLine(0, y, slices * spacing, y, color);
+        
+        x := i * spacing;
+        rl.DrawLine(x, 0, x, slices * spacing, color);
+    }
+
+    rl.DrawCircleV(vec2_one() * f32(slices) * 0.5 * f32(spacing), 5, RED);
+    
+    rl.rlPopMatrix();
+}
+
 draw_textured_plane :: proc(texture: Texture, pos: Vec3, scale: Vec2, rot: f32, color: Color) {
     x := pos.x;
     y := pos.y;

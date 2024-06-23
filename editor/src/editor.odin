@@ -6,40 +6,31 @@ import rl "vendor:raylib"
 import oe "../../oengine"
 
 main :: proc() {
-    oe.w_create();
-    oe.w_set_title("gejm");
+    monitor := rl.GetCurrentMonitor();
+    oe.w_create("oengine-editor");
+    rl.MaximizeWindow();
+    oe.w_set_resolution(rl.GetMonitorWidth(monitor), rl.GetMonitorHeight(monitor));
+    oe.w_set_title("oengine-editor");
     oe.w_set_target_fps(60);
     oe.window.debug_stats = true;
 
     oe.ew_init(oe.vec3_y() * 50);
 
-    camera := oe.cm_init(oe.vec3_zero());
-    is_mouse_locked: bool = false;
-    oe.ecs_world.camera = &camera;
+    camera_tool := ct_init();
+    oe.ecs_world.camera = &camera_tool.camera_perspective;
 
     for (oe.w_tick()) {
         // update
         oe.ew_update();
-
-        if (oe.key_pressed(oe.Key.ESCAPE)) {
-            is_mouse_locked = !is_mouse_locked;
-        }
-
-        oe.cm_set_fps(&camera, 0.1, is_mouse_locked);
-        oe.cm_set_fps_controls(&camera, 10, is_mouse_locked, true);
-        oe.cm_default_fps_matrix(&camera);
-        oe.cm_update(&camera);
+        ct_update(&camera_tool);
 
         // render
         oe.w_begin_render();
-        rl.ClearBackground(rl.SKYBLUE);
+        rl.ClearBackground(rl.BLACK);
 
-        rl.BeginMode3D(camera.rl_matrix);
-        oe.ew_render();
+        ct_render(&camera_tool);
 
-        rl.EndMode3D();
-
-        oe.gui_end();
+        msc_tool(camera_tool);
 
         oe.w_end_render();
     }

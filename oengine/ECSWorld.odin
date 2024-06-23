@@ -70,7 +70,9 @@ ew_fixed_update :: proc() {
     accumulator += dt;
 
     for (accumulator >= FIXED_TIME_STEP) {
-        if (!w_transform_changed()) do pw_update(&physics, FIXED_TIME_STEP);
+        if (!w_transform_changed() && window.instance_name != "oengine-editor") {
+            pw_update(&physics, FIXED_TIME_STEP);
+        }
         accumulator -= FIXED_TIME_STEP;
     }
 }

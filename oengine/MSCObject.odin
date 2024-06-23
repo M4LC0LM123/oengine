@@ -192,9 +192,9 @@ msc_render :: proc(using self: ^MSCObject) {
 
         if (!PHYS_DEBUG) do continue;
 
-        rl.DrawLine3D(t[0], t[1], rl.RED);
-        rl.DrawLine3D(t[0], t[2], rl.GREEN);
-        rl.DrawLine3D(t[1], t[2], rl.BLUE);
+        rl.DrawLine3D(t[0], t[1], rl.YELLOW);
+        rl.DrawLine3D(t[0], t[2], rl.YELLOW);
+        rl.DrawLine3D(t[1], t[2], rl.YELLOW);
     }
 
     if (PHYS_DEBUG) {

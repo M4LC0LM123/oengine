@@ -233,3 +233,23 @@ resize_icon :: proc(x, y, w, h: i32) {
 gui_icon :: proc(icon: GuiIcon, x, y, w, h: i32) {
     GuiIconRenders[i32(icon)](x, y, w, h);
 }
+
+gui_tick :: proc(tick: bool, x, y, w, h: f32) -> bool {
+    active := gui_active();
+    if (!active.active) do return tick;
+
+    rp := Vec2 {x + active.x, y + active.y};
+
+    gui_inverse_rec(rp.x, rp.y, w, h);
+
+    res := tick
+
+    rec := rl.Rectangle {rp.x, rp.y, w, h};
+    if (rl.CheckCollisionPointRec(window.mouse_position, rec) && mouse_pressed(.LEFT)) {
+        res = !res;
+    }
+
+    if (tick) do gui_icon(.EXIT, i32(rp.x), i32(rp.y), i32(w), i32(h));
+
+    return res;
+}

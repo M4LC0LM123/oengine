@@ -24,9 +24,10 @@ window: struct {
     debug_stats: bool,
 
     target: rl.RenderTexture,
+    instance_name: string,
 }
 
-w_create :: proc() {
+w_create :: proc(name: string = "Game") {
     using window;
 
     _width = 800;
@@ -75,6 +76,12 @@ w_create :: proc() {
 
     gui_default_font = rl.GetFontDefault();
     gui_font_size = f32(gui_default_font.baseSize);
+    w_set_instance_name(name);
+}
+
+w_set_instance_name :: proc(name: string) {
+    window.instance_name = name;
+    dbg_log(str_add("Set instance name to: ", window.instance_name));
 }
 
 w_trace_log_type :: proc() -> TraceLogType {
