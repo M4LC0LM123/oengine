@@ -231,7 +231,7 @@ main :: proc() {
         oe.gui_text_box("test2", 10, 50, 100, 30);
 
         oe.gui_end();
-
+        
         oe.w_end_render();
     }
 
