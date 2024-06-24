@@ -10,22 +10,114 @@ msc_tool :: proc(ct: CameraTool) {
     @(static) new_instance: bool;
     new_instance = oe.gui_tick(new_instance, 10, 10, 30, 30);
 
-    if (oe.gui_button("triangle_plane", 10, 50, 150, 30)) {
-        msc: ^oe.MSCObject;
-        if (new_instance) {
-            msc = oe.msc_init();
-        } else {
-            if (len(oe.ecs_world.physics.mscs) > 0) {
-                msc = oe.ecs_world.physics.mscs[len(oe.ecs_world.physics.mscs) - 1];
-            } else {
-                msc = oe.msc_init();
-            }
-        }
+    oe.gui_text("New instance", 20, 50, 10);
 
-        oe.msc_append_tri(msc, {}, {1, 0, 0}, {0, 1, 0}, ct.camera_perspective.position);
+    if (oe.gui_button("Triangle plane", 10, 50, 160, 30)) {
+        msc := msc_check(new_instance);
+
+        oe.msc_append_tri(msc, {}, {1, 0, 0}, {0, 1, 0}, msc_target_pos(ct));
+    }
+
+    if (oe.gui_button("Plane", 10, 90, 160, 30)) {
+        msc := msc_check(new_instance);
+
+        oe.msc_append_quad(msc, {}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0}, msc_target_pos(ct));
+    }
+
+    if (oe.gui_button("Cuboid", 10, 130, 160, 30)) {
+        msc := msc_check(new_instance);
+       
+        msc_cuboid(msc, msc_target_pos(ct));
     }
 
     oe.gui_end();
 }
 
+@(private = "file")
+msc_target_pos :: proc(ct: CameraTool) -> oe.Vec3 {
+    if (ct.mode == .PERSPECTIVE) do return ct.camera_perspective.position;
 
+    #partial switch ct.mode {
+        case .ORTHO_XY:
+            return {
+                ct.camera_orthographic.target.x / RENDER_SCALAR, 
+                ct.camera_orthographic.target.y / RENDER_SCALAR, 0};
+        case .ORTHO_XZ:
+            return {
+                ct.camera_orthographic.target.x / RENDER_SCALAR, 0, 
+                ct.camera_orthographic.target.y / RENDER_SCALAR};
+        case .ORTHO_ZY:
+            return { 0,
+                ct.camera_orthographic.target.x / RENDER_SCALAR, 
+                ct.camera_orthographic.target.y / RENDER_SCALAR};
+    }
+
+    return {};
+}
+
+@(private = "file")
+msc_check :: proc(new_instance: bool) -> ^oe.MSCObject {
+    msc: ^oe.MSCObject;
+    if (new_instance) {
+        msc = oe.msc_init();
+    } else {
+        if (len(oe.ecs_world.physics.mscs) > 0) {
+            msc = oe.ecs_world.physics.mscs[len(oe.ecs_world.physics.mscs) - 1];
+        } else {
+            msc = oe.msc_init();
+        }
+    }
+
+    return msc;
+}
+
+@(private)
+msc_cuboid :: proc(msc: ^oe.MSCObject, target: oe.Vec3) {
+    // front
+    oe.msc_append_quad(msc, 
+        {-0.5, -0.5, -0.5}, 
+        {0.5, -0.5, -0.5}, 
+        {-0.5, 0.5, -0.5}, 
+        {0.5, 0.5, -0.5}, 
+    target);
+
+    // back
+    oe.msc_append_quad(msc, 
+        {-0.5, -0.5, 0.5}, 
+        {0.5, -0.5, 0.5}, 
+        {-0.5, 0.5, 0.5}, 
+        {0.5, 0.5, 0.5}, 
+    target);
+
+    // left
+    oe.msc_append_quad(msc, 
+        {-0.5, -0.5, -0.5}, 
+        {-0.5, -0.5, 0.5}, 
+        {-0.5, 0.5, -0.5}, 
+        {-0.5, 0.5, 0.5}, 
+    target);
+
+    // right
+    oe.msc_append_quad(msc, 
+        {0.5, -0.5, -0.5}, 
+        {0.5, -0.5, 0.5}, 
+        {0.5, 0.5, -0.5}, 
+        {0.5, 0.5, 0.5}, 
+    target);
+
+    // top
+    oe.msc_append_quad(msc, 
+        {-0.5, 0.5, -0.5}, 
+        {0.5, 0.5, -0.5}, 
+        {-0.5, 0.5, 0.5}, 
+        {0.5, 0.5, 0.5}, 
+    target);
+
+    // bottom
+    oe.msc_append_quad(msc, 
+        {-0.5, -0.5, -0.5}, 
+        {0.5, -0.5, -0.5}, 
+        {-0.5, -0.5, 0.5}, 
+        {0.5, -0.5, 0.5}, 
+    target);
+}

@@ -23,6 +23,8 @@ oe.msc_from_json(msc, "../assets/maps/test.json");
 
 */
 
+tri_count: i32;
+
 MSCObject :: struct {
     tris: [dynamic]TriangleCollider,
     _aabb: AABB
@@ -44,11 +46,12 @@ msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, c
     t.color = color;
     t.texture_tag = texture_tag;
     append(&tris, t);
+    tri_count += 1;
 
     _aabb = tris_to_aabb(tris);
 }
 
-msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: rl.Vector3, offs: rl.Vector3 = {}, color : Color = BLACK, texture_tag: string = "") {
+msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: rl.Vector3, offs: rl.Vector3 = {}, color : Color = WHITE, texture_tag: string = "") {
     t: TriangleCollider;
     t.pts = {b + offs, a + offs, c + offs};
     t.color = color;
@@ -60,6 +63,8 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: rl.Vector3, offs: rl
     t2.color = color;
     t2.texture_tag = texture_tag;
     append(&tris, t2);
+
+    tri_count += 2;
 
     _aabb = tris_to_aabb(tris);
 }

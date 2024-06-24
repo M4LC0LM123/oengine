@@ -6,6 +6,7 @@ import oe "../../oengine"
 
 GRID_SPACING :: 25
 GRID_COLOR :: oe.Color {255, 255, 255, 125}
+RENDER_SCALAR :: 25
 
 CameraMode :: enum {
     PERSPECTIVE = 0,
@@ -57,9 +58,50 @@ ct_render :: proc(using self: ^CameraTool) {
         rl.EndMode3D();
     } else {
         rl.BeginMode2D(camera_orthographic);
-        oe.draw_grid2D(100, GRID_SPACING, GRID_COLOR);
+        ct_render_ortho(self);
         rl.EndMode2D();
     }
+}
+
+@(private = "file")
+ct_render_ortho :: proc(using self: ^CameraTool) {
+    oe.draw_grid2D(100, GRID_SPACING, GRID_COLOR);
+
+    // cross
+    rl.rlPushMatrix();
+    rl.rlTranslatef(camera_orthographic.target.x, camera_orthographic.target.y, 0);
+    rl.DrawLineV({-5, 0}, {5, 0}, oe.PINK);
+    rl.DrawLineV({0, -5}, {0, 5}, oe.PINK);
+    rl.rlPopMatrix();
+
+    for msc in oe.ecs_world.physics.mscs {
+        for tri in msc.tris {
+            tri_render_ortho(self, tri.pts);
+        } 
+    }
+}
+
+@(private = "file")
+tri_render_ortho :: proc(using self: ^CameraTool, t: [3]oe.Vec3) {
+    rl.rlPushMatrix();
+    rl.rlScalef(RENDER_SCALAR, RENDER_SCALAR, 0);
+
+    #partial switch mode {
+        case .ORTHO_XY:
+            rl.DrawLineV(t[0].xy, t[1].xy, rl.YELLOW);
+            rl.DrawLineV(t[0].xy, t[2].xy, rl.YELLOW);
+            rl.DrawLineV(t[1].xy, t[2].xy, rl.YELLOW);
+        case .ORTHO_XZ:
+            rl.DrawLineV(t[0].xz, t[1].xz, rl.YELLOW);
+            rl.DrawLineV(t[0].xz, t[2].xz, rl.YELLOW);
+            rl.DrawLineV(t[1].xz, t[2].xz, rl.YELLOW);
+        case .ORTHO_ZY:
+            rl.DrawLineV(t[0].zy, t[1].zy, rl.YELLOW);
+            rl.DrawLineV(t[0].zy, t[2].zy, rl.YELLOW);
+            rl.DrawLineV(t[1].zy, t[2].zy, rl.YELLOW);
+    }
+
+    rl.rlPopMatrix();
 }
 
 @(private = "file")
