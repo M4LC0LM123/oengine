@@ -3,6 +3,7 @@ package main
 import "core:fmt"
 import rl "vendor:raylib"
 import oe "../../oengine"
+import "core:math"
 
 msc_tool :: proc(ct: CameraTool) {
     oe.gui_begin("MSC tool", x = 0, y = 0, can_exit = false);
@@ -37,19 +38,22 @@ msc_tool :: proc(ct: CameraTool) {
 msc_target_pos :: proc(ct: CameraTool) -> oe.Vec3 {
     if (ct.mode == .PERSPECTIVE) do return ct.camera_perspective.position;
 
+    snapped_x: f32 = math.round(ct.camera_orthographic.target.x / GRID_SPACING) * GRID_SPACING;
+    snapped_y: f32 = math.round(ct.camera_orthographic.target.y / GRID_SPACING) * GRID_SPACING;
+
     #partial switch ct.mode {
         case .ORTHO_XY:
             return {
-                ct.camera_orthographic.target.x / RENDER_SCALAR, 
-                ct.camera_orthographic.target.y / RENDER_SCALAR, 0};
+                snapped_x / RENDER_SCALAR, 
+                snapped_y / RENDER_SCALAR, 0};
         case .ORTHO_XZ:
             return {
-                ct.camera_orthographic.target.x / RENDER_SCALAR, 0, 
-                ct.camera_orthographic.target.y / RENDER_SCALAR};
+                snapped_x / RENDER_SCALAR, 0, 
+                snapped_y / RENDER_SCALAR};
         case .ORTHO_ZY:
             return { 0,
-                ct.camera_orthographic.target.x / RENDER_SCALAR, 
-                ct.camera_orthographic.target.y / RENDER_SCALAR};
+                snapped_x / RENDER_SCALAR, 
+                snapped_y / RENDER_SCALAR};
     }
 
     return {};
