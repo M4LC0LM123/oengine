@@ -7,6 +7,7 @@ import oe "../../oengine"
 GRID_SPACING :: 25
 GRID_COLOR :: oe.Color {255, 255, 255, 125}
 RENDER_SCALAR :: 25
+POINT_SIZE :: 5
 
 CameraMode :: enum {
     PERSPECTIVE = 0,
@@ -91,17 +92,43 @@ tri_render_ortho :: proc(using self: ^CameraTool, t: [3]oe.Vec3) {
             rl.DrawLineV(t[0].xy, t[1].xy, rl.YELLOW);
             rl.DrawLineV(t[0].xy, t[2].xy, rl.YELLOW);
             rl.DrawLineV(t[1].xy, t[2].xy, rl.YELLOW);
+            rl.rlPopMatrix();
+
+            for pt in t {
+                res := update_point_ortho(self, pt.xy);
+                pt = {res.x, res.y, 0};
+            }
         case .ORTHO_XZ:
             rl.DrawLineV(t[0].xz, t[1].xz, rl.YELLOW);
             rl.DrawLineV(t[0].xz, t[2].xz, rl.YELLOW);
             rl.DrawLineV(t[1].xz, t[2].xz, rl.YELLOW);
+            rl.rlPopMatrix();
+
+            for pt in t {
+                res := update_point_ortho(self, pt.xz);
+                pt = {res.x, 0, res.y};
+            }
         case .ORTHO_ZY:
             rl.DrawLineV(t[0].zy, t[1].zy, rl.YELLOW);
             rl.DrawLineV(t[0].zy, t[2].zy, rl.YELLOW);
             rl.DrawLineV(t[1].zy, t[2].zy, rl.YELLOW);
+            rl.rlPopMatrix();
+
+            for pt in t {
+                res := update_point_ortho(self, pt.zy);
+                pt = {0, res.y, res.x};
+            }
     }
 
     rl.rlPopMatrix();
+}
+
+@(private = "file")
+update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2) -> oe.Vec2 {
+    res := pt;
+
+    rl.DrawCircleV(res * RENDER_SCALAR, POINT_SIZE, oe.BLUE);
+    return res;
 }
 
 @(private = "file")
@@ -125,7 +152,8 @@ ct_update_ortho :: proc(using self: ^CameraTool) {
     if (new_zoom <= 0) do new_zoom = 0.01;
 
     zoom_factor := new_zoom / camera_orthographic.zoom;
-    camera_orthographic.offset -= (_mouse_pos - camera_orthographic.target) * (zoom_factor - 1);
+    // zoom to mouse
+    // camera_orthographic.offset -= (_mouse_pos - camera_orthographic.target) * (zoom_factor - 1);
     camera_orthographic.zoom = new_zoom;
 
     if (oe.key_pressed(.SPACE)) {
