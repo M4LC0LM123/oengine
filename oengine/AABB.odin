@@ -42,7 +42,7 @@ aabb_collision :: proc(cube1, cube2: AABB) -> bool {
     return false;
 }
 
-tris_to_aabb :: proc(tris: [dynamic]TriangleCollider) -> AABB {
+tris_to_aabb :: proc(tris: [dynamic]^TriangleCollider) -> AABB {
     min := vec3_one() * math.F32_MAX;
     max := vec3_one() * math.F32_MIN;
 

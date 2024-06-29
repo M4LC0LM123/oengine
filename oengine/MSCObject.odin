@@ -26,14 +26,14 @@ oe.msc_from_json(msc, "../assets/maps/test.json");
 tri_count: i32;
 
 MSCObject :: struct {
-    tris: [dynamic]TriangleCollider,
+    tris: [dynamic]^TriangleCollider,
     _aabb: AABB
 }
 
 msc_init :: proc() -> ^MSCObject {
     using self := new(MSCObject);
 
-    tris = make([dynamic]TriangleCollider);
+    tris = make([dynamic]^TriangleCollider);
 
     append(&ecs_world.physics.mscs, self);
 
@@ -41,7 +41,7 @@ msc_init :: proc() -> ^MSCObject {
 }
 
 msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = BLACK, texture_tag: string = "") {
-    t: TriangleCollider;
+    t := new(TriangleCollider);
     t.pts = {a + offs, b + offs, c + offs};
     t.color = color;
     t.texture_tag = texture_tag;
@@ -52,13 +52,13 @@ msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, c
 }
 
 msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: rl.Vector3, offs: rl.Vector3 = {}, color : Color = WHITE, texture_tag: string = "") {
-    t: TriangleCollider;
+    t := new(TriangleCollider);
     t.pts = {b + offs, a + offs, c + offs};
     t.color = color;
     t.texture_tag = texture_tag;
     append(&tris, t);
 
-    t2: TriangleCollider;
+    t2 := new(TriangleCollider);
     t2.pts = {b + offs, c + offs, d + offs};
     t2.color = color;
     t2.texture_tag = texture_tag;

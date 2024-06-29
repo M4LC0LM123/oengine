@@ -77,47 +77,56 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
 
     for msc in oe.ecs_world.physics.mscs {
         for tri in msc.tris {
-            tri_render_ortho(self, tri.pts);
+            tri_render_ortho(self, tri);
         } 
     }
 }
 
 @(private = "file")
-tri_render_ortho :: proc(using self: ^CameraTool, t: [3]oe.Vec3) {
+tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider) {
     rl.rlPushMatrix();
     rl.rlScalef(RENDER_SCALAR, RENDER_SCALAR, 0);
 
     #partial switch mode {
         case .ORTHO_XY:
+            t := tri.pts;
             rl.DrawLineV(t[0].xy, t[1].xy, rl.YELLOW);
             rl.DrawLineV(t[0].xy, t[2].xy, rl.YELLOW);
             rl.DrawLineV(t[1].xy, t[2].xy, rl.YELLOW);
             rl.rlPopMatrix();
 
-            for pt in t {
-                res := update_point_ortho(self, pt.xy);
-                pt = {res.x, res.y, 0};
-            }
+            res := update_point_ortho(self, tri.pts[0].xy);
+            tri.pts[0] = {res.x, res.y, 0};
+            res = update_point_ortho(self, tri.pts[1].xy);
+            tri.pts[1] = {res.x, res.y, 0};
+            res = update_point_ortho(self, tri.pts[2].xy);
+            tri.pts[2] = {res.x, res.y, 0};
         case .ORTHO_XZ:
+            t := tri.pts;
             rl.DrawLineV(t[0].xz, t[1].xz, rl.YELLOW);
             rl.DrawLineV(t[0].xz, t[2].xz, rl.YELLOW);
             rl.DrawLineV(t[1].xz, t[2].xz, rl.YELLOW);
             rl.rlPopMatrix();
 
-            for pt in t {
-                res := update_point_ortho(self, pt.xz);
-                pt = {res.x, 0, res.y};
-            }
+            res := update_point_ortho(self, tri.pts[0].xz);
+            tri.pts[0] = {res.x, 0, res.y};
+            res = update_point_ortho(self, tri.pts[1].xz);
+            tri.pts[1] = {res.x, 0, res.y};
+            res = update_point_ortho(self, tri.pts[2].xz);
+            tri.pts[2] = {res.x, 0, res.y};
         case .ORTHO_ZY:
+            t := tri.pts;
             rl.DrawLineV(t[0].zy, t[1].zy, rl.YELLOW);
             rl.DrawLineV(t[0].zy, t[2].zy, rl.YELLOW);
             rl.DrawLineV(t[1].zy, t[2].zy, rl.YELLOW);
             rl.rlPopMatrix();
 
-            for pt in t {
-                res := update_point_ortho(self, pt.zy);
-                pt = {0, res.y, res.x};
-            }
+            res := update_point_ortho(self, tri.pts[0].zy);
+            tri.pts[0] = {0, res.x, res.y};
+            res = update_point_ortho(self, tri.pts[1].zy);
+            tri.pts[1] = {0, res.x, res.y};
+            res = update_point_ortho(self, tri.pts[2].zy);
+            tri.pts[2] = {0, res.x, res.y};
     }
 
     rl.rlPopMatrix();
@@ -125,10 +134,25 @@ tri_render_ortho :: proc(using self: ^CameraTool, t: [3]oe.Vec3) {
 
 @(private = "file")
 update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2) -> oe.Vec2 {
-    res := pt;
+    res := pt * RENDER_SCALAR;
 
-    rl.DrawCircleV(res * RENDER_SCALAR, POINT_SIZE, oe.BLUE);
-    return res;
+    @static _moving: bool;
+
+    mp := rl.GetScreenToWorld2D(oe.window.mouse_position, camera_orthographic);
+    if (oe.mouse_pressed(.LEFT) && rl.CheckCollisionPointCircle(mp, res, POINT_SIZE)) {
+        _moving = true;
+    }
+
+    if (_moving) {
+        if (oe.mouse_released(.LEFT))  {
+            _moving = false;
+        }
+
+        res = mp;
+    }
+
+    rl.DrawCircleV(res, POINT_SIZE, oe.BLUE);
+    return res / RENDER_SCALAR;
 }
 
 @(private = "file")

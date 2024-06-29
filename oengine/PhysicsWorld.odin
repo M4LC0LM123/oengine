@@ -58,8 +58,7 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
                 if (rb.is_static) do continue;
 
                 for tri in msc.tris {
-                    t := tri;
-                    resolve_tri_collision(rb, &t);
+                    resolve_tri_collision(rb, tri);
                 }
             }
 
