@@ -31,6 +31,7 @@ main :: proc() {
         ct_render(&camera_tool);
 
         msc_tool(camera_tool);
+        map_proj_tool(camera_tool);
 
         oe.w_end_render();
     }

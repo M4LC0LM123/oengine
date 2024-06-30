@@ -40,7 +40,7 @@ msc_init :: proc() -> ^MSCObject {
     return self;
 }
 
-msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = BLACK, texture_tag: string = "") {
+msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = WHITE, texture_tag: string = "") {
     t := new(TriangleCollider);
     t.pts = {a + offs, b + offs, c + offs};
     t.color = color;

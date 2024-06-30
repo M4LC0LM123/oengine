@@ -3,6 +3,7 @@ package main
 import "core:fmt"
 import rl "vendor:raylib"
 import oe "../../oengine"
+import "core:math"
 
 GRID_SPACING :: 25
 GRID_COLOR :: oe.Color {255, 255, 255, 125}
@@ -95,12 +96,10 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider) {
             rl.DrawLineV(t[1].xy, t[2].xy, rl.YELLOW);
             rl.rlPopMatrix();
 
-            res := update_point_ortho(self, tri.pts[0].xy);
-            tri.pts[0] = {res.x, res.y, 0};
-            res = update_point_ortho(self, tri.pts[1].xy);
-            tri.pts[1] = {res.x, res.y, 0};
-            res = update_point_ortho(self, tri.pts[2].xy);
-            tri.pts[2] = {res.x, res.y, 0};
+            for i in 0..<len(tri.pts) {
+                res := update_point_ortho(self, tri.pts[i].xy, i);
+                tri.pts[i] = {res.x, res.y, tri.pts[i].z};
+            }
         case .ORTHO_XZ:
             t := tri.pts;
             rl.DrawLineV(t[0].xz, t[1].xz, rl.YELLOW);
@@ -108,12 +107,10 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider) {
             rl.DrawLineV(t[1].xz, t[2].xz, rl.YELLOW);
             rl.rlPopMatrix();
 
-            res := update_point_ortho(self, tri.pts[0].xz);
-            tri.pts[0] = {res.x, 0, res.y};
-            res = update_point_ortho(self, tri.pts[1].xz);
-            tri.pts[1] = {res.x, 0, res.y};
-            res = update_point_ortho(self, tri.pts[2].xz);
-            tri.pts[2] = {res.x, 0, res.y};
+            for i in 0..<len(tri.pts) {
+                res := update_point_ortho(self, tri.pts[i].xz, i);
+                tri.pts[i] = {res.x, tri.pts[i].y, res.y};
+            }
         case .ORTHO_ZY:
             t := tri.pts;
             rl.DrawLineV(t[0].zy, t[1].zy, rl.YELLOW);
@@ -121,37 +118,45 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider) {
             rl.DrawLineV(t[1].zy, t[2].zy, rl.YELLOW);
             rl.rlPopMatrix();
 
-            res := update_point_ortho(self, tri.pts[0].zy);
-            tri.pts[0] = {0, res.x, res.y};
-            res = update_point_ortho(self, tri.pts[1].zy);
-            tri.pts[1] = {0, res.x, res.y};
-            res = update_point_ortho(self, tri.pts[2].zy);
-            tri.pts[2] = {0, res.x, res.y};
+            for i in 0..<len(tri.pts) {
+                res := update_point_ortho(self, tri.pts[i].zy, i);
+                tri.pts[i] = {tri.pts[i].x, res.y, res.x};
+            }
     }
 
     rl.rlPopMatrix();
 }
 
 @(private = "file")
-update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2) -> oe.Vec2 {
+update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2, #any_int id: i32) -> oe.Vec2 {
     res := pt * RENDER_SCALAR;
 
     @static _moving: bool;
-
-    mp := rl.GetScreenToWorld2D(oe.window.mouse_position, camera_orthographic);
-    if (oe.mouse_pressed(.LEFT) && rl.CheckCollisionPointCircle(mp, res, POINT_SIZE)) {
-        _moving = true;
-    }
-
-    if (_moving) {
-        if (oe.mouse_released(.LEFT))  {
-            _moving = false;
-        }
-
-        res = mp;
-    }
+    @static _moving_id: i32;
 
     rl.DrawCircleV(res, POINT_SIZE, oe.BLUE);
+
+    mp := rl.GetScreenToWorld2D(oe.window.mouse_position, camera_orthographic);
+    if (rl.CheckCollisionPointCircle(mp, res, POINT_SIZE)) {
+        if (oe.mouse_pressed(.LEFT)) {    
+            _moving = true;
+            _moving_id = id;
+        }
+
+        rl.DrawCircleV(res, POINT_SIZE, oe.GREEN);
+    }
+
+    if (_moving && _moving_id == id) {
+        if (oe.mouse_released(.LEFT))  {
+            _moving = false; 
+        }
+
+        snapped_x := math.round(mp.x / GRID_SPACING) * GRID_SPACING;
+        snapped_y := math.round(mp.y / GRID_SPACING) * GRID_SPACING;
+
+        res = {snapped_x, snapped_y};
+    }
+
     return res / RENDER_SCALAR;
 }
 
