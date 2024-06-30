@@ -1,8 +1,11 @@
 package oengine
 
 import "core:fmt"
-import "core:os"
+import "core:path/filepath"
 import rl "vendor:raylib" 
+
+BUTTON_WIDTH :: 180
+BUTTON_HEIGHT :: 30
 
 fd_file_path :: proc() -> string {
     files := rl.LoadDirectoryFiles(rl.GetWorkingDirectory());

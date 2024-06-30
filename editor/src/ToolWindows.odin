@@ -46,7 +46,7 @@ map_proj_tool :: proc(ct: CameraTool) {
     oe.gui_begin("Map project", x = 0, y = 210 + oe.gui_top_bar_height, can_exit = false);
 
     if (oe.gui_button("Load map", 10, 10, BUTTON_WIDTH, 30)) {
-        oe.fd_file_path(); 
+        oe.fd_file_path();
     }
 
     if (oe.gui_button("Save map", 10, 50, BUTTON_WIDTH, 30)) {
