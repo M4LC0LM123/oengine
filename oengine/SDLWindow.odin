@@ -4,6 +4,7 @@ import "core:fmt"
 import "core:time"
 import strs "core:strings"
 import sdl "vendor:sdl2"
+import "vendor:sdl2/ttf"
 
 sdl_create_window :: proc(#any_int w, h: i32, title: string) -> ^sdl.Window {
     window := sdl.CreateWindow(
@@ -62,4 +63,18 @@ sdl_window :: proc(window: ^sdl.Window, renderer: ^sdl.Renderer, update: proc(),
 
         sdl.RenderPresent(renderer);
     }
+}
+
+sdl_color :: proc(color: Color) -> sdl.Color {
+    return sdl.Color {color.r, color.g, color.b, color.a};
+}
+
+sdl_draw_text :: proc(renderer: ^sdl.Renderer, font: ^ttf.Font, text: string, #any_int x, y, w, h: i32, color: Color) {
+    text_surface := ttf.RenderText_Solid(font, strs.clone_to_cstring(text), sdl_color(color));
+    defer sdl.FreeSurface(text_surface);
+    text_tex := sdl.CreateTextureFromSurface(renderer, text_surface);
+    defer sdl.DestroyTexture(text_tex);
+
+    render_quad := sdl.Rect {x, y, w, h};
+    sdl.RenderCopy(renderer, text_tex, nil, &render_quad);
 }
