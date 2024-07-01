@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import rl "vendor:raylib"
+import sdl "vendor:sdl2"
 import oe "../../oengine"
 import "core:math"
 
