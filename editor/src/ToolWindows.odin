@@ -5,11 +5,25 @@ import rl "vendor:raylib"
 import sdl "vendor:sdl2"
 import oe "../../oengine"
 import "core:math"
+import "core:path/filepath"
 
 BUTTON_WIDTH :: 180
 
+registry_tool :: proc(ct: CameraTool) {
+    oe.gui_begin("Registry", x = 0, y = 0, h = 150, can_exit = false);
+
+    if (oe.gui_button("Load registry", 10, 10, BUTTON_WIDTH, 30)) {
+        path := oe.fd_file_path();
+        if (filepath.ext(path) == ".json") {
+            oe.load_registry(path);
+        }
+    }
+
+    oe.gui_end();
+}
+
 msc_tool :: proc(ct: CameraTool) {
-    oe.gui_begin("MSC tool", x = 0, y = 0, h = 210, can_exit = false);
+    oe.gui_begin("MSC tool", x = 0, y = 150 + oe.gui_top_bar_height, h = 210, can_exit = false);
 
     @static new_instance: bool;
     new_instance = oe.gui_tick(new_instance, 10, 10, 30, 30);
@@ -44,14 +58,23 @@ msc_tool :: proc(ct: CameraTool) {
 }
 
 map_proj_tool :: proc(ct: CameraTool) {
-    oe.gui_begin("Map project", x = 0, y = 210 + oe.gui_top_bar_height, can_exit = false);
+    oe.gui_begin("Map project", x = 0, y = 360 + oe.gui_top_bar_height * 2, can_exit = false);
 
     if (oe.gui_button("Load map", 10, 10, BUTTON_WIDTH, 30)) {
-        oe.fd_file_path();
+        path := oe.fd_file_path();
+        if (filepath.ext(path) == ".json") {
+            msc := oe.msc_init();
+            oe.msc_from_json(msc, path);
+        }
     }
 
     if (oe.gui_button("Save map", 10, 50, BUTTON_WIDTH, 30)) {
-        oe.fd_file_path();
+        path := oe.fd_file_path();
+        if (path != oe.STR_EMPTY) {
+            for msc in oe.ecs_world.physics.mscs {
+                 oe.msc_to_json(msc, path, oe.FileMode.APPEND);
+            }
+        }
     }
 
     oe.gui_end();

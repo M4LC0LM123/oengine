@@ -11,34 +11,61 @@ BUTTON_WIDTH :: 180
 BUTTON_HEIGHT :: 30
 
 fd_file_path :: proc() -> string {
-    @static curr_dir: cstring;
-    curr_dir = rl.GetWorkingDirectory();
+    @static curr_dir: string;
     @static files: rl.FilePathList;
-    files = rl.LoadDirectoryFiles(curr_dir);
+    curr_dir, files = fd_dir_and_files(string(rl.GetWorkingDirectory()));
+    @static res_path: string;
+    res_path = "";
 
     if (ttf.WasInit() == 0) {
         ttf.Init();
     }
 
     @static fd_font: ^ttf.Font;
-    fd_font = ttf.OpenFont(strs.clone_to_cstring(str_add(OE_FONTS_PATH, "Roboto-Regular.ttf")), 28);
+    fd_font = ttf.OpenFont(strs.clone_to_cstring(str_add(OE_FONTS_PATH, "default_font.ttf")), 28);
     if (fd_font == nil) {
         dbg_log(str_add("Failed to load font: ", string(ttf.GetError())), DebugType.ERROR);
     }
 
-    render := proc(renderer: ^sdl.Renderer) {
+    update := proc() {
+    };
+
+    render := proc(renderer: ^sdl.Renderer, running: ^bool) {
         sdl.SetRenderDrawColor(renderer, gui_main_color.r, gui_main_color.g, gui_main_color.b, gui_main_color.a);
         sdl.RenderClear(renderer);
 
         sdl_draw_text(renderer, fd_font, string(curr_dir), 10, 10, 500, 25, WHITE);
+        if (sdl_button(renderer, "<", fd_font, 740, 10, 50, 25)) {
+            curr_dir, files = fd_dir_and_files(filepath.dir(curr_dir));
+        }
 
         for i in 0..<files.count {
-            sdl_draw_text(renderer, fd_font, string(files.paths[i]), 10, 45 + 25 * i, 500, 25, WHITE);
+            path := string(files.paths[i]);
+            if (sdl_button(renderer, filepath.base(path), fd_font, 10, 45 + 35 * f32(i), 500, 25)) {
+                if (rl.DirectoryExists(strs.clone_to_cstring(path))) {
+                    curr_dir, files = fd_dir_and_files(path);
+                } else {
+                    res_path = path;
+                    running^ = false;
+                }
+            }
         }
-    }
+    };
 
     window := sdl_create_window(800, 600, "Files");
-    sdl_window(window, sdl_create_renderer(window), nil, render);
+    sdl_window(window, sdl_create_renderer(window), update, render);
 
-    return "";
+    return res_path;
+}
+
+fd_dir_and_files :: proc(dir: string) -> (string, rl.FilePathList) {
+    curr_dir, t := strs.replace_all(dir, "\\", "/");
+    files := rl.LoadDirectoryFiles(strs.clone_to_cstring(curr_dir));
+
+    for i in 0..<files.count {
+        path, t := strs.replace_all(string(files.paths[i]), "\\", "/");
+        files.paths[i] = strs.clone_to_cstring(path);
+    }
+
+    return curr_dir, files;
 }

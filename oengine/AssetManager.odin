@@ -4,7 +4,9 @@ import "core:fmt"
 import "core:encoding/json"
 import "core:io"
 import "core:os"
+import "core:path/filepath"
 import strs "core:strings"
+import rl "vendor:raylib"
 
 Asset :: union {
     Texture,
@@ -81,12 +83,12 @@ load_registry :: proc(path: string) {
         type := asset_json["type"].(json.String);
 
         if (type == "CubeMap") {
-            front := asset_json["path_front"].(json.String);
-            back := asset_json["path_back"].(json.String);
-            left := asset_json["path_left"].(json.String);
-            right := asset_json["path_right"].(json.String);
-            top := asset_json["path_top"].(json.String);
-            bottom := asset_json["path_bottom"].(json.String);
+            front := get_path(asset_json["path_front"].(json.String));
+            back := get_path(asset_json["path_back"].(json.String));
+            left := get_path(asset_json["path_left"].(json.String));
+            right := get_path(asset_json["path_right"].(json.String));
+            top := get_path(asset_json["path_top"].(json.String));
+            bottom := get_path(asset_json["path_bottom"].(json.String));
 
             reg_asset(strs.clone(tag), SkyBox {
                 load_texture(strs.clone(front)), load_texture(strs.clone(back)),
@@ -94,18 +96,27 @@ load_registry :: proc(path: string) {
                 load_texture(strs.clone(top)), load_texture(strs.clone(bottom)),
             });
         } else {
-            path := asset_json["path"].(json.String);
+            res := get_path(asset_json["path"].(json.String));
 
             if (type == "Texture") {
-                reg_asset(strs.clone(tag), load_texture(strs.clone(path)));
+                reg_asset(strs.clone(tag), load_texture(strs.clone(res)));
             } else if (type == "Model") {
-                reg_asset(strs.clone(tag), load_model(strs.clone(path)));
+                reg_asset(strs.clone(tag), load_model(strs.clone(res)));
             }
         }
     }
 
     delete(data);
     json.destroy_value(json_data);
+}
+
+@(private)
+get_path :: proc(path: string) -> string {
+    absolute, ok := filepath.abs(path);
+    res, err := filepath.rel(string(rl.GetWorkingDirectory()), absolute);
+    t: bool;
+    res, t = strs.replace_all(res, "\\", "/");
+    return res;
 }
 
 asset_variant :: proc(self: Asset, $T: typeid) -> T {

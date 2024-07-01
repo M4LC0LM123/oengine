@@ -89,15 +89,14 @@ msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}) {
     }
 }
 
-msc_to_json :: proc(using self: ^MSCObject, path: string) {
-    mode := FileMode.WRITE_RONLY | FileMode.CREATE;
+msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
     file := file_handle(path, mode);
     
     res: string = "{";
 
     i := 0;
     for t in tris {
-        data, ok := json.marshal(t, {pretty = true});
+        data, ok := json.marshal(t^, {pretty = true});
 
         if (ok != nil) {
             fmt.printfln("An error occured marshalling data: %v", ok);
@@ -184,7 +183,8 @@ msc_render :: proc(using self: ^MSCObject) {
         rl.rlBegin(rl.RL_TRIANGLES);
 
         if (asset_exists(tri.texture_tag)) {
-            rl.rlSetTexture(get_asset_var(tri.texture_tag, Texture).id);
+            tex := get_asset_var(tri.texture_tag, Texture);
+            rl.rlSetTexture(tex.id);
         }
 
         rl.rlTexCoord2f(uv1.x, uv1.y); rl.rlVertex3f(v1.x, v1.y, v1.z);

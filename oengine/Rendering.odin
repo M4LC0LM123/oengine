@@ -518,10 +518,10 @@ draw_slope :: proc(slope: Slope, pos, rot, scale: Vec3, tex: Texture, color: rl.
     }
    
     // quad
-    rl.rlColor4ub(color.r, color.g, color.b, color.a);
-    rl.rlBegin(rl.RL_QUADS);
-
     rl.rlSetTexture(tex.id);
+    rl.rlBegin(rl.RL_QUADS);
+    rl.rlColor4ub(color.r, color.g, color.b, color.a);
+
 
     rl.rlNormal3f(normal.x, normal.y, normal.z);
     rl.rlTexCoord2f(0, 0); rl.rlVertex3f(-0.5, res[0][0] - 0.5, 0.5);

@@ -74,7 +74,7 @@ w_create :: proc(name: string = "Game") {
         dbg_log("Loaded render target");
     }
 
-    gui_default_font = rl.GetFontDefault();
+    gui_default_font = rl.LoadFont(str.clone_to_cstring(str_add(OE_FONTS_PATH, "default_font.ttf")));
     gui_font_size = f32(gui_default_font.baseSize);
     w_set_instance_name(name);
 }

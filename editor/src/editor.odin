@@ -30,6 +30,7 @@ main :: proc() {
 
         ct_render(&camera_tool);
 
+        registry_tool(camera_tool);
         msc_tool(camera_tool);
         map_proj_tool(camera_tool);
 
