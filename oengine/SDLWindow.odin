@@ -6,6 +6,7 @@ import strs "core:strings"
 import rl "vendor:raylib"
 import sdl "vendor:sdl2"
 import "vendor:sdl2/ttf"
+import "core:math"
 
 sdl_create_window :: proc(#any_int w, h: i32, title: string) -> ^sdl.Window {
     window := sdl.CreateWindow(
@@ -78,14 +79,38 @@ sdl_rect :: proc(renderer: ^sdl.Renderer, rec: rl.Rectangle, color: Color) {
     sdl.RenderFillRect(renderer, rect);
 }
 
-sdl_draw_text :: proc(renderer: ^sdl.Renderer, font: ^ttf.Font, text: string, #any_int x, y, w, h: i32, color: Color) {
+sdl_draw_text :: proc(renderer: ^sdl.Renderer, font: ^ttf.Font, text: string, #any_int x, y, size: i32, color: Color) {
     text_surface := ttf.RenderText_Solid(font, strs.clone_to_cstring(text), sdl_color(color));
     defer sdl.FreeSurface(text_surface);
     text_tex := sdl.CreateTextureFromSurface(renderer, text_surface);
     defer sdl.DestroyTexture(text_tex);
-
-    render_quad := sdl.Rect {x, y, w, h};
+    
+    render_quad := sdl.Rect {x, y, text_surface.w * size, text_surface.h * size};
     sdl.RenderCopy(renderer, text_tex, nil, &render_quad);
+}
+
+sdL_text_center_pos :: proc(renderer: ^sdl.Renderer, font: ^ttf.Font, text: string, rec: rl.Rectangle) {
+    ctext := strs.clone_to_cstring(text);
+    width: i32;
+    height: i32;
+    ttf.SizeUTF8(font, ctext, &width, &height);
+    text_scale := (rec.width - gui_bezel_size * 2) / f32(width);
+
+    if (text_scale * gui_font_size > rec.height - gui_bezel_size * 2) {
+        text_scale = (rec.height - gui_bezel_size * 2) / gui_font_size;
+    }
+
+    text_x := rec.x + (rec.width - f32(width)) / 2;
+    text_y := rec.y + (rec.height - f32(height)) / 2;
+
+    sdl_draw_text(
+        renderer,
+        font,
+        text,
+        i32(text_x), i32(text_y),
+        math.round(text_scale),
+        WHITE
+    );
 }
 
 sdl_button :: proc(renderer: ^sdl.Renderer, text: string, font: ^ttf.Font, x, y, w, h: f32) -> bool {
@@ -107,7 +132,8 @@ sdl_button :: proc(renderer: ^sdl.Renderer, text: string, font: ^ttf.Font, x, y,
     if (!held) do sdl_rect(renderer, rec, gui_main_color);
     else do sdl_rect(renderer, rec, gui_accent_color);
 
-    sdl_draw_text(renderer, font, text, i32(rec.x), i32(rec.y), i32(rec.width), i32(rec.height), WHITE);
+    // sdl_draw_text(renderer, font, text, i32(rec.x), i32(rec.y), 1, WHITE);
+    sdL_text_center_pos(renderer, font, text, rec);
 
     return pressed;
 

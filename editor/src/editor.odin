@@ -12,7 +12,6 @@ main :: proc() {
     oe.w_set_resolution(rl.GetMonitorWidth(monitor), rl.GetMonitorHeight(monitor));
     oe.w_set_title("oengine-editor");
     oe.w_set_target_fps(60);
-    oe.window.debug_stats = true;
 
     oe.ew_init(oe.vec3_y() * 50);
 

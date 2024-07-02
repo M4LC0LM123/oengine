@@ -34,7 +34,7 @@ fd_file_path :: proc() -> string {
         sdl.SetRenderDrawColor(renderer, gui_main_color.r, gui_main_color.g, gui_main_color.b, gui_main_color.a);
         sdl.RenderClear(renderer);
 
-        sdl_draw_text(renderer, fd_font, string(curr_dir), 10, 10, 500, 25, WHITE);
+        sdl_draw_text(renderer, fd_font, string(curr_dir), 10, 10, 1, WHITE);
         if (sdl_button(renderer, "<", fd_font, 740, 10, 50, 25)) {
             curr_dir, files = fd_dir_and_files(filepath.dir(curr_dir));
         }
