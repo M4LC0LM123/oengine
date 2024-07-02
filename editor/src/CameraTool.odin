@@ -77,14 +77,14 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
     rl.rlPopMatrix();
 
     for msc in oe.ecs_world.physics.mscs {
-        for tri in msc.tris {
-            tri_render_ortho(self, tri);
-        } 
+        for i in 0..<len(msc.tris) {
+            tri_render_ortho(self, msc.tris[i], i);
+        }
     }
 }
 
 @(private = "file")
-tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider) {
+tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider, #any_int id: i32) {
     rl.rlPushMatrix();
     rl.rlScalef(RENDER_SCALAR, RENDER_SCALAR, 0);
 
@@ -97,7 +97,7 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider) {
             rl.rlPopMatrix();
 
             for i in 0..<len(tri.pts) {
-                res := update_point_ortho(self, tri.pts[i].xy, i);
+                res := update_point_ortho(self, tri.pts[i].xy, i, id);
                 tri.pts[i] = {res.x, res.y, tri.pts[i].z};
             }
         case .ORTHO_XZ:
@@ -108,7 +108,7 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider) {
             rl.rlPopMatrix();
 
             for i in 0..<len(tri.pts) {
-                res := update_point_ortho(self, tri.pts[i].xz, i);
+                res := update_point_ortho(self, tri.pts[i].xz, i, id);
                 tri.pts[i] = {res.x, tri.pts[i].y, res.y};
             }
         case .ORTHO_ZY:
@@ -119,7 +119,7 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider) {
             rl.rlPopMatrix();
 
             for i in 0..<len(tri.pts) {
-                res := update_point_ortho(self, tri.pts[i].zy, i);
+                res := update_point_ortho(self, tri.pts[i].zy, i, id);
                 tri.pts[i] = {tri.pts[i].x, res.y, res.x};
             }
     }
@@ -128,11 +128,12 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider) {
 }
 
 @(private = "file")
-update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2, #any_int id: i32) -> oe.Vec2 {
+update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2, #any_int vertex_id, id: i32) -> oe.Vec2 {
     res := pt * RENDER_SCALAR;
 
     @static _moving: bool;
     @static _moving_id: i32;
+    @static _moving_vertex_id: i32;
 
     rl.DrawCircleV(res, POINT_SIZE, oe.BLUE);
 
@@ -141,12 +142,13 @@ update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2, #any_int id: i3
         if (oe.mouse_pressed(.LEFT)) {    
             _moving = true;
             _moving_id = id;
+            _moving_vertex_id = vertex_id;
         }
 
         rl.DrawCircleV(res, POINT_SIZE, oe.GREEN);
     }
 
-    if (_moving && _moving_id == id) {
+    if (_moving && _moving_vertex_id == vertex_id && _moving_id == id) {
         if (oe.mouse_released(.LEFT))  {
             _moving = false; 
         }
