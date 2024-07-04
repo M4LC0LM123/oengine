@@ -88,6 +88,8 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider, #an
     rl.rlPushMatrix();
     rl.rlScalef(RENDER_SCALAR, RENDER_SCALAR, 0);
 
+    tri.pts = update_tri_ortho(self, tri.pts, id);
+
     #partial switch mode {
         case .ORTHO_XY:
             t := tri.pts;
@@ -125,6 +127,98 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider, #an
     }
 
     rl.rlPopMatrix();
+}
+
+@(private = "file")
+msc_tri_to_ortho_tri :: proc(pts: [3]oe.Vec3, mode: CameraMode) -> [3]oe.Vec2 {
+    #partial switch mode {
+        case .ORTHO_XY:
+            return { pts[0].xy, pts[1].xy, pts[2].xy };
+        case .ORTHO_XZ:
+            return { pts[0].xz, pts[1].xz, pts[2].xz };
+        case .ORTHO_ZY:
+            return { pts[0].zy, pts[1].zy, pts[2].zy };
+    }
+
+    return { pts[0].xy, pts[1].xy, pts[2].xy };
+}
+
+@(private = "file")
+ortho_tri_to_msc_tri :: proc(pts: [3]oe.Vec2, pts_3d: [3]oe.Vec3, mode: CameraMode) -> [3]oe.Vec3 {
+    #partial switch mode {
+        case .ORTHO_XY:
+            return { 
+                {pts[0].x, pts[0].y, pts_3d[0].z}, 
+                {pts[1].x, pts[1].y, pts_3d[1].z}, 
+                {pts[2].x, pts[2].y, pts_3d[2].z}, 
+            };
+        case .ORTHO_XZ:
+            return { 
+                {pts[0].x, pts_3d[0].y, pts[0].y}, 
+                {pts[1].x, pts_3d[1].y, pts[1].y}, 
+                {pts[2].x, pts_3d[2].y, pts[2].y}, 
+            };
+        case .ORTHO_ZY:
+            return { 
+                {pts_3d[0].x, pts[0].y, pts[0].x}, 
+                {pts_3d[1].x, pts[1].y, pts[1].x}, 
+                {pts_3d[2].x, pts[2].y, pts[2].x}, 
+            };
+    }
+
+    return { 
+        {pts[0].x, pts[0].y, pts_3d[0].z}, 
+        {pts[1].x, pts[1].y, pts_3d[1].z}, 
+        {pts[2].x, pts[2].y, pts_3d[2].z}, 
+    };
+}
+
+@(private = "file")
+update_tri_ortho :: proc(using self: ^CameraTool, pts: [3]oe.Vec3, #any_int id: i32) -> [3]oe.Vec3 {
+    res := pts * RENDER_SCALAR;
+
+    @static _moving: bool;
+    @static _moving_id: i32;
+    @static _offsets: [3]oe.Vec2;
+
+    mp := rl.GetScreenToWorld2D(oe.window.mouse_position, camera_orthographic);
+    tri := msc_tri_to_ortho_tri(res, mode);
+    if (rl.CheckCollisionPointTriangle(mp, tri[0], tri[1], tri[2])) {
+        rl.DrawTriangle(
+            tri[0] / RENDER_SCALAR, 
+            tri[1] / RENDER_SCALAR, 
+            tri[2] / RENDER_SCALAR, GRID_COLOR
+        );
+
+        if (oe.mouse_pressed(.LEFT)) {
+            _moving = true;
+            _moving_id = id;
+
+            snapped_x := math.round(mp.x / GRID_SPACING) * GRID_SPACING;
+            snapped_y := math.round(mp.y / GRID_SPACING) * GRID_SPACING;
+
+            _offsets = {
+                {snapped_x - tri[0].x, snapped_y - tri[0].y},
+                {snapped_x - tri[1].x, snapped_y - tri[1].y},
+                {snapped_x - tri[2].x, snapped_y - tri[2].y},
+            };
+        }
+    }
+
+    if (_moving && _moving_id == id) {
+        if (oe.mouse_released(.LEFT)) do _moving = false;
+
+        for i in 0..<3 {
+            snapped_x := math.round(mp.x / GRID_SPACING) * GRID_SPACING;
+            snapped_y := math.round(mp.y / GRID_SPACING) * GRID_SPACING;
+
+            tri[i] = {snapped_x - _offsets[i].x, snapped_y - _offsets[i].y};
+        }
+    }
+
+    res = ortho_tri_to_msc_tri(tri, res, mode); 
+
+    return res / RENDER_SCALAR;
 }
 
 @(private = "file")

@@ -39,7 +39,7 @@ sdl_window :: proc(window: ^sdl.Window, renderer: ^sdl.Renderer, update: proc(),
     start_tick := time.tick_now();
     running := true;
 
-    for (running) {
+    loop: for (running) {
         duration := time.tick_since(start_tick);
         t := f32(time.duration_seconds(duration));
 
@@ -52,9 +52,11 @@ sdl_window :: proc(window: ^sdl.Window, renderer: ^sdl.Renderer, update: proc(),
                     #partial switch event.key.keysym.sym {
                         case .ESCAPE:
                             running = false;
+                            break loop;
                 }
                 case .QUIT:
                     running = false;
+                    break loop;
             }
         }
 
