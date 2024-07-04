@@ -52,9 +52,11 @@ sdl_window :: proc(window: ^sdl.Window, renderer: ^sdl.Renderer, update: proc(),
                     #partial switch event.key.keysym.sym {
                         case .ESCAPE:
                             running = false;
+                            return;
                 }
                 case .QUIT:
                     running = false;
+                    return;
             }
         }
 
