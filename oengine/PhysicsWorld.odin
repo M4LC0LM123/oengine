@@ -125,6 +125,10 @@ pw_deinit :: proc(using self: ^PhysicsWorld) {
         free(body);
     }
 
+    for msc in mscs {
+        delete(msc.tris);
+    }
+
     delete(bodies);
     delete(mscs);
 }

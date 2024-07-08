@@ -111,3 +111,19 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
 
     return false;
 }
+
+MSCCollisionInfo :: struct {
+    t: ^TriangleCollider,
+    point: Vec3,
+}
+
+rc_is_colliding_msc :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, MSCCollisionInfo) {
+    for t in msc.tris {
+        ok, pt := ray_tri_collision(self, t);
+        if (ok) {
+            return true, {t, pt};
+        }
+    }
+
+    return false, {};
+}

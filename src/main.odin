@@ -215,6 +215,11 @@ main :: proc() {
         oe.draw_skybox(skybox, rl.WHITE);
         oe.ew_render();
 
+        coll, info := oe.rc_is_colliding_msc(camera.raycast, msc);
+        if (coll) {
+            rl.DrawSphere(info.point, 0.5, oe.RED);
+        }
+
         rl.EndMode3D();
 
         oe.gui_begin("Test", w = 200, h = 150);

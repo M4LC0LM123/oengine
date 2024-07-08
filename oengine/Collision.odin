@@ -3,6 +3,7 @@ package oengine
 import rl "vendor:raylib"
 import "core:fmt"
 import "core:math"
+import "core:math/linalg"
 
 CollisionInfo :: struct {
     normal: Vec3,
@@ -178,4 +179,55 @@ collision_slope :: proc(slope: Slope, slope_trans, transform: Transform) -> (boo
     height := rb_slope_get_height_at(slope, x) + slope_trans.position.y;
     
     return object_height - transform.scale.y * 0.5 <= height, height;
+}
+
+ray_tri_collision :: proc(ray: Raycast, t: ^TriangleCollider) -> (bool, Vec3){
+    edge1 := t.pts[1] - t.pts[0];
+    edge2 := t.pts[2] - t.pts[0];
+
+    h := linalg.cross(ray.target - ray.position, edge2);
+    a := linalg.dot(edge1, h);
+
+    if (linalg.abs(a) < 1e-8) {
+        return false, {};
+    }
+
+    f := 1.0 / a;
+    s := ray.position - t.pts[0];
+    u := f * linalg.dot(s, h);
+
+    if (u < 0.0 || u > 1.0) {
+        return false, {};
+    }
+
+    q := linalg.cross(s, edge1);
+    v := f * linalg.dot(ray.target - ray.position, q);
+
+    if (v < 0.0 || u + v > 1.0) {
+        return false, {};
+    }
+
+    t := f * linalg.dot(edge2, q);
+
+    if (t > 1e-8) {
+        intersection_point := ray.position + (ray.target - ray.position) * t;
+        return true, intersection_point;
+    }
+
+    return false, {};
+}
+
+ray_tri_resolve :: proc(ray: ^Raycast, t: ^TriangleCollider) {
+    intersect, point := ray_tri_collision(ray^, t);
+
+    if (intersect) {
+        normal := linalg.cross(t.pts[1] - t.pts[0], t.pts[2] - t.pts[0]);
+        normal = linalg.normalize(normal);
+
+        distance := linalg.dot(point - ray.position, normal);
+
+        if (distance < 0.0) {
+            ray.target -= normal * distance;
+        }
+    }
 }

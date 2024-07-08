@@ -137,3 +137,26 @@ triangle_uvs :: proc(v1, v2, v3: Vec3) -> (Vec2, Vec2, Vec2) {
 
     return uv1, uv2, uv3;
 }
+
+square_from_tri :: proc(tri: [3]Vec3) -> [4]Vec3 {
+    v1 := tri[1] - tri[0];
+    v2 := tri[2] - tri[0];
+
+    normal := vec3_normalize(vec3_cross(v1, v2));
+
+    v3 := tri[2] - tri[1];
+
+    center := (tri[0] + tri[1] + tri[2]) * (1 / 3);
+    v1_unit := vec3_normalize(v1);
+    v2_unit := vec3_normalize(v2);
+    len_v1 := math.sqrt(vec3_dot(v1, v1));
+    len_v2 := math.sqrt(vec3_dot(v2, v2));
+    side_len := max(len_v1, len_v2);
+
+    assumed_v := v1_unit + v2_unit;
+    two: f32 = 2.0;
+    assumed_v *= side_len / math.sqrt(two);
+    p4 := center + assumed_v;
+
+    return {tri[0], tri[1], tri[2], p4};
+}
