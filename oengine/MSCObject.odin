@@ -179,6 +179,8 @@ msc_render :: proc(using self: ^MSCObject) {
 
         uv1, uv2, uv3 := triangle_uvs(v1, v2, v3);
 
+        if (ecs_world.LAE) do rl.BeginShaderMode(DEFAULT_LIGHT);
+
         rl.rlColor4ub(color.r, color.g, color.b, color.a);
         rl.rlBegin(rl.RL_TRIANGLES);
 
@@ -194,6 +196,8 @@ msc_render :: proc(using self: ^MSCObject) {
         rl.rlEnd();
 
         rl.rlSetTexture(0);
+
+        if (ecs_world.LAE) do rl.EndShaderMode();
 
         if (!PHYS_DEBUG) do continue;
 

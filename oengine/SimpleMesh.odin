@@ -155,6 +155,7 @@ sm_render :: proc(component: ^Component) {
             );
     }
 
+    if (sm_tex_is(self, Model)) do return;
     rl.EndShaderMode();
 }
 

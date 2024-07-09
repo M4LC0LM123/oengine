@@ -39,11 +39,11 @@ create_light :: proc(type: LightType, position, target: Vec3, color: Color) -> r
         light.target = target;
         light.color = color;
 
-        light.enabled_loc = shader_location(DEFAULT_LIGHT, rl.TextFormat("lights[%v].enabled", light_count));
-        light.type_loc = shader_location(DEFAULT_LIGHT, rl.TextFormat("lights[%v].type", light_count));
-        light.pos_loc = shader_location(DEFAULT_LIGHT, rl.TextFormat("lights[%v].position", light_count));
-        light.target_loc = shader_location(DEFAULT_LIGHT, rl.TextFormat("lights[%v].target", light_count));
-        light.color_loc = shader_location(DEFAULT_LIGHT, rl.TextFormat("lights[%v].color", light_count));
+        light.enabled_loc = rl.GetShaderLocation(DEFAULT_LIGHT, rl.TextFormat("lights[%v].enabled", light_count));
+        light.type_loc = rl.GetShaderLocation(DEFAULT_LIGHT, rl.TextFormat("lights[%v].type", light_count));
+        light.pos_loc = rl.GetShaderLocation(DEFAULT_LIGHT, rl.TextFormat("lights[%v].position", light_count));
+        light.target_loc = rl.GetShaderLocation(DEFAULT_LIGHT, rl.TextFormat("lights[%v].target", light_count));
+        light.color_loc = rl.GetShaderLocation(DEFAULT_LIGHT, rl.TextFormat("lights[%v].color", light_count));
 
         update_light(light);
         
@@ -56,7 +56,9 @@ create_light :: proc(type: LightType, position, target: Vec3, color: Color) -> r
 @(private)
 init_lights_global :: proc() {
     DEFAULT_LIGHT = load_shader(rl.LoadShaderFromMemory(LIGHT_VERT, LIGHT_FRAG));
-    DEFAULT_LIGHT.locs[rl.ShaderLocationIndex.VECTOR_VIEW] = i32(rl.GetShaderLocation(DEFAULT_LIGHT, "viewPos"));
+
+    fmt.println(rl.GetShaderLocation(DEFAULT_LIGHT, "camPos"));
+    DEFAULT_LIGHT.locs[rl.ShaderLocationIndex.VECTOR_VIEW] = i32(rl.GetShaderLocation(DEFAULT_LIGHT, "camPos"));
 
     ambient_loc := rl.GetShaderLocation(DEFAULT_LIGHT, "ambient");
     ambient := Vec4 {0.2, 0.2, 0.2, 0.7};
