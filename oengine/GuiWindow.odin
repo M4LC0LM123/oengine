@@ -89,7 +89,7 @@ gw_render :: proc(using self: ^GuiWindow) {
     );
 }
 
-gui_begin :: proc(title: string, x: f32 = 10, y: f32 = 10, w: f32 = 300, h: f32 = 200, can_exit: bool = true) {
+gui_begin :: proc(title: string, x: f32 = 10, y: f32 = 10, w: f32 = 300, h: f32 = 200, can_exit: bool = true, active: bool = true) {
     if (!gui_window_exists(title)) {
         instance := new(GuiWindow);
         instance.id = u32(len(gui.windows)) + 1;
@@ -100,7 +100,7 @@ gui_begin :: proc(title: string, x: f32 = 10, y: f32 = 10, w: f32 = 300, h: f32 
         instance.height = h;
         instance.dw = w;
         instance.dh = h;
-        instance.active = true;
+        instance.active = active;
         instance.resizing = false;
         instance.moving = false;
         instance.can_exit = can_exit;

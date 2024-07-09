@@ -190,6 +190,10 @@ update_tri_ortho :: proc(using self: ^CameraTool, pts: [3]oe.Vec3, #any_int id: 
             tri[2] / RENDER_SCALAR, GRID_COLOR
         );
 
+        if (oe.key_pressed(.T)) {
+            oe.gui_toggle_window("Texture tool");
+        }
+
         if (oe.mouse_pressed(.LEFT)) {
             _moving = true;
             _moving_id = id;

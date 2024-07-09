@@ -80,6 +80,11 @@ map_proj_tool :: proc(ct: CameraTool) {
     oe.gui_end();
 }
 
+texture_tool :: proc(ct: CameraTool) {
+    oe.gui_begin("Texture tool", x = 0, y = 560 + oe.gui_top_bar_height * 3, active = false);
+    oe.gui_end();
+}
+
 @(private = "file")
 msc_target_pos :: proc(ct: CameraTool) -> oe.Vec3 {
     if (ct.mode == .PERSPECTIVE) do return ct.camera_perspective.position;

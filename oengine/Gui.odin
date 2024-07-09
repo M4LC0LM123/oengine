@@ -47,6 +47,14 @@ gui_set_window_active :: proc(title: string) {
     gui.windows[title].active = true;
 }
 
+gui_toggle_window :: proc(title: string) {
+    gui.windows[title].active = !gui.windows[title].active;
+}
+
+gui_set_window_unactive :: proc(title: string) {
+    gui.windows[title].active = false;
+}
+
 gui_mouse_over :: proc() -> bool {
     for t, w in gui.windows {
         if (w._mouse_over) do return true;

@@ -40,7 +40,7 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     }
 
 
-    LAE = true;
+    LAE = false;
     FAE = false;
 
     world_fog.density = 0.007;
