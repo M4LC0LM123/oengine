@@ -286,7 +286,7 @@ w_transform_changed :: proc() -> bool {
     return rl.IsWindowResized();
 }
 
-@(private = "file")
+@(private)
 w_reload_target :: proc() {
     window.target = rl.LoadRenderTexture(window._render_width, window._render_height);
 }

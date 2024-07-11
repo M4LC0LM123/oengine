@@ -6,6 +6,7 @@ import rl "vendor:raylib"
 import sdl "vendor:sdl2"
 import ttf "vendor:sdl2/ttf"
 import strs "core:strings"
+import "core:thread"
 
 BUTTON_WIDTH :: 180
 BUTTON_HEIGHT :: 30
@@ -25,12 +26,11 @@ fd_file_path :: proc() -> string {
     fd_font = ttf.OpenFont(strs.clone_to_cstring(str_add(OE_FONTS_PATH, "default_font.ttf")), 28);
     if (fd_font == nil) {
         dbg_log(str_add("Failed to load font: ", string(ttf.GetError())), DebugType.ERROR);
-    }
+    } 
+    defer ttf.CloseFont(fd_font);
 
-    update := proc() {
-    };
-
-    render := proc(renderer: ^sdl.Renderer, running: ^bool) {
+    @(static) render: proc(^sdl.Renderer, ^bool);
+    render = proc(renderer: ^sdl.Renderer, running: ^bool) {
         sdl.SetRenderDrawColor(renderer, gui_main_color.r, gui_main_color.g, gui_main_color.b, gui_main_color.a);
         sdl.RenderClear(renderer);
 
@@ -46,14 +46,20 @@ fd_file_path :: proc() -> string {
                     curr_dir, files = fd_dir_and_files(path);
                 } else {
                     res_path = path;
-                    running^ = false;
+                    sdl_quit(running);
                 }
             }
         }
     };
 
-    window := sdl_create_window(800, 600, "Files");
-    sdl_window(window, sdl_create_renderer(window), update, render);
+    sdl_thread_proc :: proc(thread: ^thread.Thread) {
+        window := sdl_create_window(800, 600, "Files");
+        sdl_window(window, sdl_create_renderer(window), nil, render);
+    }
+
+    sdl_thread := thread.create(sdl_thread_proc);
+    thread.start(sdl_thread);
+    thread.join(sdl_thread);
 
     return res_path;
 }

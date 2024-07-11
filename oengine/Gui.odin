@@ -63,14 +63,22 @@ gui_mouse_over :: proc() -> bool {
     return false;
 }
 
-gui_text :: proc(text: string, size: f32, x: f32 = 10, y: f32 = 10) {
+gui_text :: proc(text: string, size: f32, x: f32 = 10, y: f32 = 10, standalone: bool = false) {
     active := gui_active();
-    if (!active.active) do return;
+    if (!active.active && !standalone) do return;
+
+    rx: f32;
+    ry: f32;
+
+    if (!standalone) {
+        rx = active.x;
+        ry = active.y;
+    }
 
     rl.DrawTextEx(
         gui_default_font, 
         strs.clone_to_cstring(text), 
-        rl.Vector2 {active.x + x, active.y + y}, 
+        rl.Vector2 {rx + x, ry + y}, 
         size, gui_text_spacing, rl.WHITE
     );
 }
@@ -145,13 +153,21 @@ text_right_pos :: proc(text: string, rec: rl.Rectangle) {
 }
 
 gui_button :: proc(text: string, x: f32 = 10, y: f32 = 10, w: f32 = 50, h: f32 = 25, 
-    text_pos: GuiTextPositioning = .CENTER) -> bool {
+    text_pos: GuiTextPositioning = .CENTER, standalone: bool = false) -> bool {
     active := gui_active();
-    if (!active.active) do return false;
+    if (!active.active && !standalone) do return false;
+
+    rx: f32;
+    ry: f32;
+
+    if (!standalone) {
+        rx = active.x;
+        ry = active.y;
+    }
 
     rec := rl.Rectangle {
-        x = active.x + x,
-        y = active.y + y,
+        x = rx + x,
+        y = ry + y,
         width = w,
         height = h,
     };
@@ -242,11 +258,19 @@ gui_icon :: proc(icon: GuiIcon, x, y, w, h: i32) {
     GuiIconRenders[i32(icon)](x, y, w, h);
 }
 
-gui_tick :: proc(tick: bool, x, y, w, h: f32) -> bool {
+gui_tick :: proc(tick: bool, x, y, w, h: f32, standalone: bool = false) -> bool {
     active := gui_active();
-    if (!active.active) do return tick;
+    if (!active.active && !standalone) do return false;
 
-    rp := Vec2 {x + active.x, y + active.y};
+    rx: f32;
+    ry: f32;
+
+    if (!standalone) {
+        rx = active.x;
+        ry = active.y;
+    }
+
+    rp := Vec2 {x + rx, y + ry};
 
     gui_inverse_rec(rp.x, rp.y, w, h);
 

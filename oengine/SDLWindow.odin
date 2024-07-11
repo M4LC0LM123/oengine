@@ -7,11 +7,14 @@ import rl "vendor:raylib"
 import sdl "vendor:sdl2"
 import "vendor:sdl2/ttf"
 import "core:math"
+import "core:thread"
 
 sdl_create_window :: proc(#any_int w, h: i32, title: string) -> ^sdl.Window {
+    if (sdl.WasInit(sdl.INIT_VIDEO | sdl.INIT_EVENTS) == {}) do sdl.Init(sdl.INIT_VIDEO | sdl.INIT_EVENTS);
+
     window := sdl.CreateWindow(
         strs.clone_to_cstring(title), 
-        sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, w, h, 
+        sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, w, h,
         nil
     );
     if (window == nil) {
@@ -32,17 +35,16 @@ sdl_create_renderer :: proc(window: ^sdl.Window) -> ^sdl.Renderer {
     return renderer;
 }
 
-sdl_window :: proc(window: ^sdl.Window, renderer: ^sdl.Renderer, update: proc(), render: proc(^sdl.Renderer, ^bool)) {
-    defer sdl.DestroyWindow(window);
-    defer sdl.DestroyRenderer(renderer);
+sdl_quit :: proc(running: ^bool) {
+    running^ = false;
+    sdl.VideoQuit();
+    sdl.Quit();
+}
 
-    start_tick := time.tick_now();
+sdl_window :: proc(window: ^sdl.Window, renderer: ^sdl.Renderer, update: proc(), render: proc(^sdl.Renderer, ^bool)) {
     running := true;
 
     loop: for (running) {
-        duration := time.tick_since(start_tick);
-        t := f32(time.duration_seconds(duration));
-
         if (update != nil) do update();
 
         event: sdl.Event;
@@ -51,11 +53,11 @@ sdl_window :: proc(window: ^sdl.Window, renderer: ^sdl.Renderer, update: proc(),
                 case .KEYDOWN:
                     #partial switch event.key.keysym.sym {
                         case .ESCAPE:
-                            running = false;
+                            sdl_quit(&running);
                             break loop;
                 }
                 case .QUIT:
-                    running = false;
+                    sdl_quit(&running);
                     break loop;
             }
         }
@@ -68,6 +70,10 @@ sdl_window :: proc(window: ^sdl.Window, renderer: ^sdl.Renderer, update: proc(),
 
         sdl.RenderPresent(renderer);
     }
+
+    sdl.DestroyWindow(window);
+    sdl.DestroyRenderer(renderer);
+    sdl_quit(&running);
 }
 
 sdl_color :: proc(color: Color) -> sdl.Color {
