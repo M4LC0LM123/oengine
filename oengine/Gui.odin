@@ -65,7 +65,7 @@ gui_mouse_over :: proc() -> bool {
 
 gui_text :: proc(text: string, size: f32, x: f32 = 10, y: f32 = 10, standalone: bool = false) {
     active := gui_active();
-    if (!active.active && !standalone) do return;
+    if (active != nil && !active.active && !standalone) do return;
 
     rx: f32;
     ry: f32;
@@ -153,9 +153,9 @@ text_right_pos :: proc(text: string, rec: rl.Rectangle) {
 }
 
 gui_button :: proc(text: string, x: f32 = 10, y: f32 = 10, w: f32 = 50, h: f32 = 25, 
-    text_pos: GuiTextPositioning = .CENTER, standalone: bool = false) -> bool {
+    text_pos: GuiTextPositioning = .CENTER, standalone: bool = false, decorated: bool = true) -> bool {
     active := gui_active();
-    if (!active.active && !standalone) do return false;
+    if (active != nil && !active.active && !standalone) do return false;
 
     rx: f32;
     ry: f32;
@@ -175,13 +175,17 @@ gui_button :: proc(text: string, x: f32 = 10, y: f32 = 10, w: f32 = 50, h: f32 =
     pressed := rl.CheckCollisionPointRec(window.mouse_position, rec) && mouse_released(.LEFT);
     held := rl.CheckCollisionPointRec(window.mouse_position, rec) && mouse_down(.LEFT);
 
-    rl.DrawRectangle(i32(rec.x - gui_bezel_size), i32(rec.y - gui_bezel_size), i32(rec.width + gui_bezel_size * 2),
-            i32(rec.height + gui_bezel_size * 2), gui_darker_color);
-    rl.DrawRectangle(i32(rec.x - gui_bezel_size), i32(rec.y - gui_bezel_size), i32(rec.width + gui_bezel_size), 
-            i32(rec.height + gui_bezel_size), gui_lighter_color);
+    if (decorated) {
+        rl.DrawRectangle(i32(rec.x - gui_bezel_size), i32(rec.y - gui_bezel_size), i32(rec.width + gui_bezel_size * 2),
+                i32(rec.height + gui_bezel_size * 2), gui_darker_color);
+        rl.DrawRectangle(i32(rec.x - gui_bezel_size), i32(rec.y - gui_bezel_size), i32(rec.width + gui_bezel_size), 
+                i32(rec.height + gui_bezel_size), gui_lighter_color);
 
-    if (!held) do rl.DrawRectangleRec(rec, gui_main_color);
-    else do rl.DrawRectangleRec(rec, gui_accent_color);
+        if (!held) do rl.DrawRectangleRec(rec, gui_main_color);
+        else do rl.DrawRectangleRec(rec, gui_accent_color);
+    } else {
+        rl.DrawRectangleLinesEx(rec, 1, WHITE);
+    }
 
     text_pos_renders[text_pos](text, rec);
 

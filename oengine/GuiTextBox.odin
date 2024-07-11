@@ -12,13 +12,23 @@ GuiTextBox :: struct {
 }
 
 @(private)
-gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32) -> string {
+gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated: bool = true, standalone: bool = false) -> string {
     w_active := gui_active();
-    if (!w_active.active) do return text;
+    if (!standalone) { 
+        if (w_active != nil && !w_active.active) do return text;
+    }
     
+    rx: f32;
+    ry: f32;
+
+    if (!standalone) {
+        rx = w_active.x;
+        ry = w_active.y;
+    }
+
     rec := rl.Rectangle {
-        x = w_active.x + x,
-        y = w_active.y + y,
+        x = rx + x,
+        y = ry + y,
         width = w,
         height = h,
     };
@@ -36,7 +46,8 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32) -> string 
     text_y := rec.y + (rec.height - gui_font_size * text_scale) / 2;
     text_x := rec.x + 5;
 
-    gui_inverse_rec(rec.x, rec.y, rec.width, rec.height);
+    if (decorated) do gui_inverse_rec(rec.x, rec.y, rec.width, rec.height);
+    else do rl.DrawRectangleLinesEx(rec, 1, WHITE);
 
     rl.BeginScissorMode(i32(rec.x), i32(rec.y), i32(rec.width), i32(rec.height));
    
@@ -147,7 +158,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32) -> string 
     return text;
 }
 
-gui_text_box :: proc(tag: string, x, y, w, h: f32) -> string {
+gui_text_box :: proc(tag: string, x, y, w, h: f32, decorated: bool = true, standalone: bool = false) -> string {
     if (!gui_text_box_exists(tag)) {
         instance := new(GuiTextBox);
         instance.text = "";
@@ -157,5 +168,5 @@ gui_text_box :: proc(tag: string, x, y, w, h: f32) -> string {
     }
 
     inst := gui.text_boxes[tag];
-    return gui_text_box_render(inst, x, y, w, h);
+    return gui_text_box_render(inst, x, y, w, h, decorated, standalone);
 }

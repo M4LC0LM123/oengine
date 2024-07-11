@@ -77,6 +77,8 @@ w_create :: proc(name: string = "Game") {
     gui_default_font = rl.LoadFont(str.clone_to_cstring(str_add(OE_FONTS_PATH, "default_font.ttf")));
     gui_font_size = f32(gui_default_font.baseSize);
     w_set_instance_name(name);
+
+    console_init();
 }
 
 w_set_instance_name :: proc(name: string) {
@@ -225,6 +227,8 @@ w_tick :: proc() -> bool {
 
     gui_cursor_timer += rl.GetFrameTime() * 2;
 
+    console_update();
+
     return !rl.WindowShouldClose();
 }
 
@@ -234,6 +238,8 @@ w_begin_render :: proc() {
 
 w_end_render :: proc() {
     using window;
+ 
+    console_render();
 
     if (debug_stats) {
         rl.DrawText(str.clone_to_cstring(str_add("fps: ", rl.GetFPS())), 10, 10, 16, rl.YELLOW);
@@ -244,7 +250,7 @@ w_end_render :: proc() {
         rl.DrawText(str.clone_to_cstring(str_add("lights: ", light_count)), 10, 110, 16, rl.YELLOW);
         rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), 10, 130, 16, rl.YELLOW);
     }
-    
+
     rl.EndTextureMode();
     
     rl.BeginDrawing();
