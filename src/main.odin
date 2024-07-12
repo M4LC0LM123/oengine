@@ -163,13 +163,6 @@ main :: proc() {
             oe.ent_get_component_var(player, ^oe.RigidBody).velocity.xz = {};
         }
 
-        if (oe.key_pressed(oe.Key.ENTER)) {
-            ent := oe.ent_init();
-            oe.ent_add_component(ent, oe.rb_init(ent.starting, 1.0, 0.5, false, oe.ShapeType.BOX));
-            oe.ent_set_pos_y(ent, 15);
-            oe.ent_get_component_var(ent, ^oe.RigidBody).velocity.x = 25 * f32(rl.GetRandomValue(-1, 1))
-        }
-
         if (oe.key_pressed(oe.Key.F2)) {
             ent := oe.ent_init();
             oe.ent_add_component(ent, oe.rb_init(ent.starting, 1.0, 0.5, false, oe.ShapeType.BOX));

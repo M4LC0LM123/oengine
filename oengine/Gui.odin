@@ -15,7 +15,7 @@ gui_text_spacing: f32 = 2;
 gui_top_bar_height: f32 = 30;
 gui_exit_scale: f32 = 25;
 
-gui_default_font: rl.Font = rl.GetFontDefault();
+gui_default_font: rl.Font;
 
 gui_cursor := "|";
 @private gui_cursor_timer: f32;

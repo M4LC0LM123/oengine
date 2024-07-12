@@ -1,6 +1,10 @@
 package oengine
 
 import rl "vendor:raylib"
+import strs "core:strings"
+import "core:fmt"
+
+DC_TEXTBOX_SIZE :: 30
 
 dev_console: struct {
     _rec: rl.Rectangle,
@@ -8,12 +12,34 @@ dev_console: struct {
     _toggle_key: Key,
     command: string,
     output: [dynamic]string,
-};
+    commands: map[string]ConsoleCommand,
+}
 
 console_init :: proc() {
     using dev_console;
     _toggle_key = .GRAVE;
     output = make([dynamic]string);
+    commands = make(map[string]ConsoleCommand);
+
+    console_register(new_command("print", "Print text to console", print_command));
+}
+
+console_register :: proc(s_command: ConsoleCommand) {
+    using dev_console;    
+    commands[s_command.name] = s_command;
+}
+
+console_exec :: proc(command: string) {
+    using dev_console;
+    
+    parts := strs.split(command, " ");
+    name := strs.to_lower(parts[0]);
+    args := len(parts) > 1 ? parts[1:] : {};
+
+    commands[name].action(args);
+
+    // append(&output, strs.clone(command)); 
+    gui.text_boxes["CommandTextBox"].text = "";
 }
 
 console_update :: proc() {
@@ -25,10 +51,13 @@ console_update :: proc() {
 
     if (active) {
         if (key_pressed(.ENTER)) {
-            if (command != STR_EMPTY) { 
-                append(&output, command); 
-                gui.text_boxes["CommandTextBox"].text = "";
+            if (command != STR_EMPTY) {
+                console_exec(command);
             }
+        }
+
+        if (key_pressed(.UP)) {
+            gui.text_boxes["CommandTextBox"].text = output[len(output) - 1];
         }
     }
 }
@@ -51,16 +80,15 @@ console_render :: proc() {
 
         command = gui_text_box(
             "CommandTextBox", 0, 
-            _rec.height - 40, 
-            _rec.width - 40, 40, decorated = false, standalone = true
+            _rec.height - DC_TEXTBOX_SIZE, 
+            _rec.width - DC_TEXTBOX_SIZE, DC_TEXTBOX_SIZE, decorated = false, standalone = true
         );
 
         if (gui_button(
-            ">", _rec.width - 40, _rec.height - 40, 
-            40, 40, standalone = true, decorated = false)) {
+            ">", _rec.width - DC_TEXTBOX_SIZE, _rec.height - DC_TEXTBOX_SIZE, 
+            DC_TEXTBOX_SIZE, DC_TEXTBOX_SIZE, standalone = true, decorated = false)) {
             if (command != STR_EMPTY) { 
-                append(&output, command); 
-                gui.text_boxes["CommandTextBox"].text = "";
+                console_exec(command);
             }
         }
     }
