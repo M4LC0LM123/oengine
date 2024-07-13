@@ -1,6 +1,7 @@
 package oengine
 
 import strs "core:strings"
+import sc "core:strconv"
 
 CommandAction :: proc(args: []string);
 
@@ -25,5 +26,27 @@ print_command :: proc(args: []string) {
         res = str_add(res, args[i]);
     }
 
-    append(&dev_console.output, strs.clone(res));
+    console_print(res);
 };
+
+list_cmds :: proc(args: []string) {
+    using dev_console;
+
+    for i, v in commands {
+        console_print(str_add({v.name, " - ", v.description}));
+    }
+}
+
+debug_info :: proc(args: []string) {
+    using dev_console;
+    if (len(args) < 1) {
+        console_print("Incorrect usage!");
+        return;
+    }
+
+    b, ok := sc.parse_bool(args[0]);
+    if (ok) {
+        window.debug_stats = b;
+        console_print(str_add({"Set debug info to ", args[0]}));
+    }
+}
