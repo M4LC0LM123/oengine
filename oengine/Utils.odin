@@ -120,6 +120,14 @@ vec2_to_arr :: proc(v: Vec2) -> [2]f32 {
     return {v.x, v.y};
 }
 
+mat4_identity :: proc() -> Mat4 {
+    return rl_mat_to_mat4(rl.Matrix(1));
+}
+
+mat4_look_at :: proc(pos, target, up: Vec3) -> Mat4 {
+    return rl_mat_to_mat4(rl.MatrixLookAt(pos, target, up));
+}
+
 mat4_translate :: proc(mat: Mat4, translation: Vec3) -> Mat4 {
     res := mat;
 
@@ -233,6 +241,16 @@ mat4_to_rl_mat :: proc(mat: Mat4) -> rl.Matrix {
     };
 }
 
+mat4_to_arr :: proc(mat: Mat4) -> [4*4]f32 {
+    using mat;
+    return [4*4]f32 {
+        m0, m4, m8, m12,
+        m1, m5, m9, m13,
+        m2, m6, m10, m14,
+        m3, m7, m11, m15,
+    };
+}
+
 rl_mat_to_mat4 :: proc(mat: rl.Matrix) -> Mat4 {
     return Mat4 {
         m0  = mat[0, 0],
@@ -253,6 +271,10 @@ rl_mat_to_mat4 :: proc(mat: rl.Matrix) -> Mat4 {
         m15 = mat[3, 3],
     }
 }
+
+mat4_perspective :: proc(fov, aspect, near, far: f32) -> Mat4 {
+    return rl_mat_to_mat4(rl.MatrixPerspective(fov, aspect, near, far));
+} 
 
 load_heightmap :: proc(tex: Texture) -> HeightMap {
     image := rl.LoadImageFromTexture(tex.data);
