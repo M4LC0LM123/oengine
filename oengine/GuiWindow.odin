@@ -84,7 +84,7 @@ gw_render :: proc(using self: ^GuiWindow) {
     rl.DrawTextEx(
         gui_default_font, 
         strs.clone_to_cstring(title), 
-        rl.Vector2 {top_bar.x + 5, top_bar.y}, 
+        Vec2 {top_bar.x + 5, top_bar.y}, 
         gui_font_size, gui_text_spacing, rl.WHITE
     );
 }

@@ -51,7 +51,7 @@ msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, c
     _aabb = tris_to_aabb(tris);
 }
 
-msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: rl.Vector3, offs: rl.Vector3 = {}, color : Color = WHITE, texture_tag: string = "") {
+msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {}, color : Color = WHITE, texture_tag: string = "") {
     t := new(TriangleCollider);
     t.pts = {b + offs, a + offs, c + offs};
     t.color = color;

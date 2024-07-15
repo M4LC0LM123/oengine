@@ -3,10 +3,10 @@ package oengine
 import rl "vendor:raylib"
 import strs "core:strings"
 
-gui_main_color := rl.Color {99, 141, 160, 255};
-gui_accent_color := rl.Color {63, 105, 135, 255};
-gui_darker_color := rl.Color {41, 59, 68, 255};
-gui_lighter_color := rl.Color {119, 169, 191, 255};
+gui_main_color := Color {99, 141, 160, 255};
+gui_accent_color := Color {63, 105, 135, 255};
+gui_darker_color := Color {41, 59, 68, 255};
+gui_lighter_color := Color {119, 169, 191, 255};
 gui_slider_color := rl.WHITE;
 
 gui_font_size: f32 = 16;
@@ -78,7 +78,7 @@ gui_text :: proc(text: string, size: f32, x: f32 = 10, y: f32 = 10, standalone: 
     rl.DrawTextEx(
         gui_default_font, 
         strs.clone_to_cstring(text), 
-        rl.Vector2 {rx + x, ry + y}, 
+        Vec2 {rx + x, ry + y}, 
         size, gui_text_spacing, rl.WHITE
     );
 }
@@ -109,7 +109,7 @@ text_center_pos :: proc(text: string, rec: rl.Rectangle) {
     rl.DrawTextEx(
         gui_default_font, 
         ctext, 
-        rl.Vector2 {text_x, text_y}, 
+        Vec2 {text_x, text_y}, 
         gui_font_size * text_scale, gui_text_spacing, rl.WHITE
     );
 }
@@ -128,7 +128,7 @@ text_left_pos :: proc(text: string, rec: rl.Rectangle) {
     rl.DrawTextEx(
         gui_default_font, 
         ctext, 
-        rl.Vector2 {text_x, text_y}, 
+        Vec2 {text_x, text_y}, 
         gui_font_size * text_scale, gui_text_spacing, rl.WHITE
     );
 }
@@ -147,7 +147,7 @@ text_right_pos :: proc(text: string, rec: rl.Rectangle) {
     rl.DrawTextEx(
         gui_default_font, 
         ctext, 
-        rl.Vector2 {text_x, text_y}, 
+        Vec2 {text_x, text_y}, 
         gui_font_size * text_scale, gui_text_spacing, rl.WHITE
     );
 }

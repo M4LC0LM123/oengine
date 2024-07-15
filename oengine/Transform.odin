@@ -3,9 +3,9 @@ package oengine
 import rl "vendor:raylib"
 
 Transform :: struct {
-    position: rl.Vector3,
-    rotation: rl.Vector3,
-    scale: rl.Vector3
+    position: Vec3,
+    rotation: Vec3,
+    scale: Vec3
 }
 
 transform_default :: proc() -> Transform {

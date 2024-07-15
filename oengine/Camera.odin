@@ -7,15 +7,15 @@ Camera :: struct {
 
     rl_matrix: rl.Camera,
 
-    position, rotation, target: rl.Vector3,
-    up, right, front: rl.Vector3,
+    position, rotation, target: Vec3,
+    up, right, front: Vec3,
 
-    prev_mp, curr_mp: rl.Vector2,
+    prev_mp, curr_mp: Vec2,
 
     raycast: Raycast
 }
 
-cm_init :: proc(s_position: rl.Vector3, s_fov: f32 = 60, s_near: f32 = 0.1, s_far: f32 = 100) -> Camera {
+cm_init :: proc(s_position: Vec3, s_fov: f32 = 60, s_near: f32 = 0.1, s_far: f32 = 100) -> Camera {
     using res: Camera;
     
     fov = s_fov;
@@ -55,7 +55,7 @@ cm_set_fps :: proc(using self: ^Camera, sensitivity: f32, is_mouse_locked: bool)
     if (is_mouse_locked) {
         rl.HideCursor();
         curr_mp = rl.GetMousePosition();
-        mouseDelta := rl.Vector2 {curr_mp.x - prev_mp.x, -(curr_mp.y - prev_mp.y)};
+        mouseDelta := Vec2 {curr_mp.x - prev_mp.x, -(curr_mp.y - prev_mp.y)};
         rotation.y += mouseDelta.x * sensitivity;
         rotation.x -= mouseDelta.y * sensitivity;
 

@@ -56,13 +56,13 @@ tile_texture :: proc(texture: Texture, tx: i32) -> Texture {
     target := rl.LoadRenderTexture(texture.width, texture.height);
 
     rl.BeginTextureMode(target);
-    rl.ClearBackground(WHITE);
+    rl.ClearBackground(rl.WHITE);
 
     for i in 0..<tx {
         for j in 0..<tx {
             x := f32(j) * width;
             y := f32(i) * height;
-            rl.DrawTextureEx(texture, {x, y}, 0, 1 / f32(tx), WHITE);
+            rl.DrawTextureEx(texture, {x, y}, 0, 1 / f32(tx), rl.WHITE);
         }
     }
 
@@ -131,7 +131,7 @@ draw_textured_plane :: proc(texture: Texture, pos: Vec3, scale: Vec2, rot: f32, 
     rl.rlSetTexture(0);
 }
 
-draw_cube_wireframe :: proc(pos, rot, scale: Vec3, color: rl.Color) {
+draw_cube_wireframe :: proc(pos, rot, scale: Vec3, color: Color) {
     rl.rlPushMatrix();
     rl.rlRotatef(rot.x, 1, 0, 0);
     rl.rlRotatef(rot.y, 0, 1, 0);
@@ -142,7 +142,7 @@ draw_cube_wireframe :: proc(pos, rot, scale: Vec3, color: rl.Color) {
     rl.rlPopMatrix();
 }
 
-draw_sphere_wireframe :: proc(pos, rot: Vec3, radius: f32, color: rl.Color) {
+draw_sphere_wireframe :: proc(pos, rot: Vec3, radius: f32, color: Color) {
     rl.rlPushMatrix();
     rl.rlRotatef(rot.x, 1, 0, 0);
     rl.rlRotatef(rot.y, 0, 1, 0);
@@ -153,7 +153,7 @@ draw_sphere_wireframe :: proc(pos, rot: Vec3, radius: f32, color: rl.Color) {
     rl.rlPopMatrix();
 }
 
-draw_capsule_wireframe :: proc(pos, rot: Vec3, radius, height: f32, color: rl.Color) {
+draw_capsule_wireframe :: proc(pos, rot: Vec3, radius, height: f32, color: Color) {
     rl.rlPushMatrix();
     rl.rlRotatef(rot.x, 1, 0, 0);
     rl.rlRotatef(rot.y, 0, 1, 0);
@@ -168,7 +168,7 @@ draw_capsule_wireframe :: proc(pos, rot: Vec3, radius, height: f32, color: rl.Co
     rl.rlPopMatrix();
 }
 
-draw_skybox :: proc(textures: [6]Texture, tint: rl.Color, scale: i32 = 200) {
+draw_skybox :: proc(textures: [6]Texture, tint: Color, scale: i32 = 200) {
     fix: f32 = 0.5;
     rl.rlPushMatrix();
     rl.rlTranslatef(ecs_world.camera.position.x, ecs_world.camera.position.y, ecs_world.camera.position.z);
@@ -411,7 +411,7 @@ draw_cube_texture :: proc(texture: Texture, transform: Transform, color: Color) 
     rl.rlSetTexture(0);
 }
 
-draw_cube_texture_rl :: proc(texture: rl.Texture, position: Vec3, width, height, length: f32, color: rl.Color) {
+draw_cube_texture_rl :: proc(texture: rl.Texture, position: Vec3, width, height, length: f32, color: Color) {
     x := position.x;
     y := position.y;
     z := position.z;
@@ -471,7 +471,7 @@ draw_cube_texture_rl :: proc(texture: rl.Texture, position: Vec3, width, height,
     rl.rlSetTexture(0);
 }
 
-draw_heightmap_wireframe :: proc(heightmap: HeightMap, pos, rot, scale: Vec3, color: rl.Color) {
+draw_heightmap_wireframe :: proc(heightmap: HeightMap, pos, rot, scale: Vec3, color: Color) {
     rl.rlPushMatrix();
     rl.rlTranslatef(pos.x, pos.y, pos.z);
     rl.rlRotatef(rot.x, 1, 0, 0);
@@ -491,7 +491,7 @@ draw_heightmap_wireframe :: proc(heightmap: HeightMap, pos, rot, scale: Vec3, co
     rl.rlPopMatrix();
 }
 
-draw_slope :: proc(slope: Slope, pos, rot, scale: Vec3, tex: Texture, color: rl.Color) {
+draw_slope :: proc(slope: Slope, pos, rot, scale: Vec3, tex: Texture, color: Color) {
     rl.rlPushMatrix();
     rl.rlTranslatef(pos.x, pos.y, pos.z);
     rl.rlRotatef(rot.x, 1, 0, 0);
@@ -564,7 +564,7 @@ draw_slope :: proc(slope: Slope, pos, rot, scale: Vec3, tex: Texture, color: rl.
     rl.rlPopMatrix();
 }
 
-draw_slope_wireframe :: proc(slope: Slope, pos, rot, scale: Vec3, color: rl.Color) {
+draw_slope_wireframe :: proc(slope: Slope, pos, rot, scale: Vec3, color: Color) {
     rl.rlPushMatrix();
     rl.rlTranslatef(pos.x, pos.y, pos.z);
     rl.rlRotatef(rot.x, 1, 0, 0);

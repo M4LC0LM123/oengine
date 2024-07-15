@@ -4,7 +4,7 @@ import rl "vendor:raylib"
 import "core:math"
 
 Raycast :: struct {
-    position, target: rl.Vector3,
+    position, target: Vec3,
 }
 
 rc_debug :: proc(using self: Raycast) {
@@ -22,12 +22,12 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
             transform.rotation.z * rl.DEG2RAD,
         );
 
-        rayDirection: rl.Vector3 = vec3_normalize(target - position);
-        rotatedRayDirection: rl.Vector3 = vec3_transform(rayDirection, rotationMatrix);
+        rayDirection: Vec3 = vec3_normalize(target - position);
+        rotatedRayDirection: Vec3 = vec3_transform(rayDirection, rotationMatrix);
         
-        boxSize: rl.Vector3 = transform.scale;
-        boxMin: rl.Vector3 = transform.position - boxSize * 0.5;
-        boxMax: rl.Vector3 = transform.position + boxSize * 0.5;
+        boxSize: Vec3 = transform.scale;
+        boxMin: Vec3 = transform.position - boxSize * 0.5;
+        boxMax: Vec3 = transform.position + boxSize * 0.5;
 
         tmin = (boxMin.x - position.x) / rayDirection.x;
         tmax = (boxMax.x - position.x) / rayDirection.x;
@@ -82,11 +82,11 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
     if (shape == ShapeType.SPHERE) {
         t1, t2: f32;
 
-        rayDirection: rl.Vector3 = vec3_normalize(target - position);
-        sphereCenter: rl.Vector3 = transform.position;
+        rayDirection: Vec3 = vec3_normalize(target - position);
+        sphereCenter: Vec3 = transform.position;
         sphereRadius: f32 = transform.scale.x * 0.5;
 
-        oc: rl.Vector3 = position - sphereCenter;
+        oc: Vec3 = position - sphereCenter;
         a: f32 = vec3_dot(rayDirection, rayDirection);
         b: f32 = 2.0 * vec3_dot(oc, rayDirection);
         c: f32 = vec3_dot(oc, oc) - sphereRadius * sphereRadius;

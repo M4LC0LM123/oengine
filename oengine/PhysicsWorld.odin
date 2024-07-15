@@ -285,7 +285,7 @@ resolve_tri_collision :: proc(rb: ^RigidBody, t: ^TriangleCollider) {
 
     // Adjust the distance calculation to account for cube dimensions
     half_dimensions := cube_dimensions * 0.5;
-    adjusted_diff := rl.Vector3{
+    adjusted_diff := Vec3{
         diff.x / half_dimensions.x,
         diff.y / half_dimensions.y,
         diff.z / half_dimensions.z,
@@ -298,7 +298,7 @@ resolve_tri_collision :: proc(rb: ^RigidBody, t: ^TriangleCollider) {
 
     if dist < RAD {
         // Adjust position considering the cube dimensions
-        rb.transform.position += rl.Vector3{
+        rb.transform.position += Vec3{
             normal.x * (RAD - dist) * half_dimensions.x,
             normal.y * (RAD - dist) * half_dimensions.y,
             normal.z * (RAD - dist) * half_dimensions.z,

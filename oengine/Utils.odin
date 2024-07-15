@@ -4,12 +4,13 @@ import str "core:strings"
 import rl "vendor:raylib"
 import "core:math"
 import "core:fmt"
+import "core:math/linalg"
 
 STR_EMPTY :: ""
 
-Vec3 :: rl.Vector3
-Vec2 :: rl.Vector2
-Vec4 :: rl.Vector4
+Vec3 :: linalg.Vector3f32
+Vec2 :: linalg.Vector2f32
+Vec4 :: linalg.Vector4f32
 Vec2i :: [2]i32
 
 Deg2Rad :: math.PI / 180.0
@@ -32,61 +33,61 @@ Mat4 :: struct {
 	m3, m7, m11, m15: f32, // Matrix fourth row (4 components)
 }
 
-vec2_x :: proc() -> rl.Vector2 {
+vec2_x :: proc() -> Vec2 {
     return {1, 0};
 }
 
-vec2_y :: proc() -> rl.Vector2 {
+vec2_y :: proc() -> Vec2 {
     return {0, 1};
 }
 
-vec2_z :: proc() -> rl.Vector2 {
+vec2_z :: proc() -> Vec2 {
     return {0, 0};
 }
 
-vec2_zero :: proc() -> rl.Vector2 {
+vec2_zero :: proc() -> Vec2 {
     return {};
 }
 
-vec2_one :: proc() -> rl.Vector2 {
+vec2_one :: proc() -> Vec2 {
     return {1, 1};
 }
 
-vec3_x :: proc() -> rl.Vector3 {
+vec3_x :: proc() -> Vec3 {
     return {1, 0, 0};
 }
 
-vec3_y :: proc() -> rl.Vector3 {
+vec3_y :: proc() -> Vec3 {
     return {0, 1, 0};
 }
 
-vec3_z :: proc() -> rl.Vector3 {
+vec3_z :: proc() -> Vec3 {
     return {0, 0, 1};
 }
 
-vec3_zero :: proc() -> rl.Vector3 {
+vec3_zero :: proc() -> Vec3 {
     return {};
 }
 
-vec3_one :: proc() -> rl.Vector3 {
+vec3_one :: proc() -> Vec3 {
     return {1, 1, 1};
 }
 
-vec3_length :: proc(v: rl.Vector3) -> f32 {
+vec3_length :: proc(v: Vec3) -> f32 {
     return f32(math.sqrt(v.x*v.x + v.y*v.y * v.z*v.z));
 }
 
-vec3_normalize :: proc(v: rl.Vector3) -> rl.Vector3 {
+vec3_normalize :: proc(v: Vec3) -> Vec3 {
     length := vec3_length(v);
     
-    return rl.Vector3 {
+    return Vec3 {
         v.x / length,
         v.y / length,
         v.z / length
     };
 }
 
-vec3_transform :: proc(v: rl.Vector3, m: Mat4) -> rl.Vector3 {
+vec3_transform :: proc(v: Vec3, m: Mat4) -> Vec3 {
     result := vec3_zero();
 
     result.x = v.x * m.m0 + v.y * m.m1 + v.z * m.m2 + m.m3;
@@ -96,7 +97,7 @@ vec3_transform :: proc(v: rl.Vector3, m: Mat4) -> rl.Vector3 {
     return result;
 }
 
-vec3_dot :: proc(v1, v2: rl.Vector3) -> f32 {
+vec3_dot :: proc(v1, v2: Vec3) -> f32 {
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
@@ -121,11 +122,58 @@ vec2_to_arr :: proc(v: Vec2) -> [2]f32 {
 }
 
 mat4_identity :: proc() -> Mat4 {
-    return rl_mat_to_mat4(rl.Matrix(1));
+    return Mat4 { 1.0, 0.0, 0.0, 0.0,
+                  0.0, 1.0, 0.0, 0.0,
+                  0.0, 0.0, 1.0, 0.0,
+                  0.0, 0.0, 0.0, 1.0 };
 }
 
-mat4_look_at :: proc(pos, target, up: Vec3) -> Mat4 {
-    return rl_mat_to_mat4(rl.MatrixLookAt(pos, target, up));
+mat4_look_at :: proc(eye, target, up: Vec3) -> Mat4 {
+    result: Mat4;
+
+    length: f32;
+    ilength: f32;
+
+    vz := Vec3 { eye.x - target.x, eye.y - target.y, eye.z - target.z };
+
+    v := vz;
+    length = math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+    if (length == 0.0) do length = 1.0;
+    ilength = 1.0 / length;
+    vz.x *= ilength;
+    vz.y *= ilength;
+    vz.z *= ilength;
+
+    vx := Vec3 { up.y*vz.z - up.z*vz.y, up.z*vz.x - up.x*vz.z, up.x*vz.y - up.y*vz.x };
+
+    v = vx;
+    length = math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+    if (length == 0.0) do length = 1.0;
+    ilength = 1.0 / length;
+    vx.x *= ilength;
+    vx.y *= ilength;
+    vx.z *= ilength;
+
+    vy := Vec3 { vz.y*vx.z - vz.z*vx.y, vz.z*vx.x - vz.x*vx.z, vz.x*vx.y - vz.y*vx.x };
+
+    result.m0 = vx.x;
+    result.m1 = vy.x;
+    result.m2 = vz.x;
+    result.m3 = 0.0;
+    result.m4 = vx.y;
+    result.m5 = vy.y;
+    result.m6 = vz.y;
+    result.m7 = 0.0;
+    result.m8 = vx.z;
+    result.m9 = vy.z;
+    result.m10 = vz.z;
+    result.m11 = 0.0;
+    result.m12 = -(vx.x*eye.x + vx.y*eye.y + vx.z*eye.z);   // Vector3DotProduct(vx, eye)
+    result.m13 = -(vy.x*eye.x + vy.y*eye.y + vy.z*eye.z);   // Vector3DotProduct(vy, eye)
+    result.m14 = -(vz.x*eye.x + vz.y*eye.y + vz.z*eye.z);   // Vector3DotProduct(vz, eye)
+    result.m15 = 1.0;
+
+    return result;
 }
 
 mat4_translate :: proc(mat: Mat4, translation: Vec3) -> Mat4 {
@@ -272,36 +320,28 @@ rl_mat_to_mat4 :: proc(mat: rl.Matrix) -> Mat4 {
     }
 }
 
-mat4_perspective :: proc(fov, aspect, near, far: f32) -> Mat4 {
-    return rl_mat_to_mat4(rl.MatrixPerspective(fov, aspect, near, far));
+mat4_perspective :: proc(fovY, aspect, nearPlane, farPlane: f32) -> Mat4 {
+    result: Mat4;
+
+    top := nearPlane * math.tan(fovY * 0.5);
+    bottom := -top;
+    right := top * aspect;
+    left := -right;
+
+    rl := f32(right - left);
+    tb := f32(top - bottom);
+    fn := f32(farPlane - nearPlane);
+
+    result.m0 = (f32(nearPlane) * 2.0) / rl;
+    result.m5 = (f32(nearPlane) * 2.0) / tb;
+    result.m8 = (f32(right) + f32(left)) / rl;
+    result.m9 = (f32(top) + f32(bottom)) / tb;
+    result.m10 = -(f32(farPlane) + f32(nearPlane)) / fn;
+    result.m11 = -1.0;
+    result.m14 = -(f32(farPlane) * f32(nearPlane) * 2.0) / fn;
+
+    return result;
 } 
-
-load_heightmap :: proc(tex: Texture) -> HeightMap {
-    image := rl.LoadImageFromTexture(tex.data);
-    heights: [MAX_HEIGHTMAP_SIZE_S]f32;
-
-    image_data := rl.LoadImageColors(image);
-
-    for y in 0..< image.height {
-        for x in 0..< image.width {
-            index := y * image.width + x;
-
-            grayscale_val := f32(image_data[index].r) / 255.0;
-
-            heights[index] = grayscale_val;
-        }
-    }
-
-    res: HeightMap;
-
-    for y in 0..< image.height {
-        for x in 0..< image.width {
-            res[y][x] = heights[y * image.width + x];
-        }
-    }
-
-    return res;
-}
 
 OSType :: enum {
     Unknown,
