@@ -2,8 +2,11 @@ package oengine
 
 import "core:os"
 import "core:fmt"
-import rl "vendor:raylib"
 import str "core:strings"
+import sdl "vendor:sdl2"
+import mix "vendor:sdl2/mixer"
+import "core:time"
+import "gl"
 
 window: struct {
     _width, _height: i32,
@@ -11,19 +14,24 @@ window: struct {
 
     _title: string,
 
-    _config_flags: rl.ConfigFlags,
-    _trace_log_type: TraceLogType,
-    _trace_log_level: rl.TraceLogLevel,
+    _handle: ^sdl.Window,
+    now, last: u64,
+    _delta: f32,
+    _frame_count, _last_time, _last_frame, _fps: i32,
+    _running: bool,
+    _resizable: bool,
+    _vsync: bool,
 
     _exit_key: Key,
 
     _target_fps: i32,
 
+    _fbo, _target: u32,
+
     mouse_position: Vec2, // mouse position relative to screen not world
 
     debug_stats: bool,
 
-    target: rl.RenderTexture,
     instance_name: string,
 }
 
@@ -37,71 +45,59 @@ w_create :: proc(name: string = "Game") {
 
     _title = "oengine window";
 
-    _config_flags = {rl.ConfigFlag.WINDOW_RESIZABLE};
-    w_set_trace_log_type(.USE_OENGINE);
     dbg_log(str_add("Detected os: ", OSTypeStr[int(sys_os())]));
-    dbg_logf("Set config flags: ");
-    dbg_log(window._config_flags, .EMPTY);
 
-    _exit_key = Key.KEY_NULL;
+    _exit_key = Key.UNKNOWN;
 
-    _target_fps = 60;
+    w_set_target_fps(60);
 
     mouse_position = vec2_zero();
+    _running = true;
+    _resizable = true;
 
     debug_stats = false;
 
-    rl.SetConfigFlags(_config_flags);
-    rl.SetTraceLogLevel(_trace_log_level);
-    rl.InitWindow(_width, _height, str.clone_to_cstring(_title));
-    if (rl.IsWindowReady()) do dbg_log("Initalized window");
-    else do dbg_log("Failed to initialize window", .ERROR);
-    exit_key(_exit_key);
+    now = sdl.GetPerformanceCounter();
+
+    if (sdl.Init(sdl.INIT_EVERYTHING) < 0) {
+        dbg_log("Failed to sdl2", .ERROR);
+    } else do dbg_log("Initialized sdl2");
+
+    _handle = sdl.CreateWindow(
+        str.clone_to_cstring(_title), sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
+        _width, _height, {.OPENGL}
+    );
+
+    sdl.SetWindowResizable(_handle, sdl.bool(_resizable));
+
+    if (_handle != nil) {
+        dbg_log("Initalized window");
+    } else do dbg_log("Failed to initialize window", .ERROR);
+
+    sdl.GL_MakeCurrent(_handle, sdl.GL_CreateContext(_handle));
+    gl.load_gl(sdl.gl_set_proc_address);
+
+    if (mix.OpenAudio(9600, mix.DEFAULT_FORMAT, mix.DEFAULT_CHANNELS, 1024) < 0) {
+        dbg_log("Failed to initialize sdl mixer", .ERROR);
+    } else do dbg_log("Initialized sdl mixer");
+
     dbg_log(str_add("Set exit key to: ", _exit_key));
-    rl.SetTargetFPS(_target_fps);
-    rl.InitAudioDevice();
-    if (rl.IsAudioDeviceReady()) do dbg_log("Initalized audio device");
-    else do dbg_log("Failed to initialize audio device", .ERROR);
 
-    target = rl.LoadRenderTexture(_render_width, _render_height);
+    gl.Enable(gl.DEPTH_TEST);
+    // create_fbo(&_fbo, &_target, _render_width, _render_height);
+}
 
-    if (target.texture.width <= 0 || target.texture.height <= 0) {
-        dbg_log("Failed to load render target, width or height is <= 0", .ERROR);
-        return;
-    }
+w_handle :: proc() -> ^sdl.Window {
+    return window._handle;
+}
 
-    if (rl.IsRenderTextureReady(target)) {
-        dbg_log("Loaded render target");
-    }
-
-    gui_default_font = rl.LoadFont(str.clone_to_cstring(str_add(OE_FONTS_PATH, "default_font.ttf")));
-    gui_font_size = f32(gui_default_font.baseSize);
-    w_set_instance_name(name);
-
-    console_init();
+w_delta_time :: proc() -> f32 {
+    return window._delta;
 }
 
 w_set_instance_name :: proc(name: string) {
     window.instance_name = name;
     dbg_log(str_add("Set instance name to: ", window.instance_name));
-}
-
-w_trace_log_type :: proc() -> TraceLogType {
-    return window._trace_log_type;
-}
-
-w_set_trace_log_type :: proc(type: TraceLogType) {
-    window._trace_log_type = type;
-
-    if (window._trace_log_type == .USE_OENGINE) {
-        dbg_log(str_add({"Set trace log type to: ", TRACE_NAMES[int(type)]}));
-        w_set_trace_log_level(rl.TraceLogLevel.NONE);
-        return;
-    }
-
-    w_set_trace_log_level(rl.TraceLogLevel.ALL);
-
-    dbg_log(str_add({"Set trace log type to: ", DEBUG_TYPE_NAMES[int(type)]}));
 }
 
 w_render_width :: proc() -> i32 {
@@ -162,35 +158,13 @@ w_set_size :: proc(w, h: i32) {
     dbg_log(str_add("Set render height: ", window._render_height));
 }
 
-w_config_flags :: proc() -> rl.ConfigFlags {
-    return window._config_flags;
-}
-
-w_set_config_flags :: proc(flags: rl.ConfigFlags) {
-    window._config_flags = flags;
-    rl.SetConfigFlags(window._config_flags);
-    dbg_logf("Set config flags: ");
-    dbg_log(window._config_flags, .EMPTY);
-}
-
-w_trace_log_level :: proc() -> rl.TraceLogLevel {
-    return window._trace_log_level;
-}
-
-w_set_trace_log_level :: proc(level: rl.TraceLogLevel) {
-    window._trace_log_level = level;
-    rl.SetTraceLogLevel(window._trace_log_level);
-    dbg_logf("Set trace log level to: ");
-    dbg_log(window._trace_log_level, .EMPTY);
-}
-
 w_title :: proc() -> string {
     return window._title;
 }
 
 w_set_title :: proc(t: string) {
     window._title = t;
-    rl.SetWindowTitle(str.clone_to_cstring(window._title));
+    sdl.SetWindowTitle(window._handle, str.clone_to_cstring(window._title));
     dbg_log(str_add({"Set title to: ", window._title}));
 }
 
@@ -210,74 +184,104 @@ w_target_fps :: proc() -> i32 {
 
 w_set_target_fps :: proc(fps: i32) {
     window._target_fps = fps;
-    rl.SetTargetFPS(window._target_fps);
     dbg_log(str_add("Set target fps to: ", window._target_fps));
+}
+
+w_get_fps :: proc() -> i32 {
+    return window._fps;
+}
+
+w_set_vsync :: proc(v: bool) {
+    window._vsync = v;
 }
 
 w_tick :: proc() -> bool {
     using window;
 
-    if (rl.IsWindowResized()) {
-        _width = rl.GetScreenWidth();
-        _height = rl.GetScreenHeight();
+    // if (rl.IsWindowResized()) {
+    //     _width = rl.GetScreenWidth();
+    //     _height = rl.GetScreenHeight();
+    // }
+   
+    mp := mouse_pos();
+    mouse_position.x = f32(mp.x) * (f32(_render_width) / f32(_width));
+    mouse_position.y = f32(mp.y) * (f32(_render_height) / f32(_height));
+    //
+    // gui_cursor_timer += rl.GetFrameTime() * 2;
+
+    // console_update();
+
+
+    last = now;
+    now = sdl.GetPerformanceCounter();
+
+    _delta = f32((now - last)) / f32(sdl.GetPerformanceFrequency());
+
+    _last_frame = i32(sdl.GetTicks());
+    if (_last_frame >= (_last_time + 1000)) {
+        _last_time = _last_frame;
+        _fps = _frame_count;
+        _frame_count = 0;
     }
-    
-    mouse_position.x = f32(rl.GetMouseX()) * (f32(_render_width) / f32(_width));
-    mouse_position.y = f32(rl.GetMouseY()) * (f32(_render_height) / f32(_height));
 
-    gui_cursor_timer += rl.GetFrameTime() * 2;
+    event: sdl.Event;
+    for sdl.PollEvent(&event) {
+        #partial switch event.type {
+            case .QUIT: _running = false;
+            case .WINDOWEVENT:
+                #partial switch event.window.event {
+                    case .RESIZED:
+                        sdl.GetWindowSize(_handle, &_width, &_height);
+                        gl.Viewport(0, 0, _width, _height);
+                }
+            case .KEYDOWN:
+                #partial switch event.key.keysym.sym {
+                    case _exit_key: _running = false;
+                }
+        }
+    }
 
-    console_update();
-
-    return !rl.WindowShouldClose();
+    return _running;
 }
 
 w_begin_render :: proc() {
-    rl.BeginTextureMode(window.target);
+    // begin_fbo(window._fbo, window._render_width, window._render_height);
 }
 
 w_end_render :: proc() {
     using window;
- 
-    console_render();
 
-    if (debug_stats) {
-        rl.DrawText(str.clone_to_cstring(str_add("fps: ", rl.GetFPS())), 10, 10, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("dt: ", rl.GetFrameTime())), 10, 30, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("time: ", rl.GetTime())), 10, 50, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("ents: ", len(ecs_world.ents))), 10, 70, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("rbs: ", len(ecs_world.physics.bodies))), 10, 90, 16, rl.YELLOW)
-        rl.DrawText(str.clone_to_cstring(str_add("lights: ", light_count)), 10, 110, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), 10, 130, 16, rl.YELLOW);
+    // end_fbo(_target);
+
+    sdl.GL_SetSwapInterval(i32(_vsync));
+    sdl.GL_SwapWindow(_handle);
+
+    _frame_count += 1;
+    _timer_fps := i32(sdl.GetTicks()) - _last_frame;
+    if (_timer_fps < 1000 / _target_fps) {
+        sdl.Delay(u32(1000 / _target_fps - _timer_fps));
     }
-
-    rl.EndTextureMode();
-    
-    rl.BeginDrawing();
-    
-    rl.DrawTexturePro(target.texture, {0, 0, f32(target.texture.width), f32(-target.texture.height)}, 
-        {0, 0, f32(rl.GetScreenWidth()), f32(rl.GetScreenHeight())}, vec2_zero(), 0, rl.WHITE);
-    
-    rl.EndDrawing();
 }
 
 w_close :: proc() {
+    using window;
     delete(gui.windows);
 
     dbg_log(" ");
     dbg_log("Closing...");
 
-    rl.CloseAudioDevice();
+    mix.CloseAudio();
     dbg_log("Closed audio device");
 
-    rl.CloseWindow();
+    sdl.DestroyWindow(_handle);
     dbg_log("Closed window");
 }
 
 w_pos :: proc() -> Vec2 {
-    if (sys_os() == .Windows) do return rl.GetWindowPosition();
+    x, y: i32;
+    sdl.GetWindowPosition(window._handle, &x, &y);
 
-    return vec2_zero();
+    return Vec2 {f32(x), f32(y)};
 }
 
 @(private = "file")
@@ -289,15 +293,70 @@ w_transform_changed :: proc() -> bool {
         return true;
     }
 
-    return rl.IsWindowResized();
+    return false;
 }
 
 @(private)
 w_reload_target :: proc() {
-    window.target = rl.LoadRenderTexture(window._render_width, window._render_height);
+    // window.target = rl.LoadRenderTexture(window._render_width, window._render_height);
 }
 
 @(private = "file")
 w_reload_window :: proc() {
-    rl.SetWindowSize(window._width, window._height);
+    sdl.SetWindowSize(window._handle, window._width, window._height);
+}
+
+@(private = "file")
+create_fbo :: proc(fbo, texture: ^u32, w, h: i32) {
+    gl.GenFramebuffers(1, fbo);
+    gl.BindFramebuffer(gl.FRAMEBUFFER, fbo^);
+
+    gl.GenTextures(1, texture);
+    gl.BindTexture(gl.TEXTURE_2D, texture^);
+    gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB, w, h, 0, gl.RGB, gl.UNSIGNED_BYTE, nil);
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture^, 0);
+
+    if (gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE) {
+        dbg_log("Failed to create framebuffer", .ERROR);
+    } else do dbg_log("Created framebuffer");
+
+    gl.BindFramebuffer(gl.FRAMEBUFFER, 0);
+}
+
+@(private = "file")
+begin_fbo :: proc(fbo: u32, w, h: i32) {
+    gl.BindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.Viewport(0, 0, w, h);
+}
+
+@(private = "file")
+end_fbo :: proc(texture: u32) {
+    using window;
+    gl.BindFramebuffer(gl.FRAMEBUFFER, 0);
+    gl.Viewport(0, 0, _width, _height);
+    gl.ClearColor(0.0, 0.0, 0.0, 1.0); // Clear to black
+    gl.Clear(gl.COLOR_BUFFER_BIT);
+    render_fbo(_target, _width, _height);
+}
+
+@(private = "file")
+render_fbo :: proc(texture: u32, w, h: i32) {
+    gl.BindTexture(gl.TEXTURE_2D, texture);
+    gl.Enable(gl.TEXTURE_2D);
+
+    gl.Color3f(1, 1, 1);
+    gl.Begin(gl.QUADS);
+
+    gl.TexCoord2f(0.0, 0.0); gl.Vertex2f(-1.0, -1.0);
+    gl.TexCoord2f(1.0, 0.0); gl.Vertex2f( 1.0, -1.0);
+    gl.TexCoord2f(1.0, 1.0); gl.Vertex2f( 1.0,  1.0);
+    gl.TexCoord2f(0.0, 1.0); gl.Vertex2f(-1.0,  1.0);
+
+    gl.End();
+
+    gl.Disable(gl.TEXTURE_2D);
+    gl.BindTexture(gl.TEXTURE_2D, 0);
 }

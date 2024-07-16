@@ -279,9 +279,9 @@ mat4_rotate_XYZ :: proc(x, y, z: f32) -> Mat4 {
     return res;
 }
 
-mat4_to_rl_mat :: proc(mat: Mat4) -> rl.Matrix {
+mat4_to_lmat :: proc(mat: Mat4) -> linalg.Matrix4f32 {
     using mat;
-    return rl.Matrix {
+    return linalg.Matrix4f32{
         m0, m4, m8, m12,
         m1, m5, m9, m13,
         m2, m6, m10, m14,
@@ -299,7 +299,7 @@ mat4_to_arr :: proc(mat: Mat4) -> [4*4]f32 {
     };
 }
 
-rl_mat_to_mat4 :: proc(mat: rl.Matrix) -> Mat4 {
+lmat_to_mat4 :: proc(mat: linalg.Matrix4f32) -> Mat4 {
     return Mat4 {
         m0  = mat[0, 0],
         m4  = mat[0, 1],
@@ -318,6 +318,10 @@ rl_mat_to_mat4 :: proc(mat: rl.Matrix) -> Mat4 {
         m11 = mat[3, 2],
         m15 = mat[3, 3],
     }
+}
+
+mat4_scale :: proc(x, y, z: f32) -> Mat4 {
+    return lmat_to_mat4(linalg.matrix4_scale_f32({x, y, z}));
 }
 
 mat4_perspective :: proc(fovY, aspect, nearPlane, farPlane: f32) -> Mat4 {
@@ -342,6 +346,14 @@ mat4_perspective :: proc(fovY, aspect, nearPlane, farPlane: f32) -> Mat4 {
 
     return result;
 } 
+
+mat4_ortho :: proc(left, right, bottom, top, near, far: f32) -> Mat4 {
+    return lmat_to_mat4(linalg.matrix_ortho3d_f32(left, right, bottom, top, near, far));
+}
+
+random_value :: proc(min, max: i32) -> i32 {
+    return rl.GetRandomValue(min, max);
+}
 
 OSType :: enum {
     Unknown,

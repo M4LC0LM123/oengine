@@ -212,7 +212,7 @@ load_mesh_cylinder :: proc() -> Model {
 
     if (sys_os() == .Linux) do return load_model(model);
 
-    model.transform = mat4_to_rl_mat(mat4_translate(rl_mat_to_mat4(model.transform), -vec3_y() * 0.5));
+    model.transform = mat4_to_lmat(mat4_translate(lmat_to_mat4(model.transform), -vec3_y() * 0.5));
     return load_model(model);
 }
 

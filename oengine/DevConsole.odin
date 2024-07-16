@@ -18,7 +18,7 @@ dev_console: struct {
 
 console_init :: proc() {
     using dev_console;
-    _toggle_key = .GRAVE;
+    _toggle_key = Key.BACKQUOTE;
     output = make([dynamic]string);
     commands = make(map[string]ConsoleCommand);
 
@@ -67,7 +67,7 @@ console_update :: proc() {
     }
 
     if (active) {
-        if (key_pressed(.ENTER)) {
+        if (key_pressed(.RETURN)) {
             if (command != STR_EMPTY) {
                 console_exec(command);
             }

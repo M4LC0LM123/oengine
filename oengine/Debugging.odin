@@ -29,8 +29,6 @@ dbg_log :: proc {
 }
 
 dbg_logf :: proc(text: any, type: DebugType = .INFO) -> int {
-    if (!dbg_use_oe()) do return 0;
-
     id := int(type);
     dbg_type := DEBUG_TYPE_NAMES[id];
 
@@ -39,8 +37,6 @@ dbg_logf :: proc(text: any, type: DebugType = .INFO) -> int {
 }
 
 dbg_log_any :: proc(text: any, type: DebugType = .INFO) -> int {
-    if (!dbg_use_oe()) do return 0;
-
     id := int(type);
     dbg_type := DEBUG_TYPE_NAMES[id];
 
@@ -49,14 +45,8 @@ dbg_log_any :: proc(text: any, type: DebugType = .INFO) -> int {
 }
 
 dbg_log_str :: proc(text: string, type: DebugType = .INFO) -> int {
-    if (!dbg_use_oe()) do return 0;
-
     id := int(type);
     dbg_type := DEBUG_TYPE_NAMES[id];
     res := str_add({"[", DEBUG_COLORS[id - 1](dbg_type), "] ", text});
     return fmt.println(res);
-}
-
-dbg_use_oe :: proc() -> bool {
-    return w_trace_log_type() == .USE_OENGINE || w_trace_log_type() == .USE_ALL;
 }

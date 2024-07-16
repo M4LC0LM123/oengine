@@ -120,7 +120,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
     rl.EndScissorMode();
 
     if (active) {
-        if (key_down(.LEFT_CONTROL) || key_down(.LEFT_SUPER)) {
+        if (key_down(.LCTRL) || key_down(.LGUI)) {
             if (key_pressed(.V)) { 
                 text = str_add(text, string(rl.GetClipboardText())); 
             }
