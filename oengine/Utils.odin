@@ -320,6 +320,37 @@ lmat_to_mat4 :: proc(mat: linalg.Matrix4f32) -> Mat4 {
     }
 }
 
+mat4_to_rl_mat :: proc(mat: Mat4) -> rl.Matrix {
+    using mat;
+    return rl.Matrix {
+        m0, m4, m8, m12,
+        m1, m5, m9, m13,
+        m2, m6, m10, m14,
+        m3, m7, m11, m15,
+    };
+}
+
+rl_mat_to_mat4 :: proc(mat: rl.Matrix) -> Mat4 {
+    return Mat4 {
+        m0  = mat[0, 0],
+        m4  = mat[0, 1],
+        m8  = mat[0, 2],
+        m12 = mat[0, 3],
+        m1  = mat[1, 0],
+        m5  = mat[1, 1],
+        m9  = mat[1, 2],
+        m13 = mat[1, 3],
+        m2  = mat[2, 0],
+        m6  = mat[2, 1],
+        m10 = mat[2, 2],
+        m14 = mat[2, 3],
+        m3  = mat[3, 0],
+        m7  = mat[3, 1],
+        m11 = mat[3, 2],
+        m15 = mat[3, 3],
+    }
+}
+
 mat4_scale :: proc(x, y, z: f32) -> Mat4 {
     return lmat_to_mat4(linalg.matrix4_scale_f32({x, y, z}));
 }

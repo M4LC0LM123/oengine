@@ -82,8 +82,6 @@ w_create :: proc(name: string = "Game") {
     } else do dbg_log("Initialized sdl mixer");
 
     dbg_log(str_add("Set exit key to: ", _exit_key));
-
-    gl.Enable(gl.DEPTH_TEST);
     // create_fbo(&_fbo, &_target, _render_width, _render_height);
 }
 

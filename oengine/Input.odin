@@ -1,6 +1,7 @@
 package oengine
 
 import sdl "vendor:sdl2"
+import "core:fmt"
 
 Key :: sdl.Keycode
 
@@ -96,7 +97,7 @@ mouse_pressed :: proc(button: Mouse) -> bool {
     @static prev_state: [sdl.BUTTON_X2MASK + 1]u32;
     curr_state := m_state & u32(button);
 
-    if (curr_state == 1 && prev_state[u32(button)] == 0) {
+    if (curr_state > 0 && prev_state[u32(button)] == 0) {
         prev_state[u32(button)] = curr_state;
         return true;
     }
@@ -119,7 +120,7 @@ mouse_released :: proc(button: Mouse) -> bool {
     @static prev_state: [sdl.BUTTON_X2MASK + 1]u32;
     curr_state := m_state & u32(button);
 
-    if (curr_state == 0 && prev_state[u32(button)] == 1) {
+    if (curr_state == 0 && prev_state[u32(button)] > 0) {
         prev_state[u32(button)] = curr_state;
         return true;
     }
