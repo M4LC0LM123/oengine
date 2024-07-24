@@ -9,6 +9,7 @@ GRID_SPACING :: 25
 GRID_COLOR :: oe.Color {255, 255, 255, 125}
 RENDER_SCALAR :: 25
 POINT_SIZE :: 5
+ACTIVE_EMPTY :: -1
 
 CameraMode :: enum {
     PERSPECTIVE = 0,
@@ -25,6 +26,8 @@ CameraTool :: struct {
 
     _mouse_pos: oe.Vec2,
     _prev_mouse_pos: oe.Vec2,
+
+    _active_id, _active_msc_id: i32,
 }
 
 ct_init :: proc() -> CameraTool {
@@ -37,6 +40,8 @@ ct_init :: proc() -> CameraTool {
             rotation = 0, zoom = 1,
         },
         mode = .PERSPECTIVE,
+        _active_id = ACTIVE_EMPTY,
+        _active_msc_id = ACTIVE_EMPTY,
     };
 }
 
@@ -51,6 +56,8 @@ ct_update :: proc(using self: ^CameraTool) {
     if (key >= 49 && key <= 52) {
         mode = CameraMode(key - 49);
     }
+
+    // fmt.println(_active_msc_id, _active_id);
 }
 
 ct_render :: proc(using self: ^CameraTool) {
@@ -76,19 +83,35 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
     rl.DrawLineV({0, -5}, {0, 5}, oe.PINK);
     rl.rlPopMatrix();
 
-    for msc in oe.ecs_world.physics.mscs {
+    for msc_id in 0..<len(oe.ecs_world.physics.mscs) {
+        msc := oe.ecs_world.physics.mscs[msc_id];
         for i in 0..<len(msc.tris) {
-            tri_render_ortho(self, msc.tris[i], i);
+            tri_render_ortho(self, msc.tris[i], i, msc_id);
         }
     }
+
+    if (_active_id == ACTIVE_EMPTY || _active_msc_id == ACTIVE_EMPTY) do return;
+
+    if (oe.key_pressed(.T)) {
+        oe.gui_toggle_window("Texture tool");
+    }
+
+    active_3d := oe.ecs_world.physics.mscs[_active_msc_id].tris[_active_id].pts;
+    active := msc_tri_to_ortho_tri(active_3d, mode);
+
+    rl.DrawTriangle(
+        active[0] * RENDER_SCALAR, 
+        active[1] * RENDER_SCALAR, 
+        active[2] * RENDER_SCALAR, GRID_COLOR
+    );
 }
 
 @(private = "file")
-tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider, #any_int id: i32) {
+tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider, #any_int id, msc_id: i32) {
     rl.rlPushMatrix();
     rl.rlScalef(RENDER_SCALAR, RENDER_SCALAR, 0);
 
-    tri.pts = update_tri_ortho(self, tri.pts, id);
+    tri.pts = update_tri_ortho(self, tri.pts, id, msc_id);
 
     #partial switch mode {
         case .ORTHO_XY:
@@ -99,7 +122,7 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider, #an
             rl.rlPopMatrix();
 
             for i in 0..<len(tri.pts) {
-                res := update_point_ortho(self, tri.pts[i].xy, i, id);
+                res := update_point_ortho(self, tri.pts[i].xy, i, id, msc_id);
                 tri.pts[i] = {res.x, res.y, tri.pts[i].z};
             }
         case .ORTHO_XZ:
@@ -110,7 +133,7 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider, #an
             rl.rlPopMatrix();
 
             for i in 0..<len(tri.pts) {
-                res := update_point_ortho(self, tri.pts[i].xz, i, id);
+                res := update_point_ortho(self, tri.pts[i].xz, i, id, msc_id);
                 tri.pts[i] = {res.x, tri.pts[i].y, res.y};
             }
         case .ORTHO_ZY:
@@ -121,7 +144,7 @@ tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider, #an
             rl.rlPopMatrix();
 
             for i in 0..<len(tri.pts) {
-                res := update_point_ortho(self, tri.pts[i].zy, i, id);
+                res := update_point_ortho(self, tri.pts[i].zy, i, id, msc_id);
                 tri.pts[i] = {tri.pts[i].x, res.y, res.x};
             }
     }
@@ -174,11 +197,12 @@ ortho_tri_to_msc_tri :: proc(pts: [3]oe.Vec2, pts_3d: [3]oe.Vec3, mode: CameraMo
 }
 
 @(private = "file")
-update_tri_ortho :: proc(using self: ^CameraTool, pts: [3]oe.Vec3, #any_int id: i32) -> [3]oe.Vec3 {
+update_tri_ortho :: proc(using self: ^CameraTool, pts: [3]oe.Vec3, #any_int id, msc_id: i32) -> [3]oe.Vec3 {
     res := pts * RENDER_SCALAR;
 
     @static _moving: bool;
     @static _moving_id: i32;
+    @static _moving_msc_id: i32;
     @static _offsets: [3]oe.Vec2;
 
     mp := rl.GetScreenToWorld2D(oe.window.mouse_position, camera_orthographic);
@@ -190,13 +214,12 @@ update_tri_ortho :: proc(using self: ^CameraTool, pts: [3]oe.Vec3, #any_int id: 
             tri[2] / RENDER_SCALAR, GRID_COLOR
         );
 
-        if (oe.key_pressed(.T)) {
-            oe.gui_toggle_window("Texture tool");
-        }
-
-        if (oe.mouse_pressed(.LEFT)) {
+        if (oe.mouse_pressed(.LEFT) && !oe.gui_mouse_over()) {
             _moving = true;
             _moving_id = id;
+            _active_id = id;
+            _moving_msc_id = msc_id;
+            _active_msc_id = msc_id;
 
             snapped_x := math.round(mp.x / GRID_SPACING) * GRID_SPACING;
             snapped_y := math.round(mp.y / GRID_SPACING) * GRID_SPACING;
@@ -207,9 +230,17 @@ update_tri_ortho :: proc(using self: ^CameraTool, pts: [3]oe.Vec3, #any_int id: 
                 {snapped_x - tri[2].x, snapped_y - tri[2].y},
             };
         }
+    } else {
+        if (!oe.gui_mouse_over() &&
+            oe.mouse_pressed(.LEFT) &&
+            _active_id == id && 
+            _active_msc_id == msc_id) { 
+            _active_id = ACTIVE_EMPTY;
+            _active_msc_id = ACTIVE_EMPTY;
+        }
     }
 
-    if (_moving && _moving_id == id) {
+    if (_moving && _moving_id == id && _moving_msc_id == msc_id) {
         if (oe.mouse_released(.LEFT)) do _moving = false;
 
         for i in 0..<3 {
@@ -226,27 +257,29 @@ update_tri_ortho :: proc(using self: ^CameraTool, pts: [3]oe.Vec3, #any_int id: 
 }
 
 @(private = "file")
-update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2, #any_int vertex_id, id: i32) -> oe.Vec2 {
+update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2, #any_int vertex_id, id, msc_id: i32) -> oe.Vec2 {
     res := pt * RENDER_SCALAR;
 
     @static _moving: bool;
     @static _moving_id: i32;
+    @static _moving_msc_id: i32;
     @static _moving_vertex_id: i32;
 
     rl.DrawCircleV(res, POINT_SIZE, oe.BLUE);
 
     mp := rl.GetScreenToWorld2D(oe.window.mouse_position, camera_orthographic);
     if (rl.CheckCollisionPointCircle(mp, res, POINT_SIZE)) {
-        if (oe.mouse_pressed(.LEFT)) {    
+        if (oe.mouse_pressed(.LEFT) && !oe.gui_mouse_over()) {    
             _moving = true;
             _moving_id = id;
             _moving_vertex_id = vertex_id;
+            _moving_msc_id = msc_id;
         }
 
         rl.DrawCircleV(res, POINT_SIZE, oe.GREEN);
     }
 
-    if (_moving && _moving_vertex_id == vertex_id && _moving_id == id) {
+    if (_moving && _moving_vertex_id == vertex_id && _moving_id == id && _moving_msc_id == msc_id) {
         if (oe.mouse_released(.LEFT))  {
             _moving = false; 
         }

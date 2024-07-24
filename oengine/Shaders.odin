@@ -2,11 +2,170 @@ package oengine
 
 import rl "vendor:raylib"
 
-LIGHT_VERT: cstring = "#version 330\n\n// Input vertex attributes\nin vec3 vertexPosition;\nin vec2 vertexTexCoord;\nin vec3 vertexNormal;\nin vec4 vertexColor;\n\n// Input uniform values\nuniform mat4 mvp;\nuniform mat4 matModel;\nuniform mat4 matNormal;\n\n// Output vertex attributes (to fragment shader)\nout vec3 fragPosition;\nout vec2 fragTexCoord;\nout vec4 fragColor;\nout vec3 fragNormal;\n\n// NOTE: Add here your custom variables\n\nvoid main()\n{\n    // Send vertex attributes to fragment shader\n    fragPosition = vec3(matModel * vec4(vertexPosition, 1.0));\n    fragTexCoord = vertexTexCoord;\n    fragColor = vertexColor;\n    fragNormal = normalize(vec3(matNormal * vec4(vertexNormal, 1.0)));\n\n    // Calculate final vertex position\n    gl_Position = mvp * vec4(vertexPosition, 1.0);\n}"
+LIGHT_VERT: cstring = `
+#version 330
 
-LIGHT_FRAG: cstring = "#version 330\n\n// Input vertex attributes (from vertex shader)\nin vec3 fragPosition;\nin vec2 fragTexCoord;\n//in vec4 fragColor;\nin vec3 fragNormal;\n\n// Input uniform values\nuniform sampler2D texture0;\nuniform vec4 colDiffuse;\n\n// Output fragment color\nout vec4 finalColor;\n\n// NOTE: Add here your custom variables\n\n#define MAX_LIGHTS 100\n#define LIGHT_DIRECTIONAL 0\n#define LIGHT_POINT 1\n\nstruct Light {\n    int enabled;\n    int type;\n    vec3 position;\n    vec3 target;\n    vec4 color;\n};\n\n// Input lighting values\nuniform Light lights[MAX_LIGHTS];\nuniform vec3 camPos;\nuniform vec4 ambient;\n\nvoid main()\n{\n    // Texel color fetching from texture sampler\n    vec4 texelColor = texture(texture0, fragTexCoord);\n    vec3 lightDot = vec3(0.0);\n    vec3 normal = normalize(fragNormal);\n    vec3 viewD = normalize(camPos - fragPosition);\n    vec3 specular = vec3(0.0);\n\n    // NOTE: Implement here your fragment shader code\n\n    for (int i = 0; i < MAX_LIGHTS; i++)\n    {\n        if (lights[i].enabled == 1)\n        {\n            vec3 light = vec3(0.0);\n\n            if (lights[i].type == LIGHT_DIRECTIONAL)\n            {\n                light = -normalize(lights[i].target - lights[i].position);\n            }\n\n            if (lights[i].type == LIGHT_POINT)\n            {\n                light = normalize(lights[i].position - fragPosition);\n            }\n\n            float NdotL = max(dot(normal, light), 0.0);\n            lightDot += lights[i].color.rgb * NdotL;\n\n            float specCo = 0.0;\n            if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16.0); // 16 refers to shine\n            specular += specCo;\n        }\n    }\n\n    finalColor = (texelColor * ((colDiffuse + vec4(specular, 1.0)) * vec4(lightDot, 1.0)));\n    finalColor += texelColor * (ambient / 10.0) * colDiffuse;\n\n    // Gamma correction\n    finalColor = pow(finalColor, vec4(1.0 / 2.2));\n}"
+// Input vertex attributes
+in vec3 vertexPosition;
+in vec2 vertexTexCoord;
+in vec3 vertexNormal;
+in vec4 vertexColor;
 
-WAVE_FRAG: cstring = "#version 330\n\n// Input vertex attributes (from vertex shader)\nin vec2 fragTexCoord;\nin vec4 fragColor;\n\n// Input uniform values\nuniform sampler2D texture0;\nuniform vec4 colDiffuse;\n\n// Output fragment color\nout vec4 finalColor;\n\nuniform float seconds;\n\nuniform vec2 size;\n\nuniform float freqX;\nuniform float freqY;\nuniform float ampX;\nuniform float ampY;\nuniform float speedX;\nuniform float speedY;\n\nvoid main() {\n    float pixelWidth = 1.0 / size.x;\n    float pixelHeight = 1.0 / size.y;\n    float aspect = pixelHeight / pixelWidth;\n    float boxLeft = 0.0;\n    float boxTop = 0.0;\n\n    vec2 p = fragTexCoord;\n    p.x += cos((fragTexCoord.y - boxTop) * freqX / ( pixelWidth * 750.0) + (seconds * speedX)) * ampX * pixelWidth;\n    p.y += sin((fragTexCoord.x - boxLeft) * freqY * aspect / ( pixelHeight * 750.0) + (seconds * speedY)) * ampY * pixelHeight;\n\n    finalColor = texture(texture0, p)*colDiffuse*fragColor;\n}"
+// Input uniform values
+uniform mat4 mvp;
+uniform mat4 matModel;
+uniform mat4 matNormal;
+
+// Output vertex attributes (to fragment shader)
+out vec3 fragPosition;
+out vec2 fragTexCoord;
+out vec4 fragColor;
+out vec3 fragNormal;
+
+// NOTE: Add here your custom variables
+
+void main()
+{
+    // Send vertex attributes to fragment shader
+    fragPosition = vec3(matModel*vec4(vertexPosition, 1.0));
+    fragTexCoord = vertexTexCoord;
+    fragColor = vertexColor;
+    fragNormal = normalize(vec3(matNormal*vec4(vertexNormal, 1.0)));
+
+    // Calculate final vertex position
+    gl_Position = mvp*vec4(vertexPosition, 1.0);
+}
+`;
+
+LIGHT_FRAG: cstring = `
+#version 330
+
+// Input vertex attributes (from vertex shader)
+in vec3 fragPosition;
+in vec2 fragTexCoord;
+//in vec4 fragColor;
+in vec3 fragNormal;
+
+// Input uniform values
+uniform sampler2D texture0;
+uniform vec4 colDiffuse;
+
+// Output fragment color
+out vec4 finalColor;
+
+// NOTE: Add here your custom variables
+
+#define     MAX_LIGHTS              100
+#define     LIGHT_DIRECTIONAL       0
+#define     LIGHT_POINT             1
+
+struct Light {
+    int enabled;
+    int type;
+    vec3 position;
+    vec3 target;
+    vec4 color;
+};
+
+// Input lighting values
+uniform Light lights[MAX_LIGHTS];
+uniform vec4 ambient;
+uniform vec3 viewPos;
+
+void main()
+{
+    // Texel color fetching from texture sampler
+    vec4 texelColor = texture(texture0, fragTexCoord);
+    vec3 lightDot = vec3(0.0);
+    vec3 normal = normalize(fragNormal);
+    vec3 viewD = normalize(viewPos - fragPosition);
+    vec3 specular = vec3(0.0);
+
+    // NOTE: Implement here your fragment shader code
+
+    for (int i = 0; i < MAX_LIGHTS; i++)
+    {
+        if (lights[i].enabled == 1)
+        {
+            vec3 light = vec3(0.0);
+
+            if (lights[i].type == LIGHT_DIRECTIONAL)
+            {
+                light = -normalize(lights[i].target - lights[i].position);
+            }
+
+            if (lights[i].type == LIGHT_POINT)
+            {
+                light = normalize(lights[i].position - fragPosition);
+            }
+
+            float NdotL = max(dot(normal, light), 0.0);
+            lightDot += lights[i].color.rgb*NdotL;
+
+            float specCo = 0.0;
+            if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16.0); // 16 refers to shine
+            specular += specCo;
+        }
+    }
+
+    finalColor = (texelColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
+    finalColor += texelColor*(ambient/10.0)*colDiffuse;
+
+    // Gamma correction
+    finalColor = pow(finalColor, vec4(1.0/2.2));
+
+    float dist = length(viewPos - fragPosition);
+
+    // these could be parameters...
+    const vec4 fogColor = vec4(0.5, 0.5, 0.5, 1.0);
+    const float fogDensity = 0.02;
+
+    // Exponential fog
+    float fogFactor = 1.0/exp((dist*fogDensity)*(dist*fogDensity));
+
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+    finalColor = mix(fogColor, finalColor, fogFactor);
+}`;
+
+WAVE_FRAG: cstring = `
+#version 330
+
+// Input vertex attributes (from vertex shader)
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+// Input uniform values
+uniform sampler2D texture0;
+uniform vec4 colDiffuse;
+
+// Output fragment color
+out vec4 finalColor;
+
+uniform float seconds;
+
+uniform vec2 size;
+
+uniform float freqX;
+uniform float freqY;
+uniform float ampX;
+uniform float ampY;
+uniform float speedX;
+uniform float speedY;
+
+void main() {
+    float pixelWidth = 1.0 / size.x;
+    float pixelHeight = 1.0 / size.y;
+    float aspect = pixelHeight / pixelWidth;
+    float boxLeft = 0.0;
+    float boxTop = 0.0;
+
+    vec2 p = fragTexCoord;
+    p.x += cos((fragTexCoord.y - boxTop) * freqX / ( pixelWidth * 750.0) + (seconds * speedX)) * ampX * pixelWidth;
+    p.y += sin((fragTexCoord.x - boxLeft) * freqY * aspect / ( pixelHeight * 750.0) + (seconds * speedY)) * ampY * pixelHeight;
+
+    finalColor = texture(texture0, p)*colDiffuse*fragColor;
+}`;
 
 shader_location :: proc(shader: rl.Shader, uniformName: cstring) -> rl.ShaderLocationIndex {
     loc := rl.GetShaderLocation(shader, uniformName);

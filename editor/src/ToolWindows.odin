@@ -82,6 +82,17 @@ map_proj_tool :: proc(ct: CameraTool) {
 
 texture_tool :: proc(ct: CameraTool) {
     oe.gui_begin("Texture tool", x = 0, y = 560 + oe.gui_top_bar_height * 3, active = false);
+
+    texs := oe.get_reg_textures_tags();
+
+    for i in 0..<len(texs) {
+        tag := texs[i];
+        if (oe.gui_button(tag, 10, 10 + f32(i) * 35, BUTTON_WIDTH, 30)) {
+            active := oe.ecs_world.physics.mscs[ct._active_msc_id].tris[ct._active_id];
+            active.texture_tag = tag;
+        }
+    }
+
     oe.gui_end();
 }
 

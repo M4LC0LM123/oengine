@@ -37,7 +37,7 @@ w_create :: proc(name: string = "Game") {
 
     _title = "oengine window";
 
-    _config_flags = {rl.ConfigFlag.WINDOW_RESIZABLE};
+    _config_flags = {rl.ConfigFlag.WINDOW_RESIZABLE, rl.ConfigFlag.MSAA_4X_HINT};
     w_set_trace_log_type(.USE_OENGINE);
     dbg_log(str_add("Detected os: ", OSTypeStr[int(sys_os())]));
     dbg_logf("Set config flags: ");

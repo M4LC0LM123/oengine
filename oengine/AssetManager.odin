@@ -119,8 +119,44 @@ get_path :: proc(path: string) -> string {
     return res;
 }
 
+get_reg_textures :: proc() -> map[string]Texture {
+    using asset_manager;
+
+    res := make(map[string]Texture);
+
+    for tag, asset in registry {
+        if (asset_is(asset, Texture)) {
+            res[tag] = asset_variant(asset, Texture);
+        }
+    }
+
+    return res;
+}
+
+get_reg_textures_tags :: proc() -> [dynamic]string {
+    using asset_manager;
+
+    res := make([dynamic]string);
+
+    for tag, asset in registry {
+        if (asset_is(asset, Texture)) {
+            append(&res, tag);
+        }
+    }
+
+    return res;
+}
+
 asset_variant :: proc(self: Asset, $T: typeid) -> T {
     return self.(T);
+}
+
+asset_is :: proc(self: Asset, $T: typeid) -> bool {
+    #partial switch v in self {
+        case T: return true;
+    }
+
+    return false;
 }
 
 reg_asset :: proc(tag: string, asset: Asset) {
