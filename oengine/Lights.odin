@@ -57,12 +57,12 @@ create_light :: proc(type: LightType, position, target: Vec3, color: Color) -> r
 init_lights_global :: proc() {
     DEFAULT_LIGHT = load_shader(rl.LoadShaderFromMemory(LIGHT_VERT, LIGHT_FRAG));
 
-    DEFAULT_LIGHT.locs[rl.ShaderLocationIndex.VECTOR_VIEW] = i32(rl.GetShaderLocation(DEFAULT_LIGHT, "camPos"));
+    DEFAULT_LIGHT.locs[rl.ShaderLocationIndex.VECTOR_VIEW] = i32(rl.GetShaderLocation(DEFAULT_LIGHT, "viewPos"));
 
     ambient_loc := rl.GetShaderLocation(DEFAULT_LIGHT, "ambient");
     ambient := Vec4 {0.2, 0.2, 0.2, 0.7};
     rl.SetShaderValue(
-        DEFAULT_LIGHT, rl.ShaderLocationIndex(ambient_loc), 
+        DEFAULT_LIGHT, ambient_loc, 
         &ambient, rl.ShaderUniformDataType.VEC4
     );
 }

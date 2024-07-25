@@ -47,6 +47,20 @@ debug_info :: proc(args: []string) {
     b, ok := sc.parse_bool(args[0]);
     if (ok) {
         window.debug_stats = b;
-        console_print(str_add({"Set debug info to ", args[0]}));
+        console_print(str_add({"Set debug info to: ", args[0]}));
+    }
+}
+
+set_fps :: proc(args: []string) {
+    using dev_console;
+    if (len(args) < 1) {
+        console_print("Incorrect usage!");
+        return;
+    }
+
+    v, ok := sc.parse_int(args[0]);
+    if (ok) {
+        w_set_target_fps(i32(v));
+        console_print(str_add({"Set target fps to: ", args[0]}));
     }
 }
