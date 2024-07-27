@@ -25,8 +25,9 @@ console_init :: proc() {
     console_register(new_command("listcmds", "List all available commands", list_cmds));
     console_register(new_command("help", "List all available commands", list_cmds));
     console_register(new_command("print", "Print text to console", print_command));
-    console_register(new_command("debug_info", "Shows debug information", debug_info));
+    console_register(new_command("dbg_info", "Shows debug information", debug_info));
     console_register(new_command("set_fps", "Sets the target fps", set_fps));
+    console_register(new_command("exit", "Exits the app", exit_cmd));
 }
 
 console_register :: proc(s_command: ConsoleCommand) {

@@ -29,5 +29,10 @@
 		"path": "../assets/orm.png",
 		"type": "Texture"
 	},
-}}
+    "huh": {
+        "path": "../assets/jump.mp3",
+        "volume": "1.0",
+        "type": "Sound"
+    },
 }
+

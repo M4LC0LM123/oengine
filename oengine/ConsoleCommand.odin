@@ -2,6 +2,7 @@ package oengine
 
 import strs "core:strings"
 import sc "core:strconv"
+import "core:os"
 
 CommandAction :: proc(args: []string);
 
@@ -63,4 +64,14 @@ set_fps :: proc(args: []string) {
         w_set_target_fps(i32(v));
         console_print(str_add({"Set target fps to: ", args[0]}));
     }
+}
+
+exit_cmd :: proc(args: []string) {
+    using dev_console;
+    console_print("Exiting...");
+
+    ew_deinit();
+    w_close();
+
+    os.exit(0); 
 }

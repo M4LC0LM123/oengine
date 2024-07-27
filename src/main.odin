@@ -4,6 +4,7 @@ import "core:fmt"
 import str "core:strings"
 import rl "vendor:raylib"
 import oe "../oengine"
+import "core:math"
 import "core:math/linalg"
 
 main :: proc() {
@@ -24,6 +25,7 @@ main :: proc() {
     albedo := oe.get_asset_var("albedo", oe.Texture);
     troll := oe.get_asset_var("troll", oe.Texture);
     water_tex := oe.get_asset_var("water", oe.Texture);
+    jump_sfx := oe.get_asset_var("huh", oe.Sound);
 
     floor := oe.ent_init();
     oe.ent_add_component(floor, oe.rb_init(floor.starting, 1.0, 0.5, true, oe.ShapeType.BOX));
@@ -149,6 +151,10 @@ main :: proc() {
 
         if (oe.key_pressed(oe.Key.RIGHT_SHIFT)) {
             oe.ent_get_component_var(player, ^oe.RigidBody).velocity.y = 15;
+
+            oe.detach_sound_filter(.LOWPASS);
+            oe.play_sound(jump_sfx);
+            oe.attach_sound_filter(.LOWPASS);
         }
 
         if (oe.key_down(oe.Key.LEFT)) {

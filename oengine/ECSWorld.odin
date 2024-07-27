@@ -107,6 +107,8 @@ ew_deinit :: proc() {
 
     pw_deinit(&physics);
 
+    deinit_assets();
+
     delete(asset_manager.registry);
     delete(ents);
 }

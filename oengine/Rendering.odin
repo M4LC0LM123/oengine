@@ -27,6 +27,11 @@ world_fog: struct {
     color: Color,
 }
 
+deinit_cubemap :: proc(cm: CubeMap) {
+    for i in 0..<6 {
+        deinit_texture(cm[i]);
+    }
+}
 
 @(private)
 fog_update :: proc(target: Vec3) {

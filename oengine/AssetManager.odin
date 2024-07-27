@@ -5,6 +5,7 @@ import "core:encoding/json"
 import "core:io"
 import "core:os"
 import "core:path/filepath"
+import sc "core:strconv"
 import strs "core:strings"
 import rl "vendor:raylib"
 
@@ -13,6 +14,7 @@ Asset :: union {
     Model,
     Shader,
     CubeMap,
+    Sound,
 }
 
 asset_manager: struct {
@@ -52,6 +54,14 @@ save_registry :: proc(path: string) {
                         "\t\t\"path_right\": \"", strs.clone(var[3].path), "\",\n",
                         "\t\t\"path_top\": \"", strs.clone(var[4].path), "\",\n",
                         "\t\t\"path_bottom\": \"", strs.clone(var[5].path), "\"",
+                    "\n\t},"}
+                );
+            case Sound:
+                res = str_add(
+                    {res, "\n\t\"", strs.clone(tag), "\": {\n", 
+                        "\t\t\"path\": \"", strs.clone(var.path), "\",\n",
+                        "\t\t\"volume\": \"", strs.clone(str_add("", var.volume)), "\",\n",
+                        "\t\t\"type\": \"", "Sound", "\"",
                     "\n\t},"}
                 );
         }
@@ -95,6 +105,13 @@ load_registry :: proc(path: string) {
                 load_texture(strs.clone(left)), load_texture(strs.clone(right)),
                 load_texture(strs.clone(top)), load_texture(strs.clone(bottom)),
             });
+        } else if (type == "Sound") {
+            path := get_path(asset_json["path"].(json.String));
+            vol, ok := sc.parse_f32(asset_json["path"].(json.String));
+            res := load_sound(strs.clone(path));
+            if (ok) do set_sound_vol(&res, vol);
+            
+            reg_asset(strs.clone(tag), res);
         } else {
             res := get_path(asset_json["path"].(json.String));
 
@@ -187,4 +204,15 @@ get_asset_var :: proc(tag: string, $T: typeid) -> T {
 
 asset_exists :: proc(tag: string) -> bool {
     return asset_manager.registry[tag] != nil;
+}
+
+deinit_assets :: proc() {
+    using asset_manager;
+    for i, v in registry {
+        if (asset_is(v, Texture)) do deinit_texture(get_asset_var(i, Texture));
+        else if (asset_is(v, Model)) do deinit_model(get_asset_var(i, Model));
+        else if (asset_is(v, Shader)) do deinit_shader(get_asset_var(i, Shader));
+        else if (asset_is(v, CubeMap)) do deinit_cubemap(get_asset_var(i, CubeMap));
+        else if (asset_is(v, Sound)) do deinit_sound(get_asset_var(i, Sound));
+    }
 }
