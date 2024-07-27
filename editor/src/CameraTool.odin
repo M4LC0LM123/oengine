@@ -79,6 +79,7 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
     // cross
     rl.rlPushMatrix();
     rl.rlTranslatef(camera_orthographic.target.x, camera_orthographic.target.y, 0);
+    rl.rlScalef(1, -1, 1);
     rl.DrawLineV({-5, 0}, {5, 0}, oe.PINK);
     rl.DrawLineV({0, -5}, {0, 5}, oe.PINK);
     rl.rlPopMatrix();
@@ -99,17 +100,20 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
     active_3d := oe.ecs_world.physics.mscs[_active_msc_id].tris[_active_id].pts;
     active := msc_tri_to_ortho_tri(active_3d, mode);
 
+    rl.rlPushMatrix();
+    rl.rlScalef(1, -1, 1);
     rl.DrawTriangle(
         active[0] * RENDER_SCALAR, 
         active[1] * RENDER_SCALAR, 
         active[2] * RENDER_SCALAR, GRID_COLOR
     );
+    rl.rlPopMatrix();
 }
 
 @(private = "file")
 tri_render_ortho :: proc(using self: ^CameraTool, tri: ^oe.TriangleCollider, #any_int id, msc_id: i32) {
     rl.rlPushMatrix();
-    rl.rlScalef(RENDER_SCALAR, RENDER_SCALAR, 0);
+    rl.rlScalef(RENDER_SCALAR, -RENDER_SCALAR, 1);
 
     tri.pts = update_tri_ortho(self, tri.pts, id, msc_id);
 
@@ -206,6 +210,7 @@ update_tri_ortho :: proc(using self: ^CameraTool, pts: [3]oe.Vec3, #any_int id, 
     @static _offsets: [3]oe.Vec2;
 
     mp := rl.GetScreenToWorld2D(oe.window.mouse_position, camera_orthographic);
+    mp.y = -mp.y;
     tri := msc_tri_to_ortho_tri(res, mode);
     if (rl.CheckCollisionPointTriangle(mp, tri[0], tri[1], tri[2])) {
         rl.DrawTriangle(
@@ -259,6 +264,7 @@ update_tri_ortho :: proc(using self: ^CameraTool, pts: [3]oe.Vec3, #any_int id, 
 @(private = "file")
 update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2, #any_int vertex_id, id, msc_id: i32) -> oe.Vec2 {
     res := pt * RENDER_SCALAR;
+    res.y *= -1;
 
     @static _moving: bool;
     @static _moving_id: i32;
@@ -290,6 +296,7 @@ update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2, #any_int vertex
         res = {snapped_x, snapped_y};
     }
 
+    res.y *= -1;
     return res / RENDER_SCALAR;
 }
 

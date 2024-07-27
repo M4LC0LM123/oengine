@@ -101,7 +101,7 @@ msc_target_pos :: proc(ct: CameraTool) -> oe.Vec3 {
     if (ct.mode == .PERSPECTIVE) do return ct.camera_perspective.position;
 
     snapped_x: f32 = math.round(ct.camera_orthographic.target.x / GRID_SPACING) * GRID_SPACING;
-    snapped_y: f32 = math.round(ct.camera_orthographic.target.y / GRID_SPACING) * GRID_SPACING;
+    snapped_y: f32 = -math.round(ct.camera_orthographic.target.y / GRID_SPACING) * GRID_SPACING;
 
     #partial switch ct.mode {
         case .ORTHO_XY:
