@@ -131,6 +131,11 @@ main :: proc() {
         );
     }
 
+    ps := oe.ent_init("ParticleSystem");
+    oe.ent_set_pos(ps, {5, 3, -10});
+    oe.ent_add_component(ps, oe.ps_init());
+    t: oe.Timer;
+
     msc := oe.msc_init();
     oe.msc_from_json(msc, "../assets/maps/test.json");
 
@@ -204,6 +209,10 @@ main :: proc() {
             if (ent.tag != "parent") {
                 oe.ent_set_parent(ent, oe.ew_get_entity("parent"));
             }
+        }
+
+        if (oe.interval(&t, 0.5)) {
+            oe.ps_add_particle(oe.ent_get_component_var(ps, ^oe.Particles), oe.particle_init());
         }
 
         // render

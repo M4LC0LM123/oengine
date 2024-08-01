@@ -9,6 +9,7 @@ Component :: struct {
         ^SimpleMesh,
         ^Light,
         ^Fluid,
+        ^Particles,
     },
     
     update: proc(using self: ^Component, ent: ^Entity),
