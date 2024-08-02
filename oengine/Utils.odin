@@ -5,6 +5,7 @@ import rl "vendor:raylib"
 import "core:math"
 import "core:fmt"
 import "core:math/linalg"
+import "core:math/rand"
 
 STR_EMPTY :: ""
 
@@ -341,7 +342,11 @@ mat4_perspective :: proc(fovY, aspect, nearPlane, farPlane: f32) -> Mat4 {
     result.m14 = -(f32(farPlane) * f32(nearPlane) * 2.0) / fn;
 
     return result;
-} 
+}
+
+rand_val :: proc(min, max: f32) -> f32 {
+    return rand.float32_range(min, max);
+}
 
 OSType :: enum {
     Unknown,

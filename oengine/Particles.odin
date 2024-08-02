@@ -21,13 +21,14 @@ Particle :: struct {
 Particles :: struct {
     particles: [dynamic]^Particle,
     position: Vec3,
+    timer: Timer,
 }
 
-particle_init :: proc() -> ^Particle {
+particle_init :: proc(spawn_pos: Vec3 = {}, test_behaviour: bool = true, s_grav: Vec3 = {0, -9.81, 0}) -> ^Particle {
     using res := new(Particle);
     tint = WHITE;
     texture = load_texture(rl.LoadTextureFromImage(rl.GenImageChecked(4, 4, 1, 1, WHITE, BLACK)));
-    position = {};
+    position = spawn_pos;
     size = {0.5, 0.5, 0.5};
 
     render = proc(using self: ^Particle) {
@@ -36,17 +37,23 @@ particle_init :: proc() -> ^Particle {
 
     behaviours = make([dynamic]ParticleBehaviour);
 
-    append(&behaviours, ParticleBehaviour{
-        grav = {0, 9.81, 0},
+    if (test_behaviour) {    
+        append(&behaviours, ParticleBehaviour{
+            grav = s_grav,
 
-        behave = proc(using self: ^ParticleBehaviour, p: ^Particle) {
-            accel.y = -grav.y;
-            vel += accel * rl.GetFrameTime();
-            p.position += vel * rl.GetFrameTime(); 
-        }
-    });
+            behave = proc(using self: ^ParticleBehaviour, p: ^Particle) {
+                accel.y = -grav.y;
+                vel += accel * rl.GetFrameTime();
+                p.position += vel * rl.GetFrameTime(); 
+            }
+        });
+    }
 
     return res;
+}
+
+particle_add_behaviour :: proc(using self: ^Particle, behaviour: ParticleBehaviour) {
+    append(&behaviours, behaviour);
 }
 
 @(private = "file")
@@ -54,9 +61,11 @@ ps_init_all :: proc(using ps: ^Particles) {
     particles = make([dynamic]^Particle);
 }
 
-ps_add_particle :: proc(using self: ^Particles, p: ^Particle) {
+ps_add_particle :: proc(using self: ^Particles, p: ^Particle, delay: f32 = 0) {
+    if (!interval(&timer, delay)) do return;
+
     clone := new_clone(p^);
-    clone.position = position;
+    clone.position += position;
     append(&particles, clone);
 }
 

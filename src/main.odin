@@ -211,9 +211,9 @@ main :: proc() {
             }
         }
 
-        if (oe.interval(&t, 0.5)) {
-            oe.ps_add_particle(oe.ent_get_component_var(ps, ^oe.Particles), oe.particle_init());
-        }
+        prtcl := oe.particle_init(oe.circle_spawn(1, true));
+        oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 100));
+        oe.ps_add_particle(oe.ent_get_component_var(ps, ^oe.Particles), prtcl, 0.1);
 
         // render
         oe.w_begin_render();
