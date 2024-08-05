@@ -211,8 +211,8 @@ main :: proc() {
             }
         }
 
-        prtcl := oe.particle_init(oe.circle_spawn(1, true));
-        oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 100));
+        prtcl := oe.particle_init(oe.circle_spawn(1, true), slf = 10, color = oe.RED);
+        oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 200));
         oe.ps_add_particle(oe.ent_get_component_var(ps, ^oe.Particles), prtcl, 0.1);
 
         // render

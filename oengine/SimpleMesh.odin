@@ -119,10 +119,6 @@ sm_init_slope :: proc(slope: Slope, s_color: Color = rl.WHITE) -> ^Component {
 sm_update :: proc(component: ^Component, ent: ^Entity) {
     using self := component.variant.(^SimpleMesh);
     transform = ent.transform;
-
-    if (ecs_world.FAE) {
-        color = mix_color(world_fog.color, starting_color, world_fog.visibility); 
-    }
 }
 
 sm_render :: proc(component: ^Component) {

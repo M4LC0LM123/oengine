@@ -10,7 +10,6 @@ ecs_world: struct {
     physics: PhysicsWorld,
     camera: ^Camera,
     LAE: bool, // lights affect everything
-    FAE: bool, // fog affects everything
 
     accumulator: f32,
 }
@@ -27,6 +26,10 @@ ew_exists :: proc(tag: string) -> bool {
     return ecs_world.ents[tag] != nil;
 }
 
+ew_remove :: proc(tag: string) {
+    ecs_world.ents[tag] = nil;
+}
+
 ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     using ecs_world;
     ents = make(map[string]^Entity);
@@ -41,10 +44,6 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
 
 
     LAE = false;
-    FAE = false;
-
-    world_fog.density = 0.007;
-    world_fog.gradient = 1.5;
 }
 
 ew_update :: proc() {
@@ -52,7 +51,6 @@ ew_update :: proc() {
     ew_fixed_update();
 
     if (OE_USE_LIGHTS) do update_lights_global(camera^);
-    fog_update(camera.position);
 
     for tag in ents {
         ent := ew_get_entity(tag);

@@ -16,20 +16,23 @@ Particle :: struct {
     texture: Texture,
     position: Vec3,
     size: Vec3,
+    life_time: f32,
 }
 
 Particles :: struct {
     particles: [dynamic]^Particle,
+    _removed_particles: [dynamic]int,
     position: Vec3,
     timer: Timer,
 }
 
-particle_init :: proc(spawn_pos: Vec3 = {}, test_behaviour: bool = true, s_grav: Vec3 = {0, -9.81, 0}) -> ^Particle {
+particle_init :: proc(spawn_pos: Vec3 = {}, test_behaviour: bool = true, s_grav: Vec3 = {0, -9.81, 0}, slf: f32 = 10, color: Color = WHITE) -> ^Particle {
     using res := new(Particle);
-    tint = WHITE;
+    tint = color;
     texture = load_texture(rl.LoadTextureFromImage(rl.GenImageChecked(4, 4, 1, 1, WHITE, BLACK)));
     position = spawn_pos;
     size = {0.5, 0.5, 0.5};
+    life_time = slf;
 
     render = proc(using self: ^Particle) {
         rl.DrawBillboard(ecs_world.camera.rl_matrix, texture, position, size.x, tint);
@@ -85,10 +88,21 @@ ps_update :: proc(component: ^Component, ent: ^Entity) {
     using self := component.variant.(^Particles);
     position = ent.transform.position;
 
-    for p in particles {
+
+    for i in 0..<len(particles) {
+        p := particles[i];
+        p.life_time -= 10 * rl.GetFrameTime();
+
+        if (p.life_time <= 0) do append(&_removed_particles, i);
+
         for &b in p.behaviours {
             b.behave(&b, p);
         }
+    }
+
+    for &p in _removed_particles {
+        if (p != -1) do ordered_remove(&particles, p);
+        p = -1;
     }
 }
 

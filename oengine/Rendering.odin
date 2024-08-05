@@ -21,25 +21,10 @@ CubeMapSide :: enum {
     ALL,
 }
 
-world_fog: struct {
-    visibility: f32,
-    density, gradient: f32,
-    color: Color,
-}
-
 deinit_cubemap :: proc(cm: CubeMap) {
     for i in 0..<6 {
         deinit_texture(cm[i]);
     }
-}
-
-@(private)
-fog_update :: proc(target: Vec3) {
-    using world_fog;
-
-    distance := vec3_length(target);
-    visibility = math.exp(-math.pow((distance * density), gradient));
-    visibility = clamp(visibility, 0, 1);
 }
 
 mix_color :: proc(color1, color2: Color, v: f32) -> Color {
