@@ -222,6 +222,47 @@ allocate_mesh :: proc(mesh: ^rl.Mesh) {
     mesh.normals = raw_data(make([]f32, mesh.vertexCount * 3));
 }
 
+gen_mesh_triangle :: proc(verts: [3]Vec3) -> rl.Mesh {
+    mesh: rl.Mesh;
+    mesh.triangleCount = 1;
+    mesh.vertexCount = mesh.triangleCount * 3;
+    allocate_mesh(&mesh);
+    uv1, uv2, uv3 := triangle_uvs(verts[0], verts[1], verts[2]);
+
+    // Vertex at (0, 0, 0)
+    mesh.vertices[0] = verts[0].x;
+    mesh.vertices[1] = verts[0].y;
+    mesh.vertices[2] = verts[0].z;
+    mesh.normals[0] = 0;
+    mesh.normals[1] = 1;
+    mesh.normals[2] = 0;
+    mesh.texcoords[0] = uv1.x;
+    mesh.texcoords[1] = uv1.y;
+
+    // Vertex at (1, 0, 2)
+    mesh.vertices[3] = verts[1].x;
+    mesh.vertices[4] = verts[1].y;
+    mesh.vertices[5] = verts[1].z;
+    mesh.normals[3] = 0;
+    mesh.normals[4] = 1;
+    mesh.normals[5] = 0;
+    mesh.texcoords[2] = uv2.x;
+    mesh.texcoords[3] = uv2.y;
+
+    // Vertex at (2, 0, 0)
+    mesh.vertices[6] = verts[2].x;
+    mesh.vertices[7] = verts[2].y;
+    mesh.vertices[8] = verts[2].z;
+    mesh.normals[6] = 0;
+    mesh.normals[7] = 1;
+    mesh.normals[8] = 0;
+    mesh.texcoords[4] = uv3.x;
+    mesh.texcoords[5] = uv3.y;
+
+    rl.UploadMesh(&mesh, false);
+    return mesh;
+}
+
 draw_model :: proc(model: Model, transform: Transform, color: Color) {
     rl.rlPushMatrix();
     rl.rlTranslatef(transform.position.x, transform.position.y, transform.position.z);

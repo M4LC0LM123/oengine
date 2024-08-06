@@ -45,6 +45,7 @@ msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, c
     t.pts = {a + offs, b + offs, c + offs};
     t.color = color;
     t.texture_tag = texture_tag;
+    t.mesh = gen_mesh_triangle(t.pts);
     append(&tris, t);
     tri_count += 1;
 
@@ -56,12 +57,14 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {
     t.pts = {b + offs, a + offs, c + offs};
     t.color = color;
     t.texture_tag = texture_tag;
+    t.mesh = gen_mesh_triangle(t.pts);
     append(&tris, t);
 
     t2 := new(TriangleCollider);
     t2.pts = {b + offs, c + offs, d + offs};
     t2.color = color;
     t2.texture_tag = texture_tag;
+    t2.mesh = gen_mesh_triangle(t2.pts);
     append(&tris, t2);
 
     tri_count += 2;
@@ -104,7 +107,7 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         }
 
         name := str_add({str_add("\"triangle", i), "\": {\n"});
-        res = str_add({res, "\n", name, string(data[1:len(data) - 1]), "},\n"});
+        res = str_add({res, "\n", name, string(data[1:len(data) - 2]), "},\n"});
         i += 1;
     }
 
@@ -176,28 +179,35 @@ msc_render :: proc(using self: ^MSCObject) {
         v3 := t[2];
         color := tri.color;
 
+        // uv1, uv2, uv3 := triangle_uvs(v1, v2, v3);
+        //
+        // if (ecs_world.LAE) do rl.BeginShaderMode(DEFAULT_LIGHT);
 
-        uv1, uv2, uv3 := triangle_uvs(v1, v2, v3);
-
-        if (ecs_world.LAE) do rl.BeginShaderMode(DEFAULT_LIGHT);
-
-        rl.rlColor4ub(color.r, color.g, color.b, color.a);
-        rl.rlBegin(rl.RL_TRIANGLES);
-
+        material := rl.LoadMaterialDefault();
+        material.maps[rl.MaterialMapIndex.ALBEDO].color = color;
         if (asset_exists(tri.texture_tag)) {
             tex := get_asset_var(tri.texture_tag, Texture);
-            rl.rlSetTexture(tex.id);
+            material.maps[rl.MaterialMapIndex.ALBEDO].texture = tex;
         }
+        rl.DrawMesh(tri.mesh, material, rl.Matrix(1));
 
-        rl.rlTexCoord2f(uv1.x, uv1.y); rl.rlVertex3f(v1.x, v1.y, v1.z);
-        rl.rlTexCoord2f(uv2.x, uv2.y); rl.rlVertex3f(v2.x, v2.y, v2.z);
-        rl.rlTexCoord2f(uv3.x, uv3.y); rl.rlVertex3f(v3.x, v3.y, v3.z);
+        // rl.rlColor4ub(color.r, color.g, color.b, color.a);
+        // rl.rlBegin(rl.RL_TRIANGLES);
+        //
+        // if (asset_exists(tri.texture_tag)) {
+        //     tex := get_asset_var(tri.texture_tag, Texture);
+        //     rl.rlSetTexture(tex.id);
+        // }
+        //
+        // rl.rlTexCoord2f(uv1.x, uv1.y); rl.rlVertex3f(v1.x, v1.y, v1.z);
+        // rl.rlTexCoord2f(uv2.x, uv2.y); rl.rlVertex3f(v2.x, v2.y, v2.z);
+        // rl.rlTexCoord2f(uv3.x, uv3.y); rl.rlVertex3f(v3.x, v3.y, v3.z);
+        //
+        // rl.rlEnd();
+        //
+        // rl.rlSetTexture(0);
 
-        rl.rlEnd();
-
-        rl.rlSetTexture(0);
-
-        if (ecs_world.LAE) do rl.EndShaderMode();
+        // if (ecs_world.LAE) do rl.EndShaderMode();
 
         if (!PHYS_DEBUG) do continue;
 

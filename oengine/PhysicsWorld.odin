@@ -12,6 +12,7 @@ TriangleCollider :: struct {
     using pts: [3]Vec3,
     color: Color,
     texture_tag: string,
+    mesh: rl.Mesh,
 }
 
 PhysicsWorld :: struct {
