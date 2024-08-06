@@ -92,14 +92,25 @@ msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}) {
     }
 }
 
-msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
+msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileMode.WRITE_RONLY) {
     file := file_handle(path, mode);
     
     res: string = "{";
 
+    TriangleColliderMarshal :: struct {
+        using pts: [3]Vec3,
+        color: Color,
+        texture_tag: string,
+    }
+
     i := 0;
     for t in tris {
-        data, ok := json.marshal(t^, {pretty = true});
+        tm := TriangleColliderMarshal {
+            pts = t.pts,
+            color = t.color,
+            texture_tag = t.texture_tag
+        };
+        data, ok := json.marshal(tm, {pretty = true});
 
         if (ok != nil) {
             fmt.printfln("An error occured marshalling data: %v", ok);
@@ -107,7 +118,7 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         }
 
         name := str_add({str_add("\"triangle", i), "\": {\n"});
-        res = str_add({res, "\n", name, string(data[1:len(data) - 2]), "},\n"});
+        res = str_add({res, "\n", name, string(data[1:len(data) - 1]), "},\n"});
         i += 1;
     }
 
@@ -179,35 +190,37 @@ msc_render :: proc(using self: ^MSCObject) {
         v3 := t[2];
         color := tri.color;
 
-        // uv1, uv2, uv3 := triangle_uvs(v1, v2, v3);
-        //
-        // if (ecs_world.LAE) do rl.BeginShaderMode(DEFAULT_LIGHT);
+        if (window.instance_name == EDITOR_INSTANCE) {
+            uv1, uv2, uv3 := triangle_uvs(v1, v2, v3);
 
-        material := rl.LoadMaterialDefault();
-        material.maps[rl.MaterialMapIndex.ALBEDO].color = color;
-        if (asset_exists(tri.texture_tag)) {
-            tex := get_asset_var(tri.texture_tag, Texture);
-            material.maps[rl.MaterialMapIndex.ALBEDO].texture = tex;
+            if (ecs_world.LAE) do rl.BeginShaderMode(DEFAULT_LIGHT);
+
+            rl.rlColor4ub(color.r, color.g, color.b, color.a);
+            rl.rlBegin(rl.RL_TRIANGLES);
+
+            if (asset_exists(tri.texture_tag)) {
+                tex := get_asset_var(tri.texture_tag, Texture);
+                rl.rlSetTexture(tex.id);
+            }
+
+            rl.rlTexCoord2f(uv1.x, uv1.y); rl.rlVertex3f(v1.x, v1.y, v1.z);
+            rl.rlTexCoord2f(uv2.x, uv2.y); rl.rlVertex3f(v2.x, v2.y, v2.z);
+            rl.rlTexCoord2f(uv3.x, uv3.y); rl.rlVertex3f(v3.x, v3.y, v3.z);
+
+            rl.rlEnd();
+
+            rl.rlSetTexture(0);
+
+            if (ecs_world.LAE) do rl.EndShaderMode();
+        } else {
+            material := rl.LoadMaterialDefault();
+            material.maps[rl.MaterialMapIndex.ALBEDO].color = color;
+            if (asset_exists(tri.texture_tag)) {
+                tex := get_asset_var(tri.texture_tag, Texture);
+                material.maps[rl.MaterialMapIndex.ALBEDO].texture = tex;
+            }
+            rl.DrawMesh(tri.mesh, material, rl.Matrix(1));
         }
-        rl.DrawMesh(tri.mesh, material, rl.Matrix(1));
-
-        // rl.rlColor4ub(color.r, color.g, color.b, color.a);
-        // rl.rlBegin(rl.RL_TRIANGLES);
-        //
-        // if (asset_exists(tri.texture_tag)) {
-        //     tex := get_asset_var(tri.texture_tag, Texture);
-        //     rl.rlSetTexture(tex.id);
-        // }
-        //
-        // rl.rlTexCoord2f(uv1.x, uv1.y); rl.rlVertex3f(v1.x, v1.y, v1.z);
-        // rl.rlTexCoord2f(uv2.x, uv2.y); rl.rlVertex3f(v2.x, v2.y, v2.z);
-        // rl.rlTexCoord2f(uv3.x, uv3.y); rl.rlVertex3f(v3.x, v3.y, v3.z);
-        //
-        // rl.rlEnd();
-        //
-        // rl.rlSetTexture(0);
-
-        // if (ecs_world.LAE) do rl.EndShaderMode();
 
         if (!PHYS_DEBUG) do continue;
 

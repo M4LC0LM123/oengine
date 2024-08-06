@@ -5,6 +5,8 @@ import "core:fmt"
 import rl "vendor:raylib"
 import str "core:strings"
 
+EDITOR_INSTANCE :: "oengine-editor"
+
 window: struct {
     _width, _height: i32,
     _render_width, _render_height: i32,

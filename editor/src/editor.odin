@@ -7,7 +7,7 @@ import oe "../../oengine"
 
 main :: proc() {
     monitor := rl.GetCurrentMonitor();
-    oe.w_create("oengine-editor");
+    oe.w_create(oe.EDITOR_INSTANCE);
     rl.MaximizeWindow();
     oe.w_set_resolution(rl.GetMonitorWidth(monitor), rl.GetMonitorHeight(monitor));
     oe.w_set_title("oengine-editor");

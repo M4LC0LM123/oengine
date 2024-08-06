@@ -25,30 +25,30 @@ registry_tool :: proc(ct: CameraTool) {
 msc_tool :: proc(ct: CameraTool) {
     oe.gui_begin("MSC tool", x = 0, y = 150 + oe.gui_top_bar_height, h = 210, can_exit = false);
 
-    @static new_instance: bool;
-    new_instance = oe.gui_tick(new_instance, 10, 10, 30, 30);
+    @static new_instance: bool = false;
+    // new_instance = oe.gui_tick(new_instance, 10, 10, 30, 30);
+    //
+    // oe.gui_text("New instance", 20, 50, 10);
 
-    oe.gui_text("New instance", 20, 50, 10);
-
-    if (oe.gui_button("Triangle plane", 10, 50, BUTTON_WIDTH, 30)) {
+    if (oe.gui_button("Triangle plane", 10, 10, BUTTON_WIDTH, 30)) {
         msc := msc_check(new_instance);
 
         oe.msc_append_tri(msc, {}, {1, 0, 0}, {0, 1, 0}, msc_target_pos(ct));
     }
 
-    if (oe.gui_button("Plane", 10, 90, BUTTON_WIDTH, 30)) {
+    if (oe.gui_button("Plane", 10, 50, BUTTON_WIDTH, 30)) {
         msc := msc_check(new_instance);
 
         oe.msc_append_quad(msc, {}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0}, msc_target_pos(ct));
     }
 
-    if (oe.gui_button("Cuboid", 10, 130, BUTTON_WIDTH, 30)) {
+    if (oe.gui_button("Cuboid", 10, 90, BUTTON_WIDTH, 30)) {
         msc := msc_check(new_instance);
        
         msc_cuboid(msc, msc_target_pos(ct));
     }
 
-    if (oe.gui_button("Recalc aabbs", 10, 170, BUTTON_WIDTH, 30)) {
+    if (oe.gui_button("Recalc aabbs", 10, 130, BUTTON_WIDTH, 30)) {
         for msc in oe.ecs_world.physics.mscs {
             msc._aabb = oe.tris_to_aabb(msc.tris);
         }
@@ -72,7 +72,7 @@ map_proj_tool :: proc(ct: CameraTool) {
         path := oe.fd_file_path();
         if (path != oe.STR_EMPTY) {
             for msc in oe.ecs_world.physics.mscs {
-                 oe.msc_to_json(msc, path, oe.FileMode.APPEND);
+                 oe.msc_to_json(msc, path);
             }
         }
     }
