@@ -141,6 +141,9 @@ main :: proc() {
     msc := oe.msc_init();
     oe.msc_from_json(msc, "../assets/maps/test.json");
 
+    msc2 := oe.msc_init();
+    oe.msc_from_model(msc2, oe.load_model("../assets/unnamed.obj"), oe.vec3_z() * -30);
+
     for (oe.w_tick()) {
         // update
         oe.ew_update();

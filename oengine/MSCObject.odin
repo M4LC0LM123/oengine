@@ -74,21 +74,19 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {
 }
 
 
-// supports only .obj wavefront
+// supports only .obj wavefront and tested with trenchbroom models
 // work in progress
 msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}) {
     for i in 0..<model.meshCount {
         mesh := model.meshes[i];
 
-        vertices := mesh.vertices[:mesh.vertexCount]; 
-        for j := 0; j < len(vertices); j += 9 {
-            v1 := Vec3 { vertices[j], vertices[j + 1], vertices[j + 2]};
-            v2 := Vec3 { vertices[j + 3], vertices[j + 4], vertices[j + 5]};
-            v3 := Vec3 { vertices[j + 6], vertices[j + 7], vertices[j + 8]};
+        vertices := mesh.vertices;
+        for j := 0; j < int(mesh.vertexCount); j += 3 {
+            v0 := Vec3 { vertices[j * 3], vertices[j * 3 + 1], vertices[j * 3 + 2] };
+            v1 := Vec3 { vertices[(j + 1) * 3], vertices[(j + 1) * 3 + 1], vertices[(j + 1) * 3 + 2] };
+            v2 := Vec3 { vertices[(j + 2) * 3], vertices[(j + 2) * 3 + 1], vertices[(j + 2) * 3 + 2] };
 
-            // fmt.printf("%v, %v, %v\n", v1, v2, v3);
-
-            msc_append_tri(self, v1, v2, v3, offs);
+            msc_append_tri(self, v0, v1, v2, offs);
         } 
     }
 }
