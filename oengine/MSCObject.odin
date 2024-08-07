@@ -3,6 +3,7 @@ package oengine
 import "core:fmt"
 import "core:math"
 import rl "vendor:raylib"
+import rlg "rllights"
 import "core:encoding/json"
 import "core:io"
 import "core:os"
@@ -219,7 +220,7 @@ msc_render :: proc(using self: ^MSCObject) {
                 tex := get_asset_var(tri.texture_tag, Texture);
                 material.maps[rl.MaterialMapIndex.ALBEDO].texture = tex;
             }
-            rl.DrawMesh(tri.mesh, material, rl.Matrix(1));
+            rlg.DrawMesh(tri.mesh, material, rl.Matrix(1));
         }
 
         if (!PHYS_DEBUG) do continue;

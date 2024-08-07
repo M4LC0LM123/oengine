@@ -6,6 +6,7 @@ import rl "vendor:raylib"
 import oe "../oengine"
 import "core:math"
 import "core:math/linalg"
+import rlg "../oengine/rllights"
 
 main :: proc() {
     oe.w_create();
@@ -29,19 +30,19 @@ main :: proc() {
 
     floor := oe.ent_init();
     oe.ent_add_component(floor, oe.rb_init(floor.starting, 1.0, 0.5, true, oe.ShapeType.BOX));
-    oe.ent_add_component(floor, oe.sm_init(oe.cube_map_identity(oe.get_asset_var("orm", oe.Texture))));
+    oe.ent_add_component(floor, oe.sm_init(oe.get_asset_var("orm", oe.Texture)));
     oe.ent_set_scale(floor, {50, 1, 50});
-    oe.sm_set_tiling(oe.ent_get_component_var(floor, ^oe.SimpleMesh), 10, oe.CubeMapSide.TOP);
+    oe.sm_set_tiling(oe.ent_get_component_var(floor, ^oe.SimpleMesh), 10);
 
     wall := oe.ent_init();
     oe.ent_add_component(wall, oe.rb_init(wall.starting, 1.0, 0.5, true, oe.ShapeType.BOX));
-    oe.ent_add_component(wall, oe.sm_init(oe.cube_map_identity(albedo)));
+    oe.ent_add_component(wall, oe.sm_init(albedo));
     oe.ent_set_pos(wall, {10, 5, 0});
     oe.ent_set_scale(wall, {1, 10, 10});
 
     wall2 := oe.ent_init();
     oe.ent_add_component(wall2, oe.rb_init(wall2.starting, 1.0, 0.5, true, oe.ShapeType.BOX));
-    oe.ent_add_component(wall2, oe.sm_init(oe.cube_map_identity(albedo)));
+    oe.ent_add_component(wall2, oe.sm_init(albedo));
     oe.ent_set_pos(wall2, {-10, 5, 0});
     oe.ent_set_scale(wall2, {1, 10, 10});
 
@@ -96,6 +97,7 @@ main :: proc() {
     player := oe.ent_init("player");
     oe.ent_add_component(player, oe.rb_init(player.starting, 1.0, 0.5, false, oe.ShapeType.BOX));
     oe.ent_add_component(player, oe.sm_init(oe.tex_flip_vert(troll)));
+    oe.ent_get_component_var(player, ^oe.SimpleMesh).is_lit = false;
     oe.ent_set_pos_y(player, 5);
 
     light := oe.ent_init("light");
@@ -138,8 +140,6 @@ main :: proc() {
 
     msc := oe.msc_init();
     oe.msc_from_json(msc, "../assets/maps/test.json");
-
-    // oe.save_registry("registry.json");
 
     for (oe.w_tick()) {
         // update
@@ -192,11 +192,6 @@ main :: proc() {
             }
         }
 
-        if (oe.key_pressed(oe.Key.F3)) {
-            lc := oe.ent_get_component_var(light, ^oe.Light);
-            lc.enabled = !lc.enabled;
-        }
-
         if (oe.key_pressed(oe.Key.F1)) {
             ent := oe.ent_init("parent");
             oe.ent_add_component(ent, oe.sm_init(troll, oe.ShapeType(rl.GetRandomValue(0, 3))));
@@ -210,6 +205,8 @@ main :: proc() {
                 oe.ent_set_parent(ent, oe.ew_get_entity("parent"));
             }
         }
+
+        if (oe.key_pressed(.F3)) do rlg.ToggleLight(0);
 
         prtcl := oe.particle_init(oe.circle_spawn(1, true), slf = 10, color = oe.RED);
         oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 200));
@@ -229,21 +226,6 @@ main :: proc() {
         }
 
         rl.EndMode3D();
-
-        oe.gui_begin("Test", w = 200, h = 150);
-
-        oe.gui_text("this is text", 16);
-        oe.gui_button("HEH", 10, 40);
-        oe.gui_text_box("test", 10, 80, 120, 30);
-
-        oe.gui_end();
-
-        oe.gui_begin("Test2", x = 200, w = 150, h = 100);
-
-        oe.gui_button("HUH", w = 75, text_pos = oe.GuiTextPositioning.RIGHT);
-        oe.gui_text_box("test2", 10, 50, 100, 30);
-
-        oe.gui_end();
         
         oe.w_end_render();
     }

@@ -14,6 +14,7 @@ SimpleMesh :: struct {
         Slope,
     },
 
+    is_lit: bool,
     texture: Texture,
     color: Color,
     starting_color: Color,
@@ -41,6 +42,7 @@ sm_init_all :: proc(using sm: ^SimpleMesh, s_shape: ShapeType, s_color: Color) {
         sm_set_shader(sm, DEFAULT_LIGHT);
     }
 
+    is_lit = true;
     texture = load_texture(rl.LoadTextureFromImage(rl.GenImageColor(16, 16, WHITE)));
     color = s_color;
     starting_color = color;
@@ -140,7 +142,7 @@ sm_render :: proc(component: ^Component) {
 
     #partial switch v in tex {
         case Model:
-            draw_model(v, target, color);
+            draw_model(v, target, color, is_lit);
         case CubeMap:
             draw_cube_map(v, target, color);
         case Slope:
@@ -169,6 +171,10 @@ sm_deinit :: proc(component: ^Component) {
 
     deinit_texture(texture);
     deinit_shader(shader);
+}
+
+sm_toggle_lit :: proc(using self: ^SimpleMesh) {
+    is_lit = !is_lit;
 }
 
 sm_tex :: proc(using self: ^SimpleMesh, $T: typeid) -> T {
@@ -205,7 +211,6 @@ sm_set_texture :: proc(using self: ^SimpleMesh, s_texture: Texture) {
 sm_set_tiling :: proc {
     sm_set_tiling_def,
     sm_set_tiling_cube,
-
 }
 
 sm_set_tiling_def :: proc(using self: ^SimpleMesh, tx: i32) {

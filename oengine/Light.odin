@@ -1,26 +1,33 @@
 package oengine
 
 import "core:fmt"
+import rl "vendor:raylib"
+import rlg "rllights"
 
 Light :: struct {
+    id: u32,
     transform: Transform,
-    _handle: rlLight,
-    type: LightType,
+    type: rlg.LightType,
     color: Color,
     enabled: bool,
 }
 
 @(private = "file")
-lc_init_all :: proc(using lc: ^Light, s_type: LightType = .POINT, s_color: Color = WHITE) {
+lc_init_all :: proc(using lc: ^Light, s_type: rlg.LightType = .OMNI, s_color: Color = WHITE) {
+    id = ecs_world.light_count;
+    ecs_world.light_count += 1;
     transform = transform_default();
     type = s_type;
     color = s_color;
     enabled = true;
 
-    _handle = create_light(type, transform.position, vec3_zero(), color);
+    rlg.UseLight(id, enabled);
+    rlg.SetLightType(id, type);
+    rlg.SetLightVec3(id, .POSITION, transform.position);
+    rlg.SetLightColor(id, color);
 }
 
-lc_init :: proc(s_type: LightType = .POINT, s_color: Color = WHITE) -> ^Component {
+lc_init :: proc(s_type: rlg.LightType = .OMNI, s_color: Color = WHITE) -> ^Component {
     using component := new(Component);
 
     component.variant = new(Light);
@@ -35,11 +42,7 @@ lc_update :: proc(component: ^Component, ent: ^Entity) {
     using self := component.variant.(^Light);
     transform = ent.transform;
 
-    _handle.enabled = enabled;
-    _handle.position = transform.position;
-    _handle.type = type;
-    _handle.color = color;
-
-    update_light(_handle);
+    rlg.SetLightVec3(id, .POSITION, transform.position);
+    rlg.SetLightColor(id, color);
 }
 

@@ -1,14 +1,18 @@
 package oengine
 
 import rl "vendor:raylib"
+import rlg "rllights"
 import "core:fmt"
 
+MAX_LIGHTS :: 44
 FIXED_TIME_STEP :: 1.0 / 60.0
 
 ecs_world: struct {
     ents: map[string]^Entity,
     physics: PhysicsWorld,
     camera: ^Camera,
+    rlg_ctx: rlg.Context,
+    light_count: u32,
     LAE: bool, // lights affect everything
 
     accumulator: f32,
@@ -18,7 +22,6 @@ ew_get_entity :: proc(tag: string) -> ^Entity {
     using ecs_world;
     ent := ents[tag];
     if (ent == nil) do dbg_log(str_add({"Entity: ", tag, " is nil"}), .WARNING);
-
     return ent;
 }
 
@@ -42,6 +45,8 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
         init_lights_global();
     }
 
+    rlg_ctx = rlg.CreateContext(MAX_LIGHTS);
+    rlg.SetContext(rlg_ctx);
 
     LAE = false;
 }
@@ -51,6 +56,7 @@ ew_update :: proc() {
     ew_fixed_update();
 
     if (OE_USE_LIGHTS) do update_lights_global(camera^);
+    rlg.SetViewPositionV(camera.position);
 
     for tag in ents {
         ent := ew_get_entity(tag);
@@ -102,6 +108,8 @@ ew_render :: proc() {
 ew_deinit :: proc() {
     using ecs_world;
     if (OE_USE_LIGHTS) do rl.UnloadShader(DEFAULT_LIGHT);
+
+    rlg.DestroyContext(rlg_ctx);
 
     pw_deinit(&physics);
 

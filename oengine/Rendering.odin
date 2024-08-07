@@ -1,6 +1,7 @@
 package oengine
 
 import rl "vendor:raylib"
+import rlg "rllights"
 import "core:fmt"
 import "core:math"
 import strs "core:strings"
@@ -263,7 +264,7 @@ gen_mesh_triangle :: proc(verts: [3]Vec3) -> rl.Mesh {
     return mesh;
 }
 
-draw_model :: proc(model: Model, transform: Transform, color: Color) {
+draw_model :: proc(model: Model, transform: Transform, color: Color, is_lit: bool = false) {
     rl.rlPushMatrix();
     rl.rlTranslatef(transform.position.x, transform.position.y, transform.position.z);
     rl.rlRotatef(transform.rotation.x, 1, 0, 0);
@@ -271,7 +272,8 @@ draw_model :: proc(model: Model, transform: Transform, color: Color) {
     rl.rlRotatef(transform.rotation.z, 0, 0, 1);
     rl.rlScalef(transform.scale.x, transform.scale.y, transform.scale.z);
     
-    rl.DrawModel(model, {}, 1, color);
+    if(is_lit) do rlg.DrawModel(model, {}, 1, color);
+    else do rl.DrawModel(model, {}, 1, color);
 
     rl.rlPopMatrix();
 }

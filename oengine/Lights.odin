@@ -3,8 +3,6 @@ package oengine
 import "core:fmt"
 import rl "vendor:raylib"
 
-MAX_LIGHTS :: 100
-
 LightType :: enum i32 {
     DIRECTIONAL,
     POINT
