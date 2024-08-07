@@ -46,54 +46,6 @@ main :: proc() {
     oe.ent_set_pos(wall2, {-10, 5, 0});
     oe.ent_set_scale(wall2, {1, 10, 10});
 
-    slope_def := oe.Slope {
-        {0, 1},
-        {0, 1},
-    };
-    slope := oe.ent_init();
-    oe.ent_add_component(slope, oe.rb_init(slope.starting, 1.0, 0.5, slope_def));
-    oe.ent_add_component(slope, oe.sm_init(
-        oe.ent_get_component_var(slope, ^oe.RigidBody).shape_variant.(oe.Slope)));
-    oe.sm_set_texture(oe.ent_get_component_var(slope, ^oe.SimpleMesh), albedo);
-    oe.ent_set_pos(slope, {-2, 3, -10})
-    oe.ent_set_scale(slope, {5, 5, 5});
-
-    slope_def2 := oe.Slope {
-        {1, 0},
-        {1, 0},
-    };
-    slope2 := oe.ent_init();
-    oe.ent_add_component(slope2, oe.rb_init(slope2.starting, 1.0, 0.5, slope_def2));
-    oe.ent_add_component(slope2, oe.sm_init(
-        oe.ent_get_component_var(slope2, ^oe.RigidBody).shape_variant.(oe.Slope)));
-    oe.sm_set_texture(oe.ent_get_component_var(slope2, ^oe.SimpleMesh), albedo);
-    oe.ent_set_pos(slope2, {-2, 3, -15});
-    oe.ent_set_scale(slope2, {5, 5, 5});
-
-    slope_def3 := oe.Slope {
-        {0, 0},
-        {1, 1},
-    };
-    slope3 := oe.ent_init();
-    oe.ent_add_component(slope3, oe.rb_init(slope3.starting, 1.0, 0.5, slope_def3));
-    oe.ent_add_component(slope3, oe.sm_init(
-        oe.ent_get_component_var(slope3, ^oe.RigidBody).shape_variant.(oe.Slope)));
-    oe.sm_set_texture(oe.ent_get_component_var(slope3, ^oe.SimpleMesh), albedo);
-    oe.ent_set_pos(slope3, {-2, 3, 10});
-    oe.ent_set_scale(slope3, {5, 5, 5});
-
-    slope_def4 := oe.Slope {
-        {1, 1},
-        {0, 0},
-    };
-    slope4 := oe.ent_init();
-    oe.ent_add_component(slope4, oe.rb_init(slope4.starting, 1.0, 0.5, slope_def4));
-    oe.ent_add_component(slope4, oe.sm_init(
-        oe.ent_get_component_var(slope4, ^oe.RigidBody).shape_variant.(oe.Slope)));
-    oe.sm_set_texture(oe.ent_get_component_var(slope4, ^oe.SimpleMesh), albedo);
-    oe.ent_set_pos(slope4, {3, 3, 10});
-    oe.ent_set_scale(slope4, {5, 5, 5});
-
     player := oe.ent_init("player");
     oe.ent_add_component(player, oe.rb_init(player.starting, 1.0, 0.5, false, oe.ShapeType.BOX));
     oe.ent_add_component(player, oe.sm_init(oe.tex_flip_vert(troll)));
@@ -109,30 +61,6 @@ main :: proc() {
     oe.ent_set_scale(water, {25, 1, 25});
     oe.ent_add_component(water, oe.f_init(water_tex, water.transform));
 
-    car := oe.ent_init("car");
-    oe.ent_add_component(car, oe.rb_init(car.starting, 1.0, 0.5, false, oe.ShapeType.BOX));
-    oe.ent_starting_transform(car, {
-        position = {15, 5, 0},
-        rotation = {},
-        scale = {2, 0.5, 2},
-    });
-
-    for i in 0..<4 {
-        wheel := oe.ent_init("wheel");
-        oe.ent_add_component(wheel, oe.rb_init(wheel.starting, 1.0, 0.5, false, oe.ShapeType.BOX));
-
-        if (i == 0) do oe.ent_set_pos(wheel, {car.transform.position.x - 1.5, car.transform.position.y, car.transform.position.z + 1.5});
-        if (i == 1) do oe.ent_set_pos(wheel, {car.transform.position.x + 1.5, car.transform.position.y, car.transform.position.z + 1.5});
-        if (i == 2) do oe.ent_set_pos(wheel, {car.transform.position.x - 1.5, car.transform.position.y, car.transform.position.z - 1.5});
-        if (i == 3) do oe.ent_set_pos(wheel, {car.transform.position.x + 1.5, car.transform.position.y, car.transform.position.z - 1.5});
-
-        wheel_joint := oe.fj_init(
-            oe.ent_get_component_var(car, ^oe.RigidBody),
-            oe.ent_get_component_var(wheel, ^oe.RigidBody),
-            wheel.transform.position,
-        );
-    }
-
     ps := oe.ent_init("ParticleSystem");
     oe.ent_set_pos(ps, {5, 3, -10});
     oe.ent_add_component(ps, oe.ps_init());
@@ -142,7 +70,11 @@ main :: proc() {
     oe.msc_from_json(msc, "../assets/maps/test.json");
 
     msc2 := oe.msc_init();
-    oe.msc_from_model(msc2, oe.load_model("../assets/unnamed.obj"), oe.vec3_z() * -30);
+    oe.msc_from_model(msc2, oe.load_model("../assets/maps/bowl.obj"), oe.vec3_z() * -35);
+
+    light2 := oe.ent_init("light2");
+    oe.ent_add_component(light2, oe.lc_init());
+    oe.ent_set_pos(light2, {0, 5, -35});
 
     for (oe.w_tick()) {
         // update

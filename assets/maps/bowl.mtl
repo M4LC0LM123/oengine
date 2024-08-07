@@ -1,0 +1,6 @@
+newmtl albedo
+map_Kd ../textures/albedo.png
+
+newmtl orm
+map_Kd ../textures/orm.png
+

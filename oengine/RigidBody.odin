@@ -15,6 +15,23 @@ HEIGHTMAP_SCALE :: 1
 
 Slope :: [2][2]f32
 
+/*
+Slope example
+
+slope_def := oe.Slope {
+    {0, 1},
+    {0, 1},
+};
+slope := oe.ent_init();
+oe.ent_add_component(slope, oe.rb_init(slope.starting, 1.0, 0.5, slope_def));
+oe.ent_add_component(slope, oe.sm_init(
+    oe.ent_get_component_var(slope, ^oe.RigidBody).shape_variant.(oe.Slope)));
+oe.sm_set_texture(oe.ent_get_component_var(slope, ^oe.SimpleMesh), albedo);
+oe.ent_set_pos(slope, {-2, 3, -10})
+oe.ent_set_scale(slope, {5, 5, 5});
+
+*/
+
 RigidBody :: struct {
     id: u32,
     transform: Transform,

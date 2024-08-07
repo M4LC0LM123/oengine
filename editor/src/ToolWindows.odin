@@ -65,6 +65,9 @@ map_proj_tool :: proc(ct: CameraTool) {
         if (filepath.ext(path) == ".json") {
             msc := oe.msc_init();
             oe.msc_from_json(msc, path);
+        } else if (filepath.ext(path) == ".obj") {
+            msc := oe.msc_init();
+            oe.msc_from_model(msc, oe.load_model(path));
         }
     }
 
