@@ -80,6 +80,10 @@ map_proj_tool :: proc(ct: CameraTool) {
         }
     }
 
+    if (oe.gui_button("Clear", 10, 90, BUTTON_WIDTH, 30)) {
+        clear(&oe.ecs_world.physics.mscs);
+    }
+
     oe.gui_end();
 }
 

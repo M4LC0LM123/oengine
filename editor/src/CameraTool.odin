@@ -97,6 +97,13 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
         oe.gui_toggle_window("Texture tool");
     }
 
+    if (oe.key_pressed(.DELETE)) {
+        ordered_remove(&oe.ecs_world.physics.mscs[_active_msc_id].tris, int(_active_id));
+        _active_id = ACTIVE_EMPTY;
+        _active_msc_id = ACTIVE_EMPTY;
+        return;
+    }
+
     active_3d := oe.ecs_world.physics.mscs[_active_msc_id].tris[_active_id].pts;
     active := msc_tri_to_ortho_tri(active_3d, mode);
 
