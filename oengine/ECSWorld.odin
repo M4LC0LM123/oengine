@@ -13,7 +13,7 @@ ecs_world: struct {
     camera: ^Camera,
     rlg_ctx: rlg.Context,
     light_count: u32,
-    LAE: bool, // lights affect everything
+    FAE: bool, // fog affects everything
 
     accumulator: f32,
 }
@@ -40,22 +40,20 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     pw_init(&physics, s_gravity, s_iter);
 
     accumulator = 0;
-    
-    if (OE_USE_LIGHTS) {
-        init_lights_global();
-    }
 
     rlg_ctx = rlg.CreateContext(MAX_LIGHTS);
     rlg.SetContext(rlg_ctx);
 
-    LAE = false;
+    FAE = true;
+    world_fog.density = 0.007;
+    world_fog.gradient = 1.5;
 }
 
 ew_update :: proc() {
     using ecs_world;
     ew_fixed_update();
 
-    if (OE_USE_LIGHTS) do update_lights_global(camera^);
+    fog_update(camera.position);
     rlg.SetViewPositionV(camera.position);
 
     for tag in ents {
@@ -107,7 +105,6 @@ ew_render :: proc() {
 
 ew_deinit :: proc() {
     using ecs_world;
-    if (OE_USE_LIGHTS) do rl.UnloadShader(DEFAULT_LIGHT);
 
     rlg.DestroyContext(rlg_ctx);
 

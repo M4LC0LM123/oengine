@@ -13,6 +13,8 @@ TriangleCollider :: struct {
     color: Color,
     texture_tag: string,
     mesh: rl.Mesh,
+    is_lit: bool,
+    use_fog: bool,
 }
 
 PhysicsWorld :: struct {

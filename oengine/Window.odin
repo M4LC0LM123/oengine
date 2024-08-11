@@ -249,7 +249,6 @@ w_end_render :: proc() {
         rl.DrawText(str.clone_to_cstring(str_add("time: ", rl.GetTime())), 10, 50, 16, rl.YELLOW);
         rl.DrawText(str.clone_to_cstring(str_add("ents: ", len(ecs_world.ents))), 10, 70, 16, rl.YELLOW);
         rl.DrawText(str.clone_to_cstring(str_add("rbs: ", len(ecs_world.physics.bodies))), 10, 90, 16, rl.YELLOW)
-        rl.DrawText(str.clone_to_cstring(str_add("lights: ", light_count)), 10, 110, 16, rl.YELLOW);
         rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), 10, 130, 16, rl.YELLOW);
     }
 

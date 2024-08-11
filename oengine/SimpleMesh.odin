@@ -15,6 +15,7 @@ SimpleMesh :: struct {
     },
 
     is_lit: bool,
+    use_fog: bool,
     texture: Texture,
     color: Color,
     starting_color: Color,
@@ -38,11 +39,8 @@ sm_init_all :: proc(using sm: ^SimpleMesh, s_shape: ShapeType, s_color: Color) {
         tex = mesh_loaders[int(shape)]();
     }
 
-    if (ecs_world.LAE) {
-        sm_set_shader(sm, DEFAULT_LIGHT);
-    }
-
     is_lit = true;
+    use_fog = OE_FAE;
     texture = load_texture(rl.LoadTextureFromImage(rl.GenImageColor(16, 16, WHITE)));
     color = s_color;
     starting_color = color;
@@ -121,6 +119,10 @@ sm_init_slope :: proc(slope: Slope, s_color: Color = rl.WHITE) -> ^Component {
 sm_update :: proc(component: ^Component, ent: ^Entity) {
     using self := component.variant.(^SimpleMesh);
     transform = ent.transform;
+
+    if (ecs_world.FAE && use_fog) {
+        color = mix_color(world_fog.color, starting_color, world_fog.visibility); 
+    }
 }
 
 sm_render :: proc(component: ^Component) {
@@ -135,8 +137,6 @@ sm_render :: proc(component: ^Component) {
     if (!sm_tex_is(self, Model)) {
         if (shader_defined(shader)) {
             rl.BeginShaderMode(shader);
-        } else {
-            if (ecs_world.LAE && !sm_tex_is(self, Model)) do rl.BeginShaderMode(DEFAULT_LIGHT);
         }
     }
 

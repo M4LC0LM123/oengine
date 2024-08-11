@@ -41,24 +41,28 @@ msc_init :: proc() -> ^MSCObject {
     return self;
 }
 
-msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = WHITE, texture_tag: string = "") {
+msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = WHITE, texture_tag: string = "", is_lit: bool = true, use_fog: bool = OE_FAE) {
     t := new(TriangleCollider);
     t.pts = {a + offs, b + offs, c + offs};
     t.color = color;
     t.texture_tag = texture_tag;
     t.mesh = gen_mesh_triangle(t.pts);
+    t.is_lit = is_lit;
+    t.use_fog = use_fog;
     append(&tris, t);
     tri_count += 1;
 
     _aabb = tris_to_aabb(tris);
 }
 
-msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {}, color : Color = WHITE, texture_tag: string = "") {
+msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {}, color : Color = WHITE, texture_tag: string = "", is_lit: bool = true, use_fog: bool = OE_FAE) {
     t := new(TriangleCollider);
     t.pts = {b + offs, a + offs, c + offs};
     t.color = color;
     t.texture_tag = texture_tag;
     t.mesh = gen_mesh_triangle(t.pts);
+    t.is_lit = is_lit;
+    t.use_fog = use_fog;
     append(&tris, t);
 
     t2 := new(TriangleCollider);
@@ -66,6 +70,8 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {
     t2.color = color;
     t2.texture_tag = texture_tag;
     t2.mesh = gen_mesh_triangle(t2.pts);
+    t2.is_lit = is_lit;
+    t2.use_fog = use_fog;
     append(&tris, t2);
 
     tri_count += 2;
@@ -106,6 +112,8 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         using pts: [3]Vec3,
         color: Color,
         texture_tag: string,
+        is_lit: bool,
+        use_fog: bool,
     }
 
     i := 0;
@@ -113,7 +121,9 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         tm := TriangleColliderMarshal {
             pts = t.pts,
             color = t.color,
-            texture_tag = t.texture_tag
+            texture_tag = t.texture_tag,
+            is_lit = t.is_lit,
+            use_fog = t.use_fog,
         };
         data, ok := json.marshal(tm, {pretty = true});
 
@@ -151,27 +161,33 @@ msc_from_json :: proc(using self: ^MSCObject, path: string) {
     msc := json_data.(json.Object);
 
     for tag, obj in msc {
-        pts := obj.(json.Object)["pts"].(json.Array);
-        tri: [3]Vec3;
 
-        i := 0;
-        for pt in pts {
-            val := pt.(json.Array);
-            tri[i] = Vec3 {
-                f32(val[0].(json.Float)), 
-                f32(val[1].(json.Float)),
-                f32(val[2].(json.Float))
-            };
-            i += 1;
+        tri: [3]Vec3;
+        if (obj.(json.Object)["pts"] != nil) {
+            pts := obj.(json.Object)["pts"].(json.Array);
+
+            i := 0;
+            for pt in pts {
+                val := pt.(json.Array);
+                tri[i] = Vec3 {
+                    f32(val[0].(json.Float)), 
+                    f32(val[1].(json.Float)),
+                    f32(val[2].(json.Float))
+                };
+                i += 1;
+            }
         }
 
-        colors := obj.(json.Object)["color"].(json.Array);
-        color := Color {
-            u8(colors[0].(json.Float)),
-            u8(colors[1].(json.Float)),
-            u8(colors[2].(json.Float)),
-            u8(colors[3].(json.Float)),
-        };
+        color: Color;
+        if (obj.(json.Object)["color"] != nil) {
+            colors := obj.(json.Object)["color"].(json.Array);
+            color = {
+                u8(colors[0].(json.Float)),
+                u8(colors[1].(json.Float)),
+                u8(colors[2].(json.Float)),
+                u8(colors[3].(json.Float)),
+            };
+        }
 
         tex_tag := obj.(json.Object)["texture_tag"].(json.String);
 
@@ -182,7 +198,17 @@ msc_from_json :: proc(using self: ^MSCObject, path: string) {
             );
         }
 
-        msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag));
+        is_lit := true;
+        if (obj.(json.Object)["is_lit"] != nil) {
+            is_lit = obj.(json.Object)["is_lit"].(json.Boolean);
+        }
+
+        use_fog := OE_FAE;
+        if (obj.(json.Object)["use_fog"] != nil) {
+            use_fog = obj.(json.Object)["use_fog"].(json.Boolean);
+        }
+
+        msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag), is_lit = is_lit, use_fog = use_fog);
     }
 }
 
@@ -197,8 +223,6 @@ msc_render :: proc(using self: ^MSCObject) {
 
         if (window.instance_name == EDITOR_INSTANCE) {
             uv1, uv2, uv3 := triangle_uvs(v1, v2, v3);
-
-            if (ecs_world.LAE) do rl.BeginShaderMode(DEFAULT_LIGHT);
 
             rl.rlColor4ub(color.r, color.g, color.b, color.a);
             rl.rlBegin(rl.RL_TRIANGLES);
@@ -215,8 +239,6 @@ msc_render :: proc(using self: ^MSCObject) {
             rl.rlEnd();
 
             rl.rlSetTexture(0);
-
-            if (ecs_world.LAE) do rl.EndShaderMode();
         } else {
             material := rl.LoadMaterialDefault();
             material.maps[rl.MaterialMapIndex.ALBEDO].color = color;
@@ -224,7 +246,9 @@ msc_render :: proc(using self: ^MSCObject) {
                 tex := get_asset_var(tri.texture_tag, Texture);
                 material.maps[rl.MaterialMapIndex.ALBEDO].texture = tex;
             }
-            rlg.DrawMesh(tri.mesh, material, rl.Matrix(1));
+
+            if (tri.is_lit) do rlg.DrawMesh(tri.mesh, material, rl.Matrix(1));
+            else do rl.DrawMesh(tri.mesh, material, rl.Matrix(1));
         }
 
         if (!PHYS_DEBUG) do continue;
