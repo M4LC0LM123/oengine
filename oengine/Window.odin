@@ -3,6 +3,7 @@ package oengine
 import "core:os"
 import "core:fmt"
 import rl "vendor:raylib"
+import "core:math"
 import str "core:strings"
 
 EDITOR_INSTANCE :: "oengine-editor"
@@ -20,6 +21,7 @@ window: struct {
     _exit_key: Key,
 
     _target_fps: i32,
+    _dbg_stats_pos: i32,
 
     mouse_position: Vec2, // mouse position relative to screen not world
 
@@ -238,18 +240,44 @@ w_begin_render :: proc() {
     rl.BeginTextureMode(window.target);
 }
 
+DBG_INFO_STAT_COUNT :: 5
+DBG_INFO_POS_COUNT :: 5
+
 w_end_render :: proc() {
     using window;
  
     console_render();
 
     if (debug_stats) {
-        rl.DrawText(str.clone_to_cstring(str_add("fps: ", rl.GetFPS())), 10, 10, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("dt: ", rl.GetFrameTime())), 10, 30, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("time: ", rl.GetTime())), 10, 50, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("ents: ", len(ecs_world.ents))), 10, 70, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("rbs: ", len(ecs_world.physics.bodies))), 10, 90, 16, rl.YELLOW)
-        rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), 10, 130, 16, rl.YELLOW);
+        OFFSET :: 20
+
+        text_height := rl.MeasureTextEx(rl.GetFontDefault(), "A", 16.0, 0.5).y;
+
+        dbg_stat_pos := [DBG_INFO_POS_COUNT]Vec2i {
+            Vec2i {10, 10},
+            Vec2i {
+                10, 
+                window._render_height / 2 - OFFSET * i32(math.round_f32(DBG_INFO_STAT_COUNT * 0.5)) - i32(text_height) - 10
+            },
+            Vec2i {10, window._render_height - OFFSET * DBG_INFO_STAT_COUNT - i32(text_height) - 10},
+            Vec2i {
+                window._render_width / 2 - OFFSET * i32(math.round_f32(DBG_INFO_STAT_COUNT * 0.5)) - 10,
+                window._render_height - OFFSET * DBG_INFO_STAT_COUNT - i32(text_height) - 10,
+            },
+            Vec2i {
+                window._render_width / 2 - OFFSET * i32(math.round_f32(DBG_INFO_STAT_COUNT * 0.5)) - 10,
+                10
+            },
+        };
+
+        top_left := dbg_stat_pos[_dbg_stats_pos];
+
+        rl.DrawText(str.clone_to_cstring(str_add("fps: ", rl.GetFPS())), top_left.x, top_left.y, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("dt: ", rl.GetFrameTime())), top_left.x, top_left.y + OFFSET, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("time: ", rl.GetTime())), top_left.x, top_left.y + OFFSET * 2, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("ents: ", len(ecs_world.ents))), top_left.x, top_left.y + OFFSET * 3, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("rbs: ", len(ecs_world.physics.bodies))), top_left.x, top_left.y + OFFSET * 4, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), top_left.x, top_left.y + OFFSET * 5, 16, rl.YELLOW);
     }
 
     rl.EndTextureMode();

@@ -52,6 +52,25 @@ debug_info :: proc(args: []string) {
     }
 }
 
+dbg_info_pos :: proc(args: []string) {
+    using dev_console;
+    if (len(args) < 1) {
+        console_print("Incorrect usage!");
+        return;
+    }
+
+    b, ok := sc.parse_int(args[0]);
+    if (ok) {
+        if (b >= DBG_INFO_POS_COUNT) {
+            console_print(str_add({str_add("", b), " >= DBG_INFO_POS_COUNT: ", str_add("", i32(DBG_INFO_POS_COUNT))}));
+            return;
+        }
+
+        window._dbg_stats_pos = i32(b);
+        console_print(str_add({"Set debug info pos to: ", args[0]}));
+    }
+}
+
 set_fps :: proc(args: []string) {
     using dev_console;
     if (len(args) < 1) {
