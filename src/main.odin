@@ -52,6 +52,8 @@ main :: proc() {
     oe.ent_get_component_var(player, ^oe.SimpleMesh).is_lit = false;
     oe.ent_set_pos_y(player, 5);
 
+    oe.ent_to_json(player, "ent_save_test.json");
+
     light := oe.ent_init("light");
     oe.ent_add_component(light, oe.lc_init());
     oe.ent_set_pos_y(light, 5);
