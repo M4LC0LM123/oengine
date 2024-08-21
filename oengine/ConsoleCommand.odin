@@ -94,3 +94,8 @@ exit_cmd :: proc(args: []string) {
 
     os.exit(0); 
 }
+
+clear_cmd :: proc(args: []string) {
+    clear(&dev_console.output);
+    dev_console.offset = 0;
+}

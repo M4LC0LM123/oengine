@@ -14,6 +14,7 @@ dev_console: struct {
     output: [dynamic]string,
     commands: map[string]ConsoleCommand,
     prev_input: string,
+    offset: f32,
 }
 
 console_init :: proc() {
@@ -29,6 +30,7 @@ console_init :: proc() {
     console_register(new_command("dbg_pos", "Sets debug info position", dbg_info_pos));
     console_register(new_command("set_fps", "Sets the target fps", set_fps));
     console_register(new_command("exit", "Exits the app", exit_cmd));
+    console_register(new_command("clear", "Clears the console", clear_cmd));
 }
 
 console_register :: proc(s_command: ConsoleCommand) {
@@ -84,8 +86,6 @@ console_update :: proc() {
 
 console_render :: proc() {
     using dev_console;
-    
-    @static offset: f32;
 
     if (active) {
         rl.DrawRectangleRec(_rec, {0, 0, 0, 125});
