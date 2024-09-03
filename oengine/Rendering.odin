@@ -80,7 +80,7 @@ tile_texture :: proc(texture: Texture, tx: i32) -> Texture {
 
 draw_data_id :: proc(using self: DataID) {
     draw_cube_wireframe(transform.position, transform.rotation, transform.scale, WHITE);
-    rl.DrawBillboard(ecs_world.camera.rl_matrix, tag_image, transform.position, 0.5, YELLOW); 
+    rl.DrawBillboard(ecs_world.camera.rl_matrix, tag_image, transform.position, 0.5, PINK); 
 }
 
 draw_grid2D :: proc(slices, spacing: i32, color: Color) {
