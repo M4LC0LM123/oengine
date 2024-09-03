@@ -103,7 +103,7 @@ msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}) {
     }
 }
 
-msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileMode.WRITE_RONLY) {
+msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
     file := file_handle(path, mode);
     
     res: string = "{";
@@ -137,6 +137,20 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         i += 1;
     }
 
+    j := 0;
+    for data_id in get_reg_data_ids() {
+        data, ok := json.marshal(data_id, {pretty = true});
+
+        if (ok != nil) {
+            fmt.printfln("An error occured marshalling data: %v", ok);
+            return;
+        }
+        
+        name := str_add({"\"", str_add("data_id", j), "\": {\n"});
+        res = str_add({res, "\n", name, string(data[1:len(data) - 1]), "},\n"});
+        j += 1;
+    }
+
     res = str_add(res, "\n}");
     file_write(file, res);
     file_close(file);
@@ -162,7 +176,7 @@ msc_from_json :: proc(using self: ^MSCObject, path: string) {
 
     for tag, obj in msc {
         if (strs.contains(tag, "triangle")) { msc_load_tri(self, obj); }
-        else { msc_load_data_id(tag, obj); }
+        else { msc_load_data_id(obj.(json.Object)["tag"].(json.String), obj); }
     }
 }
 

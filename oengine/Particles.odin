@@ -101,7 +101,7 @@ ps_update :: proc(component: ^Component, ent: ^Entity) {
     }
 
     for &p in _removed_particles {
-        if (p != -1) do ordered_remove(&particles, p);
+        if (p != -1 && p < len(particles)) do ordered_remove(&particles, p);
         p = -1;
     }
 }

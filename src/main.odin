@@ -76,8 +76,6 @@ main :: proc() {
     oe.ent_add_component(light2, oe.lc_init());
     oe.ent_set_pos(light2, {0, 5, -35});
 
-    fmt.println(oe.get_reg_data_ids());
-
     for (oe.w_tick()) {
         // update
         oe.ew_update();

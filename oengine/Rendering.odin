@@ -22,6 +22,8 @@ CubeMapSide :: enum {
     ALL,
 }
 
+tag_image: Texture;
+
 world_fog: struct {
     visibility: f32,
     density, gradient: f32,
@@ -74,6 +76,11 @@ tile_texture :: proc(texture: Texture, tx: i32) -> Texture {
     rl.EndTextureMode();
 
     return load_texture(target.texture);
+}
+
+draw_data_id :: proc(using self: DataID) {
+    draw_cube_wireframe(transform.position, transform.rotation, transform.scale, WHITE);
+    rl.DrawBillboard(ecs_world.camera.rl_matrix, tag_image, transform.position, 0.5, YELLOW); 
 }
 
 draw_grid2D :: proc(slices, spacing: i32, color: Color) {

@@ -47,6 +47,8 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     FAE = true;
     world_fog.density = 0.007;
     world_fog.gradient = 1.5;
+
+    tag_image = load_texture(rl.LoadTextureFromImage(rl.GenImageGradientLinear(128, 64, 0, WHITE, BLACK)));
 }
 
 ew_update :: proc() {
@@ -95,6 +97,10 @@ ew_render :: proc() {
     for tag in ents {
         ent := ew_get_entity(tag);
         ent->render();
+    }
+
+    if (OE_DEBUG) {
+        for data_id in get_reg_data_ids() { draw_data_id(data_id); }
     }
 
     rl.rlDisableBackfaceCulling();
