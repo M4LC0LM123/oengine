@@ -9,12 +9,19 @@ import sc "core:strconv"
 import strs "core:strings"
 import rl "vendor:raylib"
 
+DataID :: struct {
+    tag: string,
+    id: u32,
+    transform: Transform,
+}
+
 Asset :: union {
     Texture,
     Model,
     Shader,
     CubeMap,
     Sound,
+    DataID,
 }
 
 asset_manager: struct {
@@ -133,6 +140,20 @@ get_path :: proc(path: string) -> string {
     res, err := filepath.rel(string(rl.GetWorkingDirectory()), absolute);
     t: bool;
     res, t = strs.replace_all(res, "\\", "/");
+    return res;
+}
+
+get_reg_data_ids :: proc() -> [dynamic]DataID {
+    using asset_manager;
+
+    res := make([dynamic]DataID);
+
+    for tag, asset in registry {
+        if (asset_is(asset, DataID)) {
+            append(&res, asset_variant(asset, DataID));
+        }
+    }
+
     return res;
 }
 

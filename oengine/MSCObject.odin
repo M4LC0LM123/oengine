@@ -161,55 +161,82 @@ msc_from_json :: proc(using self: ^MSCObject, path: string) {
     msc := json_data.(json.Object);
 
     for tag, obj in msc {
-
-        tri: [3]Vec3;
-        if (obj.(json.Object)["pts"] != nil) {
-            pts := obj.(json.Object)["pts"].(json.Array);
-
-            i := 0;
-            for pt in pts {
-                val := pt.(json.Array);
-                tri[i] = Vec3 {
-                    f32(val[0].(json.Float)), 
-                    f32(val[1].(json.Float)),
-                    f32(val[2].(json.Float))
-                };
-                i += 1;
-            }
-        }
-
-        color: Color;
-        if (obj.(json.Object)["color"] != nil) {
-            colors := obj.(json.Object)["color"].(json.Array);
-            color = {
-                u8(colors[0].(json.Float)),
-                u8(colors[1].(json.Float)),
-                u8(colors[2].(json.Float)),
-                u8(colors[3].(json.Float)),
-            };
-        }
-
-        tex_tag := obj.(json.Object)["texture_tag"].(json.String);
-
-        if (!asset_exists(tex_tag)) {
-            dbg_log(
-                str_add({"Texture ", tex_tag, " doesn't exist in the asset manager"}), 
-                DebugType.WARNING
-            );
-        }
-
-        is_lit := true;
-        if (obj.(json.Object)["is_lit"] != nil) {
-            is_lit = obj.(json.Object)["is_lit"].(json.Boolean);
-        }
-
-        use_fog := OE_FAE;
-        if (obj.(json.Object)["use_fog"] != nil) {
-            use_fog = obj.(json.Object)["use_fog"].(json.Boolean);
-        }
-
-        msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag), is_lit = is_lit, use_fog = use_fog);
+        if (strs.contains(tag, "triangle")) { msc_load_tri(self, obj); }
+        else { msc_load_data_id(tag, obj); }
     }
+}
+
+json_vec3_to_vec3 :: proc(v: json.Array) -> Vec3 {
+    return Vec3 {
+        f32(v[0].(json.Float)),
+        f32(v[1].(json.Float)),
+        f32(v[2].(json.Float))
+    };
+}
+
+msc_load_data_id :: proc(tag: string, obj: json.Value) {
+    id := obj.(json.Object)["id"].(json.Float);
+
+    if (obj.(json.Object)["transform"] == nil) do return;
+
+    transfrom_obj := obj.(json.Object)["transform"].(json.Object);
+    transform := Transform {
+        position = json_vec3_to_vec3(transfrom_obj["position"].(json.Array)),
+        rotation = json_vec3_to_vec3(transfrom_obj["rotation"].(json.Array)),
+        scale = json_vec3_to_vec3(transfrom_obj["scale"].(json.Array)),
+    };
+
+    reg_asset(str_add("data_id_", tag), DataID {tag, u32(id), transform});
+}
+
+msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {
+    tri: [3]Vec3;
+    if (obj.(json.Object)["pts"] != nil) {
+        pts := obj.(json.Object)["pts"].(json.Array);
+
+        i := 0;
+        for pt in pts {
+            val := pt.(json.Array);
+            tri[i] = Vec3 {
+                f32(val[0].(json.Float)), 
+                f32(val[1].(json.Float)),
+                f32(val[2].(json.Float))
+            };
+            i += 1;
+        }
+    }
+
+    color: Color;
+    if (obj.(json.Object)["color"] != nil) {
+        colors := obj.(json.Object)["color"].(json.Array);
+        color = {
+            u8(colors[0].(json.Float)),
+            u8(colors[1].(json.Float)),
+            u8(colors[2].(json.Float)),
+            u8(colors[3].(json.Float)),
+        };
+    }
+
+    tex_tag := obj.(json.Object)["texture_tag"].(json.String);
+
+    if (!asset_exists(tex_tag)) {
+        dbg_log(
+            str_add({"Texture ", tex_tag, " doesn't exist in the asset manager"}), 
+            DebugType.WARNING
+        );
+    }
+
+    is_lit := true;
+    if (obj.(json.Object)["is_lit"] != nil) {
+        is_lit = obj.(json.Object)["is_lit"].(json.Boolean);
+    }
+
+    use_fog := OE_FAE;
+    if (obj.(json.Object)["use_fog"] != nil) {
+        use_fog = obj.(json.Object)["use_fog"].(json.Boolean);
+    }
+
+    msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag), is_lit = is_lit, use_fog = use_fog);
 }
 
 msc_render :: proc(using self: ^MSCObject) {

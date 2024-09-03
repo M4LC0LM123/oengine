@@ -28,6 +28,15 @@
 	"texture_tag": "albedo"
 },
 
+"trigger": {
+    "id": 0,
+    "transform": {
+        "position": [10, 10, 10],
+        "rotation": [0, 0, 0],
+        "scale": [1, 1, 1]
+    }
+},
+
 "triangle1": {
 
 	"pts": [
@@ -278,6 +287,6 @@
 		255
 	],
 	"texture_tag": "albedo"
-},
+}
 
 }
