@@ -48,7 +48,8 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     world_fog.density = 0.007;
     world_fog.gradient = 1.5;
 
-    tag_image = load_texture(rl.LoadTextureFromImage(rl.GenImageGradientLinear(128, 64, 0, WHITE, BLACK)));
+    img := rl.GenImageGradientLinear(128, 64, 0, WHITE, BLACK);
+    tag_image = load_texture(rl.LoadTextureFromImage(img));
 }
 
 ew_update :: proc() {

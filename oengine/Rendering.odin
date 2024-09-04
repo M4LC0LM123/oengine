@@ -80,7 +80,169 @@ tile_texture :: proc(texture: Texture, tx: i32) -> Texture {
 
 draw_data_id :: proc(using self: DataID) {
     draw_cube_wireframe(transform.position, transform.rotation, transform.scale, WHITE);
-    rl.DrawBillboard(ecs_world.camera.rl_matrix, tag_image, transform.position, 0.5, YELLOW); 
+    rl.DrawBillboard(ecs_world.camera.rl_matrix, tag_image, transform.position, 0.5, YELLOW);
+}
+
+draw_text_codepoint_3d :: proc(font: rl.Font, codepoint: char, pos: Vec3, size: f32, backface: bool, tint: Color) {
+    index := rl.GetGlyphIndex(font, codepoint);
+    scale := size / f32(font.baseSize);
+    position := pos;
+
+    position.x += f32(font.glyphs[index].offsetX - font.glyphPadding) / f32(font.baseSize) * scale;
+    position.z += f32(font.glyphs[index].offsetY - font.glyphPadding) / f32(font.baseSize) * scale;
+
+    srcRec := rl.Rectangle {
+        font.recs[index].x - f32(font.glyphPadding), font.recs[index].y - f32(font.glyphPadding),
+        font.recs[index].width + 2.0 * f32(font.glyphPadding), font.recs[index].height + 2.0 * f32(font.glyphPadding)
+    };
+
+    width := f32(font.recs[index].width + 2.0 * f32(font.glyphPadding)) / f32(font.baseSize) * scale;
+    height := f32(font.recs[index].height + 2.0 * f32(font.glyphPadding)) / f32(font.baseSize) * scale;
+
+    if (font.texture.id <= 0) do return;
+
+    x: f32;
+    y: f32;
+    z: f32;
+
+    tx := srcRec.x / f32(font.texture.width);
+    ty := srcRec.y / f32(font.texture.height);
+    tw := (srcRec.x + srcRec.width) / f32(font.texture.width);
+    th := (srcRec.y + srcRec.height) / f32(font.texture.height);
+
+    rl.rlCheckRenderBatchLimit(4 + 4 * i32(backface));
+    rl.rlSetTexture(font.texture.id);
+    
+    rl.rlPushMatrix();
+    rl.rlTranslatef(position.x, position.y, position.z);
+    rl.rlRotatef(90, 1, 0, 0);
+
+    rl.rlBegin(rl.RL_QUADS);
+    rl.rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+
+    // Front Face
+    rl.rlNormal3f(0.0, 1.0, 0.0);                                   // Normal Pointing Up
+    rl.rlTexCoord2f(tx, ty); rl.rlVertex3f(x,         y, z);              // Top Left Of The Texture and Quad
+    rl.rlTexCoord2f(tx, th); rl.rlVertex3f(x,         y, z + height);     // Bottom Left Of The Texture and Quad
+    rl.rlTexCoord2f(tw, th); rl.rlVertex3f(x + width, y, z + height);     // Bottom Right Of The Texture and Quad
+    rl.rlTexCoord2f(tw, ty); rl.rlVertex3f(x + width, y, z);              // Top Right Of The Texture and Quad
+
+    if (backface)
+    {
+        // Back Face
+        rl.rlNormal3f(0.0, -1.0, 0.0);                              // Normal Pointing Down
+        rl.rlTexCoord2f(tx, ty); rl.rlVertex3f(x,         y, z);          // Top Right Of The Texture and Quad
+        rl.rlTexCoord2f(tw, ty); rl.rlVertex3f(x + width, y, z);          // Top Left Of The Texture and Quad
+        rl.rlTexCoord2f(tw, th); rl.rlVertex3f(x + width, y, z + height); // Bottom Left Of The Texture and Quad
+        rl.rlTexCoord2f(tx, th); rl.rlVertex3f(x,         y, z + height); // Bottom Right Of The Texture and Quad
+    }
+
+    rl.rlEnd();
+    rl.rlPopMatrix();
+
+    rl.rlSetTexture(0);
+}
+
+measure_text_3d :: proc(font: rl.Font, text: string, size, spacing, line_spacing: f32) -> Vec3 {
+    ctext := strs.clone_to_cstring(text);
+    len := rl.TextLength(ctext);
+    temp_len: i32;
+    len_counter: i32;
+
+    temp_text_width: f32;
+
+    scale := size / f32(font.baseSize);
+    text_height := scale;
+    text_width: f32;
+
+    letter: char;
+    index: i32;
+
+    for i := 0; i < int(len); i += 1 {
+        len_counter += 1;
+
+        next: i32;
+        r := string([]u8{text[i]});
+        letter = rl.GetCodepoint(strs.clone_to_cstring(r), &next);
+        index = rl.GetGlyphIndex(font, letter);
+        
+        if (letter == 0x3f) do next = 1;
+        i += int(next) - 1;
+        
+        if (letter != '\n') {
+            if (font.glyphs[index].advanceX != 0) do text_width += (f32(font.glyphs[index].advanceX) + spacing) / f32(font.baseSize) * scale;
+            else do text_width += f32(font.recs[index].width + f32(font.glyphs[index].offsetX)) / f32(font.baseSize) * scale;
+        } else {
+            if (temp_text_width < text_width) do temp_text_width = text_width;
+            len_counter = 0;
+            text_width = 0.0;
+            text_height += scale + spacing / f32(font.baseSize) *scale;
+        }
+
+        if (temp_len < len_counter) do temp_len = len_counter;
+    }
+
+    if (temp_text_width < text_width) do temp_text_width = text_width;
+
+    vec: Vec3;
+    vec.x = temp_text_width + f32(f32(temp_len - 1) * spacing / f32(font.baseSize) * scale); // Adds chars spacing to measure
+    vec.y = 0.25;
+    vec.z = text_height;
+
+    return vec;
+}
+
+draw_text_3d :: proc(font: rl.Font, text: string, position: Vec3, size: f32, color: Color, spacing: f32 = 0.5, line_spacing: f32 = 0, rotate: bool = true, backface: bool = false) {
+    ctext := strs.clone_to_cstring(text);
+
+    scale := size / f32(font.baseSize);
+    text_dimensions := measure_text_3d(font, text, size, spacing, line_spacing);
+
+    adjusted_position: Vec3 = position;
+    adjusted_position.x -= text_dimensions.x / 2.0; // Center horizontally
+    adjusted_position.z -= text_dimensions.z / 2.0; // Center vertically (Z-axis since it's 3D)
+
+    text_offset_x: f32 = 0;
+    text_offset_y: f32 = 0;
+
+    rl.rlPushMatrix();
+    if (rotate) { 
+        rot := Rad2Deg * math.atan2_f32(position.z - ecs_world.camera.position.z, ecs_world.camera.position.x - position.x) + 90;
+        rl.rlRotatef(rot, 0, 1, 0); 
+    }
+
+    length := rl.TextLength(strs.clone_to_cstring(text));
+    for i := 0; i < int(length); {
+        codepoint_byte_count: i32;
+        r := string([]u8{text[i]});
+        codepoint := rl.GetCodepoint(strs.clone_to_cstring(r), &codepoint_byte_count);
+        index := rl.GetGlyphIndex(font, codepoint);
+
+        if (codepoint == 0x3f) do codepoint_byte_count = 1;
+
+        if (codepoint == '\n') {
+            text_offset_x = 0;
+            text_offset_y += scale + line_spacing / f32(font.baseSize) * scale;
+        } else {
+            if ((codepoint != ' ') && (codepoint != '\t')) {
+                draw_text_codepoint_3d(
+                    font, codepoint, 
+                    {adjusted_position.x + text_offset_x, adjusted_position.y, adjusted_position.z + text_offset_y},
+                    size, backface, color
+                );
+            }
+
+            if (font.glyphs[index].advanceX == 0) {
+                text_offset_x += f32(font.recs[index].width + spacing) / f32(font.baseSize) * scale;
+            } else { 
+                text_offset_x += (f32(font.glyphs[index].advanceX) + spacing) / f32(font.baseSize) * scale; 
+            }
+        }
+
+        i += int(codepoint_byte_count);
+    }
+
+    rl.rlPopMatrix();
 }
 
 draw_grid2D :: proc(slices, spacing: i32, color: Color) {

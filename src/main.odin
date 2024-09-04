@@ -160,6 +160,8 @@ main :: proc() {
             rl.DrawSphere(info.point, 0.5, oe.RED);
         }
 
+        oe.draw_text_3d(oe.gui_default_font, "HEHE IDE GASASSAD", {0, 10, 0}, 10, oe.RED);
+
         rl.EndMode3D();
         
         oe.w_end_render();
