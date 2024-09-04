@@ -52,7 +52,7 @@ ct_update :: proc(using self: ^CameraTool) {
         ct_update_ortho(self);
     }
 
-    key := oe.char_pressed();
+    key := i32(oe.keycode_pressed());
     if (key >= 49 && key <= 52) {
         mode = CameraMode(key - 49);
     }

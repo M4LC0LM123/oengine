@@ -200,7 +200,10 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
         scale = json_vec3_to_vec3(transfrom_obj["scale"].(json.Array)),
     };
 
-    reg_asset(str_add("data_id_", tag), DataID {tag, u32(id), transform});
+    reg_tag := str_add("data_id_", tag);
+    if (asset_manager.registry[reg_tag] != nil) do reg_tag = str_add(reg_tag, rl.GetRandomValue(1000, 9999));
+
+    reg_asset(reg_tag, DataID {tag, u32(id), transform});
 }
 
 msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {

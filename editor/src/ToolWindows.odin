@@ -6,6 +6,7 @@ import sdl "vendor:sdl2"
 import oe "../../oengine"
 import "core:math"
 import "core:path/filepath"
+import sc "core:strconv"
 
 BUTTON_WIDTH :: 180
 
@@ -99,6 +100,33 @@ texture_tool :: proc(ct: CameraTool) {
             active.texture_tag = tag;
         }
     }
+
+    oe.gui_end();
+}
+
+data_id_tool :: proc(ct: CameraTool) {
+    oe.gui_begin("DataID tool", x = f32(oe.w_render_width()) - 300, y = 0);
+
+    @static tag: string;
+    @static id: u32;
+    if (oe.gui_button("Add dataID", 10, 10, BUTTON_WIDTH, 30)) {
+        if (tag == "") do tag = "default";
+
+        reg_tag := oe.str_add("data_id_", tag);
+        if (oe.asset_manager.registry[reg_tag] != nil) do reg_tag = oe.str_add(reg_tag, rl.GetRandomValue(1000, 9999));
+
+        oe.reg_asset(reg_tag, oe.DataID {tag, id, oe.Transform{ct.camera_perspective.position, {}, oe.vec3_one()}});
+        oe.dbg_log(oe.str_add({"Added data id of tag: ", tag, " and id: ", oe.str_add("", id)}));
+    }
+
+    tag = oe.gui_text_box("TagTextBox", 10, 50, BUTTON_WIDTH, 30);
+    oe.gui_text("Tag", 25, BUTTON_WIDTH + 20, 50);
+
+    id_parse := oe.gui_text_box("IDTextBox", 10, 90, BUTTON_WIDTH, 30);
+    oe.gui_text("ID", 25, BUTTON_WIDTH + 20, 90);
+
+    parsed, ok := sc.parse_int(id_parse);
+    if (ok) do id = u32(parsed);
 
     oe.gui_end();
 }
