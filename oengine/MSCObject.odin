@@ -176,7 +176,7 @@ msc_from_json :: proc(using self: ^MSCObject, path: string) {
 
     for tag, obj in msc {
         if (strs.contains(tag, "triangle")) { msc_load_tri(self, obj); }
-        else { msc_load_data_id(obj.(json.Object)["tag"].(json.String), obj); }
+        else { msc_load_data_id(strs.clone(obj.(json.Object)["tag"].(json.String)), obj); }
     }
 }
 
