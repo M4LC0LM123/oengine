@@ -64,14 +64,12 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]^oe.
         }
     }
 
-    if (collision_count == 1) {
-        // one collision
-        editor_data.hovered_data_id = collided_dids[0];
-    } else if (collision_count > 1) {
+    did: int = 0;
+    if (collision_count > 1) {
         // multiple collisions
         min_dist := distances[0];
         id: int;
-        for i in 0..<len(distances) {
+        for i in 1..<len(distances) {
             dist := distances[i];
 
             if (dist < min_dist) {
@@ -80,7 +78,18 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]^oe.
             }
         }
 
-        editor_data.hovered_data_id = collided_dids[id];
+        did = id;
+    }
+
+    if (collision_count == 0) {
+        if (oe.mouse_pressed(.LEFT)) do editor_data.active_data_id = nil;
+        return;
+    }
+
+    editor_data.hovered_data_id = collided_dids[did];
+
+    if (oe.mouse_pressed(.LEFT)) {
+        editor_data.active_data_id = editor_data.hovered_data_id;
     }
 }
 
@@ -88,5 +97,10 @@ render :: proc() {
     if (editor_data.hovered_data_id != nil) { 
         t := editor_data.hovered_data_id.transform;
         oe.draw_cube_wireframe(t.position, t.rotation, t.scale, oe.YELLOW); 
+    }
+    
+    if (editor_data.active_data_id != nil) { 
+        t := editor_data.active_data_id.transform;
+        oe.draw_cube_wireframe(t.position, t.rotation, t.scale, oe.BLUE); 
     }
 }
