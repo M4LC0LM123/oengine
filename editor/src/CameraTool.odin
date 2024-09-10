@@ -64,6 +64,7 @@ ct_render :: proc(using self: ^CameraTool) {
     if (mode == .PERSPECTIVE) {
         rl.BeginMode3D(camera_perspective.rl_matrix);
         oe.ew_render();
+        render();
         rl.EndMode3D();
     } else {
         rl.BeginMode2D(camera_orthographic);

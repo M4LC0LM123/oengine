@@ -105,7 +105,7 @@ texture_tool :: proc(ct: CameraTool) {
 }
 
 data_id_tool :: proc(ct: CameraTool) {
-    oe.gui_begin("DataID tool", x = f32(oe.w_render_width()) - 300, y = 0);
+    oe.gui_begin("DataID tool", x = f32(oe.w_render_width()) - 300, y = 0, can_exit = false);
 
     @static tag: string;
     @static id: u32;

@@ -348,6 +348,13 @@ rand_val :: proc(min, max: f32) -> f32 {
     return rand.float32_range(min, max);
 }
 
+transform_to_rl_bb :: proc(transform: Transform) -> rl.BoundingBox {
+    return rl.BoundingBox {
+        min = transform.position - transform.scale * 0.5,
+        max = transform.position + transform.scale * 0.5
+    };
+}
+
 OSType :: enum {
     Unknown,
     Windows,
