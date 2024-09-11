@@ -57,6 +57,8 @@ ct_update :: proc(using self: ^CameraTool) {
         mode = CameraMode(key - 49);
     }
 
+    update();
+
     // fmt.println(_active_msc_id, _active_id);
 }
 

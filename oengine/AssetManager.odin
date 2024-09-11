@@ -10,6 +10,7 @@ import strs "core:strings"
 import rl "vendor:raylib"
 
 DataID :: struct {
+    reg_tag: string, // tag registerd in registry
     tag: string,
     id: u32,
     transform: Transform,
@@ -200,6 +201,11 @@ asset_is :: proc(self: Asset, $T: typeid) -> bool {
 reg_asset :: proc(tag: string, asset: Asset) {
     using asset_manager;
     registry[tag] = asset;
+}
+
+unreg_asset :: proc(tag: string) {
+    using asset_manager;
+    registry[tag] = nil;
 }
 
 get_asset :: proc(tag: string) -> Asset {

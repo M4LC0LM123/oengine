@@ -115,7 +115,7 @@ data_id_tool :: proc(ct: CameraTool) {
         reg_tag := oe.str_add("data_id_", tag);
         if (oe.asset_manager.registry[reg_tag] != nil) do reg_tag = oe.str_add(reg_tag, rl.GetRandomValue(1000, 9999));
 
-        oe.reg_asset(reg_tag, oe.DataID {tag, id, oe.Transform{ct.camera_perspective.position, {}, oe.vec3_one()}});
+        oe.reg_asset(reg_tag, oe.DataID {reg_tag, tag, id, oe.Transform{ct.camera_perspective.position, {}, oe.vec3_one()}});
         oe.dbg_log(oe.str_add({"Added data id of tag: ", tag, " and id: ", oe.str_add("", id)}));
     }
 

@@ -93,6 +93,15 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]^oe.
     }
 }
 
+update :: proc() {
+    if (editor_data.active_data_id != nil) {
+        if (oe.key_pressed(.DELETE)) {
+            oe.unreg_asset(editor_data.active_data_id.reg_tag);
+            editor_data.active_data_id = nil;
+        }
+    }
+}
+
 render :: proc() {
     if (editor_data.hovered_data_id != nil) { 
         t := editor_data.hovered_data_id.transform;

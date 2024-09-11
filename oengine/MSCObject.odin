@@ -137,9 +137,16 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         i += 1;
     }
 
+    DataIDMarshall :: struct {
+        tag: string,
+        id: u32,
+        transform: Transform,
+    };
+
     j := 0;
     for data_id in get_reg_data_ids() {
-        data, ok := json.marshal(data_id, {pretty = true});
+        mrshl := DataIDMarshall {data_id.tag, data_id.id, data_id.transform};
+        data, ok := json.marshal(mrshl, {pretty = true});
 
         if (ok != nil) {
             fmt.printfln("An error occured marshalling data: %v", ok);
@@ -203,7 +210,7 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
     reg_tag := str_add("data_id_", tag);
     if (asset_manager.registry[reg_tag] != nil) do reg_tag = str_add(reg_tag, rl.GetRandomValue(1000, 9999));
 
-    reg_asset(reg_tag, DataID {tag, u32(id), transform});
+    reg_asset(reg_tag, DataID {reg_tag, tag, u32(id), transform});
 }
 
 msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {
