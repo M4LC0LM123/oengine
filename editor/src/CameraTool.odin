@@ -87,6 +87,10 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
     rl.DrawLineV({0, -5}, {0, 5}, oe.PINK);
     rl.rlPopMatrix();
 
+    for &data_id in oe.get_reg_data_ids() {
+        did_render_ortho(self, &data_id); 
+    }
+
     for msc_id in 0..<len(oe.ecs_world.physics.mscs) {
         msc := oe.ecs_world.physics.mscs[msc_id];
         for i in 0..<len(msc.tris) {
@@ -117,6 +121,35 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
         active[1] * RENDER_SCALAR, 
         active[2] * RENDER_SCALAR, GRID_COLOR
     );
+    rl.rlPopMatrix();
+}
+
+@(private = "file")
+did_render_ortho :: proc(using self: ^CameraTool, did: ^oe.DataID) {
+    rl.rlPushMatrix();
+    rl.rlScalef(RENDER_SCALAR, -RENDER_SCALAR, 1);
+
+    #partial switch mode {
+        case .ORTHO_XY:
+            rl.DrawRectangleLinesEx({
+                did.transform.position.x - did.transform.scale.x, 
+                did.transform.position.y - did.transform.scale.y,
+                did.transform.scale.x, did.transform.scale.y,
+            }, 0.05, rl.YELLOW);
+        case .ORTHO_XZ:
+            rl.DrawRectangleLinesEx({
+                (did.transform.position.x - did.transform.scale.x), 
+                (did.transform.position.z - did.transform.scale.z),
+                did.transform.scale.x, did.transform.scale.z,
+            }, 0.05, rl.YELLOW);
+        case .ORTHO_ZY:
+            rl.DrawRectangleLinesEx({
+                (did.transform.position.z - did.transform.scale.z), 
+                (did.transform.position.y - did.transform.scale.y),
+                did.transform.scale.z, did.transform.scale.y,
+            }, 0.05, rl.YELLOW);
+    }
+    
     rl.rlPopMatrix();
 }
 
