@@ -39,6 +39,7 @@ main :: proc() {
         map_proj_tool(camera_tool);
         data_id_tool(camera_tool);
         texture_tool(camera_tool);
+        data_id_mod_tool(camera_tool);
 
         oe.w_end_render();
     }
@@ -82,7 +83,10 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]^oe.
     }
 
     if (collision_count == 0) {
-        if (oe.mouse_pressed(.LEFT)) do editor_data.active_data_id = nil;
+        if (oe.mouse_pressed(.LEFT) && !oe.gui_mouse_over()) { 
+            editor_data.active_data_id = nil; 
+            oe.gui.windows["DataID modifier"].active = false;
+        }
         return;
     }
 
@@ -90,6 +94,9 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]^oe.
 
     if (oe.mouse_pressed(.LEFT)) {
         editor_data.active_data_id = editor_data.hovered_data_id;
+        oe.gui.windows["DataID modifier"].active = true;
+        oe.gui.text_boxes["ModTagTextBox"].text = editor_data.active_data_id.tag;
+        oe.gui.text_boxes["ModIDTextBox"].text = oe.str_add("", editor_data.active_data_id.id);
     }
 }
 

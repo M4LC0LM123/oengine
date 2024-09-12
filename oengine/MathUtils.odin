@@ -4,6 +4,7 @@ import "core:fmt"
 import rl "vendor:raylib"
 import "core:math"
 import "core:math/linalg"
+import sc "core:strconv"
 
 to_radians :: proc(degrees: f32) -> f32 {
     return degrees * rl.DEG2RAD;
@@ -159,4 +160,19 @@ square_from_tri :: proc(tri: [3]Vec3) -> [4]Vec3 {
     p4 := center + assumed_v;
 
     return {tri[0], tri[1], tri[2], p4};
+}
+
+rand_digits :: proc(digit_count: i32) -> i32 {
+    res_str := str_add("", rl.GetRandomValue(0, 9));
+
+    for i in 1..<digit_count {
+        digit := rl.GetRandomValue(0, 9);
+        res_str = str_add(res_str, digit);
+    }
+
+    res, ok := sc.parse_int(res_str);
+
+    if (ok) do return i32(res);
+
+    return 0;
 }

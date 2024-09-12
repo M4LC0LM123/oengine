@@ -113,7 +113,7 @@ data_id_tool :: proc(ct: CameraTool) {
         if (tag == "") do tag = "default";
 
         reg_tag := oe.str_add("data_id_", tag);
-        if (oe.asset_manager.registry[reg_tag] != nil) do reg_tag = oe.str_add(reg_tag, rl.GetRandomValue(1000, 9999));
+        if (oe.asset_manager.registry[reg_tag] != nil) do reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
 
         oe.reg_asset(reg_tag, oe.DataID {reg_tag, tag, id, oe.Transform{ct.camera_perspective.position, {}, oe.vec3_one()}});
         oe.dbg_log(oe.str_add({"Added data id of tag: ", tag, " and id: ", oe.str_add("", id)}));
@@ -123,6 +123,40 @@ data_id_tool :: proc(ct: CameraTool) {
     oe.gui_text("Tag", 25, BUTTON_WIDTH + 20, 50);
 
     id_parse := oe.gui_text_box("IDTextBox", 10, 90, BUTTON_WIDTH, 30);
+    oe.gui_text("ID", 25, BUTTON_WIDTH + 20, 90);
+
+    parsed, ok := sc.parse_int(id_parse);
+    if (ok) do id = u32(parsed);
+
+    oe.gui_end();
+}
+
+data_id_mod_tool :: proc(ct: CameraTool) {
+    oe.gui_begin("DataID modifier", x = f32(oe.w_render_width()) - 300, y = 200 + oe.gui_top_bar_height, active = false);
+
+    @static tag: string;
+    @static id: u32;
+    if (oe.gui_button("Modify", 10, 10, BUTTON_WIDTH, 30)) {
+        if (tag == "") do tag = "default";
+
+        reg_tag := oe.str_add("data_id_", tag);
+        if (oe.asset_manager.registry[reg_tag] != nil) do reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
+
+        // actually just reregistering
+        oe.unreg_asset(editor_data.active_data_id.reg_tag);
+
+        editor_data.active_data_id.id = id;
+        editor_data.active_data_id.tag = tag;
+        editor_data.active_data_id.reg_tag = reg_tag;
+
+        oe.reg_asset(reg_tag, oe.DataID {reg_tag, tag, id, editor_data.active_data_id.transform});
+        oe.dbg_log(oe.str_add({"Modified data id of tag: ", tag, " and id: ", oe.str_add("", id)}));
+    }
+
+    tag = oe.gui_text_box("ModTagTextBox", 10, 50, BUTTON_WIDTH, 30);
+    oe.gui_text("Tag", 25, BUTTON_WIDTH + 20, 50);
+
+    id_parse := oe.gui_text_box("ModIDTextBox", 10, 90, BUTTON_WIDTH, 30);
     oe.gui_text("ID", 25, BUTTON_WIDTH + 20, 90);
 
     parsed, ok := sc.parse_int(id_parse);
