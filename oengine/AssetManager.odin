@@ -125,7 +125,6 @@ load_registry :: proc(path: string) {
 
             if (type == "Texture") {
                 tex := load_texture(strs.clone(res));
-                tex.tag = strs.clone(tag);
                 reg_asset(strs.clone(tag), tex);
             } else if (type == "Model") {
                 reg_asset(strs.clone(tag), load_model(strs.clone(res)));
