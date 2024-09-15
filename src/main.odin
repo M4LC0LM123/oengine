@@ -61,6 +61,10 @@ main :: proc() {
     oe.ent_set_scale(water, {25, 1, 25});
     oe.ent_add_component(water, oe.f_init(water_tex, water.transform));
 
+    sprite := oe.ent_init("sprite_test");
+    oe.ent_set_pos(sprite, {-5, 3, -10});
+    oe.ent_add_component(sprite, oe.sm_init(troll, 0));
+
     ps := oe.ent_init("ParticleSystem");
     oe.ent_set_pos(ps, {5, 3, -10});
     oe.ent_add_component(ps, oe.ps_init());

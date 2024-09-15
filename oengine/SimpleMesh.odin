@@ -4,6 +4,23 @@ import "core:math"
 import "core:fmt"
 import rl "vendor:raylib"
 
+Sprite :: struct {
+    src: rl.Rectangle,
+    up: Vec3,
+    size, origin: Vec2,
+    rotation: f32,
+}
+
+sprite_default :: proc(texture: Texture) -> Sprite {
+    return Sprite {
+        src = {0, 0, f32(texture.width), f32(texture.height)},
+        up = vec3_y(),
+        size = {1, 1},
+        origin = {f32(texture.width) * 0.5, f32(texture.height) * 0.5},
+        rotation = 0,
+    };
+}
+
 SimpleMesh :: struct {
     transform: Transform,
     shape: ShapeType,
@@ -12,6 +29,7 @@ SimpleMesh :: struct {
         Model,
         CubeMap,
         Slope,
+        Sprite,
     },
 
     is_lit: bool,
@@ -28,6 +46,7 @@ sm_init :: proc {
     sm_init_cube,
     sm_init_model,
     sm_init_slope,
+    sm_init_sprite,
 }
 
 @(private = "file")
@@ -116,6 +135,23 @@ sm_init_slope :: proc(slope: Slope, s_color: Color = rl.WHITE) -> ^Component {
     return component;
 }
 
+// temp fix, since the sm_init_tex can also take only a texture as parameter here 
+// you have to pass .SPRITE or any int to distinguish it from sm_init_tex
+sm_init_sprite :: proc(s_texture: Texture, #any_int i: i32, s_color: Color = rl.WHITE) -> ^Component {
+    using component := new(Component);
+
+    component.variant = new(SimpleMesh);
+    sm_init_all(component.variant.(^SimpleMesh), .SPRITE, s_color);
+    component.variant.(^SimpleMesh).texture = s_texture;
+    component.variant.(^SimpleMesh).tex = sprite_default(s_texture);
+
+    update = sm_update;
+    render = sm_render;
+    deinit = sm_deinit;
+
+    return component;
+}
+
 sm_update :: proc(component: ^Component, ent: ^Entity) {
     using self := component.variant.(^SimpleMesh);
     transform = ent.transform;
@@ -150,6 +186,13 @@ sm_render :: proc(component: ^Component) {
                 v, target.position,
                 target.rotation, target.scale,
                 texture, color,
+            );
+        case Sprite:
+            rl.DrawBillboardPro(
+                ecs_world.camera.rl_matrix, texture,
+                v.src, target.position, v.up,
+                v.size, v.origin, v.rotation,
+                color,
             );
     }
 
