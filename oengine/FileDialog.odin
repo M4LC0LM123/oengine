@@ -52,6 +52,13 @@ fd_file_path :: proc() -> string {
         }
     };
 
+    if (sys_os() == OSType.Darwin) {
+        window := sdl_create_window(800, 600, "Files");
+        sdl_window(window, sdl_create_renderer(window), nil, render);
+
+        return res_path;
+    }
+
     sdl_thread_proc :: proc(thread: ^thread.Thread) {
         window := sdl_create_window(800, 600, "Files");
         sdl_window(window, sdl_create_renderer(window), nil, render);
