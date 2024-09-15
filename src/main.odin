@@ -97,6 +97,8 @@ main :: proc() {
             oe.attach_sound_filter(.LOWPASS);
         }
 
+        if (oe.key_pressed(.R)) do oe.reload_assets();
+
         if (oe.key_down(oe.Key.LEFT)) {
             oe.ent_get_component_var(player, ^oe.RigidBody).velocity.x = -7.5;
         } else if (oe.key_down(oe.Key.RIGHT)) {

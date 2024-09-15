@@ -124,7 +124,9 @@ load_registry :: proc(path: string) {
             res := get_path(asset_json["path"].(json.String));
 
             if (type == "Texture") {
-                reg_asset(strs.clone(tag), load_texture(strs.clone(res)));
+                tex := load_texture(strs.clone(res));
+                tex.tag = strs.clone(tag);
+                reg_asset(strs.clone(tag), tex);
             } else if (type == "Model") {
                 reg_asset(strs.clone(tag), load_model(strs.clone(res)));
             }
@@ -133,6 +135,67 @@ load_registry :: proc(path: string) {
 
     delete(data);
     json.destroy_value(json_data);
+}
+
+reload_assets :: proc() {
+    using asset_manager;
+
+    for tag, &asset in registry {
+        if (asset_has_path(asset)) {
+            load_asset(&asset); 
+        }
+    }
+}
+
+@(private)
+asset_has_path :: proc(asset: Asset) -> bool {
+    if (!asset_is(asset, DataID)) {
+        return true;
+    }
+
+    return false;
+}
+
+load_asset :: proc(asset: ^Asset) {
+    #partial switch &v in asset {
+        case Texture:
+            v = load_texture(v.path);
+            dbg_log(str_add("Loading texture: ", v.path));
+        case Model:
+            v = load_model(v.path);
+            dbg_log(str_add("Loading model: ", v.path));
+        case Shader:
+            v = load_shader(v.v_path, v.f_path);
+            dbg_log(str_add("Loading shader: ", v.v_path));
+            dbg_log(str_add("Loading shader: ", v.f_path));
+        case CubeMap:
+            for &i in v {
+                i = load_texture(i.path);
+                dbg_log(str_add("Loading cubemap texture: ", i.path));
+            }
+        case Sound:
+            v = load_sound(v.path);
+            dbg_log(str_add("Loading sound: ", v.path));
+    }
+}
+
+get_asset_type :: proc(asset: Asset) -> $T {
+    #partial switch v in asset {
+        case Texture:
+            return asset.(Texture); 
+        case Model:
+            return asset.(Model);
+        case Shader: 
+            return asset.(Shader);
+        case CubeMap:
+            return asset.(CubeMap);
+        case Sound:
+            return asset.(Sound);
+        case DataID:
+            return asset.(DataID);
+    }
+
+    return nil;
 }
 
 @(private)
