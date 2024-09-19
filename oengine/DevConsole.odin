@@ -22,6 +22,7 @@ console_init :: proc() {
     _toggle_key = .GRAVE;
     output = make([dynamic]string);
     commands = make(map[string]ConsoleCommand);
+    _rec = {0, -f32(w_render_height() / 2), f32(w_render_width()), f32(w_render_height() / 2)};
 
     console_register(new_command("listcmds", "List all available commands", list_cmds));
     console_register(new_command("help", "List all available commands", list_cmds));
@@ -57,18 +58,62 @@ console_exec :: proc(command: string) {
 
 console_print :: proc(str: string) {
     using dev_console;
+
+    // id := 0;
+    // res: string;
+    // for i in 0..<len(str) {
+    //     c := str[i];
+    //     ci: u8;
+    //     if (i != len(str) - 1) do ci = str[i + 1];
+    //
+    //     res = str_add(res, str[id:i]);
+    //
+    //     if (c == '\\' && ci == 'n') {
+    //         append(&output, strs.clone(res));
+    //         id = i + 2;
+    //     }
+    // }
+
     append(&output, strs.clone(str));
 }
 
 console_update :: proc() {
     using dev_console;
-    _rec = {0, 0, f32(w_render_width()), f32(w_render_height() / 2)};
+
+    @static frame_counter: f32;
+    @static animating: bool;
+
     if (key_pressed(_toggle_key)) {
         active = !active;
 
-        if (gui.text_boxes["CommandTextBox"] != nil) {
-            gui.text_boxes["CommandTextBox"].active = !gui.text_boxes["CommandTextBox"].active;
+        if (active) {
+            animating = true;
+            _rec.y = -f32(w_render_height() / 2);
         }
+
+        if (gui.text_boxes["CommandTextBox"] != nil) {
+            gui.text_boxes["CommandTextBox"].active = active;
+        } else {
+            gui_text_box(
+                "CommandTextBox", 0, 
+                _rec.y + _rec.height - DC_TEXTBOX_SIZE, 
+                _rec.width - DC_TEXTBOX_SIZE, DC_TEXTBOX_SIZE, decorated = false, standalone = true,
+                except = []char{'`'}
+            );
+            gui.text_boxes["CommandTextBox"].active = active;
+        }
+    }
+
+    if (animating) {
+        frame_counter += rl.GetFrameTime();
+        _rec.y = rl.EaseLinearNone(frame_counter, 0, f32(w_render_height() / 2), 0.1) - f32(w_render_height() / 2);
+
+        if (frame_counter >= 0.1) {
+            frame_counter = 0;
+            animating = false;
+        }
+
+        // fmt.println(_rec.y, frame_counter);
     }
 
     if (active) {
@@ -109,12 +154,13 @@ console_render :: proc() {
 
         command = gui_text_box(
             "CommandTextBox", 0, 
-            _rec.height - DC_TEXTBOX_SIZE, 
-            _rec.width - DC_TEXTBOX_SIZE, DC_TEXTBOX_SIZE, decorated = false, standalone = true
+            _rec.y + _rec.height - DC_TEXTBOX_SIZE, 
+            _rec.width - DC_TEXTBOX_SIZE, DC_TEXTBOX_SIZE, decorated = false, standalone = true,
+            except = []char{'`'}
         );
 
         if (gui_button(
-            ">", _rec.width - DC_TEXTBOX_SIZE, _rec.height - DC_TEXTBOX_SIZE, 
+            ">", _rec.width - DC_TEXTBOX_SIZE, _rec.y + _rec.height - DC_TEXTBOX_SIZE, 
             DC_TEXTBOX_SIZE, DC_TEXTBOX_SIZE, standalone = true, decorated = false)) {
             if (command != STR_EMPTY) { 
                 console_exec(command);

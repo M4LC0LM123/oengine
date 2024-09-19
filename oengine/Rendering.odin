@@ -78,6 +78,12 @@ tile_texture :: proc(texture: Texture, tx: i32) -> Texture {
     return load_texture(target.texture);
 }
 
+draw_debug_axis :: proc(#any_int size: i32 = 1) {
+    rl.DrawLine3D({}, vec3_x(), BLUE);
+    rl.DrawLine3D({}, vec3_y(), RED);
+    rl.DrawLine3D({}, vec3_z(), GREEN);
+}
+
 draw_data_id :: proc(using self: DataID) {
     draw_cube_wireframe(transform.position, transform.rotation, transform.scale, WHITE);
     rl.DrawBillboard(ecs_world.camera.rl_matrix, tag_image, transform.position, 0.5, YELLOW);

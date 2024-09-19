@@ -65,6 +65,7 @@ ct_update :: proc(using self: ^CameraTool) {
 ct_render :: proc(using self: ^CameraTool) {
     if (mode == .PERSPECTIVE) {
         rl.BeginMode3D(camera_perspective.rl_matrix);
+        oe.draw_debug_axis(3);
         oe.ew_render();
         render();
         rl.EndMode3D();

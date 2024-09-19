@@ -355,6 +355,35 @@ transform_to_rl_bb :: proc(transform: Transform) -> rl.BoundingBox {
     };
 }
 
+contains :: proc(element, array: rawptr, arr_len: int, $T: typeid) -> bool {
+    elem := cast(^T)element;
+    arr := cast([^]T)array;
+    // fmt.println(elem^, arr[0:arr_len]);
+
+    for i in arr[0:arr_len] {
+        if i == elem^ {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+arr_id :: proc(element, array: rawptr, arr_len: int, $T: typeid) -> int {
+    elem := cast(^T)element;
+    arr := cast([^]T)array;
+    // fmt.println(elem^, arr[0:arr_len]);
+
+    for i in 0..<len(arr[0:arr_len]) {
+        if arr[0:arr_len][i] == elem^ {
+            return i;
+        }
+    }
+
+    return 0;
+}
+
+
 OSType :: enum {
     Unknown,
     Windows,

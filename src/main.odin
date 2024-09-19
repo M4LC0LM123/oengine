@@ -15,7 +15,7 @@ main :: proc() {
     oe.window.debug_stats = true;
 
     oe.ew_init(oe.vec3_y() * 50);
-    oe.load_registry("registry.json");
+    oe.load_registry("../registry.json");
 
     camera := oe.cm_init(oe.vec3_zero());
     is_mouse_locked: bool = false;
@@ -100,8 +100,6 @@ main :: proc() {
             oe.play_sound(jump_sfx);
             oe.attach_sound_filter(.LOWPASS);
         }
-
-        if (oe.key_pressed(.R)) do oe.reload_assets();
 
         if (oe.key_down(oe.Key.LEFT)) {
             oe.ent_get_component_var(player, ^oe.RigidBody).velocity.x = -7.5;

@@ -12,7 +12,7 @@ GuiTextBox :: struct {
 }
 
 @(private)
-gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated: bool = true, standalone: bool = false) -> string {
+gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated: bool = true, standalone: bool = false, except: []char = {}) -> string {
     w_active := gui_active();
     if (!standalone) { 
         if (w_active != nil && !w_active.active) do return text;
@@ -144,7 +144,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
             }
         } else {
             key := []char{char_pressed()};
-            if (key[0] >= 32 && key[0] <= 125) {
+            if (key[0] >= 32 && key[0] <= 125 && !contains(&key[0], raw_data(except), len(except), char)) {
                 text = str_add(text, utf8.runes_to_string(key));
             }
         }
@@ -158,7 +158,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
     return text;
 }
 
-gui_text_box :: proc(tag: string, x, y, w, h: f32, decorated: bool = true, standalone: bool = false) -> string {
+gui_text_box :: proc(tag: string, x, y, w, h: f32, decorated: bool = true, standalone: bool = false, except: []char = {}) -> string {
     if (!gui_text_box_exists(tag)) {
         instance := new(GuiTextBox);
         instance.text = "";
@@ -168,5 +168,5 @@ gui_text_box :: proc(tag: string, x, y, w, h: f32, decorated: bool = true, stand
     }
 
     inst := gui.text_boxes[tag];
-    return gui_text_box_render(inst, x, y, w, h, decorated, standalone);
+    return gui_text_box_render(inst, x, y, w, h, decorated, standalone, except);
 }
