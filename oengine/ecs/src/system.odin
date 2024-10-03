@@ -1,5 +1,7 @@
 package ecs
 
+import "core:fmt"
+
 System :: struct {
     required_components: []typeid,
     system_proc: proc(^Context, Entity),
@@ -7,11 +9,16 @@ System :: struct {
 
 register_system :: proc(ctx: ^Context, required_components: []typeid, system_proc: proc(^Context, Entity), render: bool = false) {
   system := System{
-    required_components = required_components,
+    required_components = make([]typeid, len(required_components)),
     system_proc = system_proc,
   }
+  
+  for i in 0..<len(required_components) {
+    system.required_components[i] = required_components[i];
+  }
+
   if (!render) {
-    append_elem(&ctx.systems, system)
+    append_elem(&ctx.systems, system);
     return;
   }
 

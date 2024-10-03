@@ -35,7 +35,7 @@ add_component :: proc(ctx: ^Context, entity: Entity, component: $T) -> (^T, ECS_
   } 
   array := cast(^[dynamic]T)ctx.component_map[T].data
   comp_map := &ctx.component_map[T]
-  
+
   // Add a new component to the component array.
   append_elem(array, component) 
   // Map the entity to the new index, so we can lookup the component index later,

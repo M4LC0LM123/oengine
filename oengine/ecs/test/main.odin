@@ -22,6 +22,8 @@ main :: proc() {
 
     ecs.register_system(&ctx, {TestVal}, test_system);
 
+    fmt.println(ctx.systems);
+
     player := ecs.create_entity(&ctx)
     defer ecs.destroy_entity(&ctx, player)
 

@@ -2,6 +2,7 @@ package oengine
 
 import rl "vendor:raylib"
 import rlg "rllights"
+import ecs "ecs/src"
 import "core:fmt"
 
 MAX_LIGHTS :: 44
@@ -9,6 +10,7 @@ FIXED_TIME_STEP :: 1.0 / 60.0
 
 ecs_world: struct {
     ents: map[string]^Entity,
+    ecs_ctx: ecs.Context,
     physics: PhysicsWorld,
     camera: ^Camera,
     rlg_ctx: rlg.Context,
@@ -35,6 +37,8 @@ ew_remove :: proc(tag: string) {
 
 ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     using ecs_world;
+    ecs_ctx = ecs.init_ecs();
+
     ents = make(map[string]^Entity);
     asset_manager.registry = make(map[string]Asset);
     pw_init(&physics, s_gravity, s_iter);
@@ -50,11 +54,15 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
 
     img := rl.GenImageGradientLinear(128, 64, 0, WHITE, BLACK);
     tag_image = load_texture(rl.LoadTextureFromImage(img));
+
+    ecs.register_system(&ecs_ctx, {Transform}, transform_render);
 }
 
 ew_update :: proc() {
     using ecs_world;
     ew_fixed_update();
+
+    ecs.run_systems(&ecs_ctx);
 
     fog_update(camera.position);
     rlg.SetViewPositionV(camera.position);
@@ -114,6 +122,8 @@ ew_deinit :: proc() {
     using ecs_world;
 
     rlg.DestroyContext(rlg_ctx);
+
+    ecs.deinit_ecs(&ecs_ctx);
 
     pw_deinit(&physics);
 

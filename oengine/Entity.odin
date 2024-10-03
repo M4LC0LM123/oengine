@@ -1,7 +1,42 @@
 package oengine
 
 import "core:fmt"
+import ecs "ecs/src"
 import rl "vendor:raylib"
+
+AEntity :: struct {
+    data: ecs.Entity,
+    tag: string,
+}
+
+aent_init :: proc(tag: string = "Entity") -> AEntity {
+    res := AEntity {
+        data = ecs.create_entity(&ecs_world.ecs_ctx),
+        tag = tag,
+    };
+
+    add_component(res, transform_default());
+
+    return res;
+}
+
+add_component :: proc(ent: AEntity, component: $T) -> ^T {
+    c, err := ecs.add_component(&ecs_world.ecs_ctx, ent.data, component);
+    return c;
+}
+
+has_component :: proc(ent: AEntity, $T: typeid) -> bool {
+    return ecs.has_component(&ecs_world.ecs_ctx, ent.data, T);
+}
+
+get_component :: proc(ent: AEntity, $T: typeid) -> ^T {
+    c, err := ecs.get_component(&ecs_world.ecs_ctx, ent.data, T);
+    return c;
+}
+
+remove_component :: proc(ent: AEntity, $T: typeid) {
+    ecs.remove_component(&ecs_world.ecs_ctx, ent.data, T);
+}
 
 Entity :: struct {
     tag: string,
