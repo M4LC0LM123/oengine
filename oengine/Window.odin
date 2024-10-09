@@ -83,6 +83,8 @@ w_create :: proc(name: string = "Game") {
     w_set_instance_name(name);
 
     console_init();
+
+    checkered_image = load_texture(rl.LoadTextureFromImage(rl.GenImageChecked(4, 4, 1, 1, WHITE, BLACK)));
 }
 
 w_set_instance_name :: proc(name: string) {
@@ -240,7 +242,7 @@ w_begin_render :: proc() {
     rl.BeginTextureMode(window.target);
 }
 
-DBG_INFO_STAT_COUNT :: 5
+DBG_INFO_STAT_COUNT :: 7
 DBG_INFO_POS_COUNT :: 5
 
 w_end_render :: proc() {
@@ -275,9 +277,11 @@ w_end_render :: proc() {
         rl.DrawText(str.clone_to_cstring(str_add("fps: ", rl.GetFPS())), top_left.x, top_left.y, 16, rl.YELLOW);
         rl.DrawText(str.clone_to_cstring(str_add("dt: ", rl.GetFrameTime())), top_left.x, top_left.y + OFFSET, 16, rl.YELLOW);
         rl.DrawText(str.clone_to_cstring(str_add("time: ", rl.GetTime())), top_left.x, top_left.y + OFFSET * 2, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("ents: ", len(ecs_world.ents))), top_left.x, top_left.y + OFFSET * 3, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("rbs: ", len(ecs_world.physics.bodies))), top_left.x, top_left.y + OFFSET * 4, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), top_left.x, top_left.y + OFFSET * 5, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("ents: ", len(ecs_world.ecs_ctx.entities))), top_left.x, top_left.y + OFFSET * 3, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("sys_updts: ", len(ecs_world.ecs_ctx._update_systems))), top_left.x, top_left.y + OFFSET * 4, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("sys_rndrs: ", len(ecs_world.ecs_ctx._render_systems))), top_left.x, top_left.y + OFFSET * 5, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("rbs: ", len(ecs_world.physics.bodies))), top_left.x, top_left.y + OFFSET * 6, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), top_left.x, top_left.y + OFFSET * 7, 16, rl.YELLOW);
     }
 
     rl.EndTextureMode();

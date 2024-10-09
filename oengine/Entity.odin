@@ -1,17 +1,17 @@
 package oengine
 
 import "core:fmt"
-import ecs "ecs/src"
+import ecs "ecs"
 import rl "vendor:raylib"
 
 AEntity :: struct {
-    data: ecs.Entity,
+    data: ^ecs.Entity,
     tag: string,
 }
 
 aent_init :: proc(tag: string = "Entity") -> AEntity {
     res := AEntity {
-        data = ecs.create_entity(&ecs_world.ecs_ctx),
+        data = ecs.entity_init(&ecs_world.ecs_ctx),
         tag = tag,
     };
 
@@ -21,21 +21,30 @@ aent_init :: proc(tag: string = "Entity") -> AEntity {
 }
 
 add_component :: proc(ent: AEntity, component: $T) -> ^T {
-    c, err := ecs.add_component(&ecs_world.ecs_ctx, ent.data, component);
+    c := ecs.add_component(ent.data, component);
+  
+    if (type_of(component) == RigidBody) {
+        append(&ecs_world.physics.bodies, cast(^RigidBody)c);
+    }
+
     return c;
 }
 
 has_component :: proc(ent: AEntity, $T: typeid) -> bool {
-    return ecs.has_component(&ecs_world.ecs_ctx, ent.data, T);
+    return ecs.has_component(ent.data, T);
 }
 
 get_component :: proc(ent: AEntity, $T: typeid) -> ^T {
-    c, err := ecs.get_component(&ecs_world.ecs_ctx, ent.data, T);
+    c := ecs.get_component(ent.data, T);
     return c;
 }
 
 remove_component :: proc(ent: AEntity, $T: typeid) {
-    ecs.remove_component(&ecs_world.ecs_ctx, ent.data, T);
+    ecs.remove_component(ent.data, T);
+}
+
+aent_deinit :: proc(ent: AEntity) {
+    ecs.ecs_remove(&ecs_world.ecs_ctx, ent.data);
 }
 
 Entity :: struct {

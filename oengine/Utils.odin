@@ -2,6 +2,7 @@ package oengine
 
 import str "core:strings"
 import rl "vendor:raylib"
+import ecs "ecs"
 import "core:math"
 import "core:fmt"
 import "core:math/linalg"
@@ -353,6 +354,14 @@ transform_to_rl_bb :: proc(transform: Transform) -> rl.BoundingBox {
         min = transform.position - transform.scale * 0.5,
         max = transform.position + transform.scale * 0.5
     };
+}
+
+is_nil :: proc(data: ..rawptr) -> bool {
+    for obj in data {
+        if (obj == nil) do return true;
+    }
+
+    return false;
 }
 
 contains :: proc(element, array: rawptr, arr_len: int, $T: typeid) -> bool {

@@ -3,6 +3,7 @@ package oengine
 import "core:math"
 import "core:fmt"
 import rl "vendor:raylib"
+import ecs "ecs"
 
 MASS_SCALAR :: 100
 MAX_VEL :: 50
@@ -96,52 +97,39 @@ rb_init_all :: proc(using rb: ^RigidBody, s_density, s_restitution: f32, s_stati
 
     id = u32(len(&ecs_world.physics.bodies));
     joints = make([dynamic]u32);
-    append(&ecs_world.physics.bodies, rb);
 }
 
-rb_init_def :: proc(s_starting: Transform, s_density, s_restitution: f32, s_static: bool, s_shape: ShapeType) -> ^Component {
-    using component := new(Component);
+rb_init_def :: proc(s_starting: Transform, s_density, s_restitution: f32, s_static: bool, s_shape: ShapeType) -> RigidBody {
+    using rb: RigidBody;
 
-    component.variant = new(RigidBody);
-    rb_init_all(component.variant.(^RigidBody), s_density, s_restitution, s_static, s_shape);
-    component.variant.(^RigidBody).starting = s_starting;
+    rb_init_all(&rb, s_density, s_restitution, s_static, s_shape);
+    rb_starting_transform(&rb, s_starting);
 
-    update = rb_update;
-    render = rb_render;
-
-    return component;
+    return rb;
 }
 
-rb_init_terrain :: proc(s_starting: Transform, s_density, s_restitution: f32, s_heightmap: HeightMap) -> ^Component {
-    using component := new(Component);
+rb_init_terrain :: proc(s_starting: Transform, s_density, s_restitution: f32, s_heightmap: HeightMap) -> RigidBody {
+    using rb: RigidBody;
 
-    component.variant = new(RigidBody);
-    rb_init_all(component.variant.(^RigidBody), s_density, s_restitution, true, ShapeType.HEIGHTMAP);
-    c_variant(component, ^RigidBody).shape_variant = s_heightmap;
-    component.variant.(^RigidBody).starting = s_starting;
+    rb_init_all(&rb, s_density, s_restitution, true, ShapeType.HEIGHTMAP);
+    rb.shape_variant = s_heightmap;
+    rb_starting_transform(&rb, s_starting);
 
-    update = rb_update;
-    render = rb_render;
-
-    return component;
+    return rb;
 }
 
-rb_init_slope :: proc(s_starting: Transform, s_density, s_restitution: f32, s_slope: Slope, reverse: bool = false) -> ^Component {
-    using component := new(Component);
+rb_init_slope :: proc(s_starting: Transform, s_density, s_restitution: f32, s_slope: Slope, reverse: bool = false) -> RigidBody {
+    using rb: RigidBody;
 
-    component.variant = new(RigidBody);
-    rb_init_all(component.variant.(^RigidBody), s_density, s_restitution, true, ShapeType.SLOPE);
-    c_variant(component, ^RigidBody).shape_variant = s_slope;
-    component.variant.(^RigidBody).starting = s_starting;
+    rb_init_all(&rb, s_density, s_restitution, true, ShapeType.SLOPE);
+    rb.shape_variant = s_slope;
+    rb_starting_transform(&rb, s_starting);
 
     if (reverse) {
-        append(&ecs_world.physics.reverse_slopes, component.variant.(^RigidBody).id);
+        append(&ecs_world.physics.reverse_slopes, rb.id);
     }
 
-    update = rb_update;
-    render = rb_render;
-
-    return component;
+    return rb;
 }
 
 rb_starting_transform :: proc(using self: ^RigidBody, trans: Transform) {
@@ -164,13 +152,17 @@ rb_fixed_update :: proc(using self: ^RigidBody, dt: f32) {
     force = acceleration * mass;
 }
 
-rb_update :: proc(component: ^Component, ent: ^Entity) {
-    using self := component.variant.(^RigidBody);
-    ent.transform = transform;
+rb_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
+    t, rb := ecs.get_components(ent, Transform, RigidBody);
+    if (is_nil(t, rb)) do return;
+
+    t^ = rb.transform;
 }
 
-rb_render :: proc(component: ^Component) {
-    using self := component.variant.(^RigidBody);
+rb_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
+    rb := ecs.get_component(ent, RigidBody);
+    if (is_nil(rb)) do return;
+    using rb;
 
     if (!PHYS_DEBUG) do return;
 

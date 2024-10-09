@@ -2,8 +2,9 @@ package oengine
 
 import rl "vendor:raylib"
 import rlg "rllights"
-import ecs "ecs/src"
+import ecs "ecs"
 import "core:fmt"
+import "core:thread"
 
 MAX_LIGHTS :: 44
 FIXED_TIME_STEP :: 1.0 / 60.0
@@ -37,7 +38,7 @@ ew_remove :: proc(tag: string) {
 
 ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     using ecs_world;
-    ecs_ctx = ecs.init_ecs();
+    ecs_ctx = ecs.ecs_init();
 
     ents = make(map[string]^Entity);
     asset_manager.registry = make(map[string]Asset);
@@ -55,17 +56,31 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     img := rl.GenImageGradientLinear(128, 64, 0, WHITE, BLACK);
     tag_image = load_texture(rl.LoadTextureFromImage(img));
 
-    ecs.register_system(&ecs_ctx, {Transform}, transform_render);
+    ecs.register_system(&ecs_ctx, rb_update, ecs.ECS_UPDATE);
+    ecs.register_system(&ecs_ctx, lc_update, ecs.ECS_UPDATE);
+    ecs.register_system(&ecs_ctx, ps_update, ecs.ECS_UPDATE);
+
+    ecs.register_system(&ecs_ctx, ps_render, ecs.ECS_RENDER);
+    ecs.register_system(&ecs_ctx, sm_render, ecs.ECS_RENDER);
+    ecs.register_system(&ecs_ctx, f_render, ecs.ECS_RENDER);
+
+    if (OE_DEBUG) {
+        ecs.register_system(&ecs_ctx, rb_render, ecs.ECS_RENDER);
+    }
+
+    if (PHYS_DEBUG) {
+        ecs.register_system(&ecs_ctx, transform_render, ecs.ECS_RENDER);
+    }
 }
 
 ew_update :: proc() {
     using ecs_world;
-    ew_fixed_update();
-
-    ecs.run_systems(&ecs_ctx);
+    thread.run(ew_fixed_update);
 
     fog_update(camera.position);
     rlg.SetViewPositionV(camera.position);
+
+    ecs.ecs_update(&ecs_ctx);
 
     for tag in ents {
         ent := ew_get_entity(tag);
@@ -93,25 +108,27 @@ ew_fixed_update :: proc() {
 ew_render :: proc() {
     using ecs_world;
 
-    rl.rlEnableBackfaceCulling();
-    if (PHYS_DEBUG) {
-        draw_cube_wireframe(
-            {physics.tree._bounds.x, physics.tree._bounds.y, physics.tree._bounds.z},
-            vec3_zero(),
-            {physics.tree._bounds.width, physics.tree._bounds.height, physics.tree._bounds.depth},
-            rl.GREEN,
-        )
-    }
+    ecs.ecs_render(&ecs_ctx);
 
-    for tag in ents {
-        ent := ew_get_entity(tag);
-        ent->render();
-    }
-
-    if (OE_DEBUG) {
-        for data_id in get_reg_data_ids() { draw_data_id(data_id); }
-    }
-
+    // rl.rlEnableBackfaceCulling();
+    // if (PHYS_DEBUG) {
+    //     draw_cube_wireframe(
+    //         {physics.tree._bounds.x, physics.tree._bounds.y, physics.tree._bounds.z},
+    //         vec3_zero(),
+    //         {physics.tree._bounds.width, physics.tree._bounds.height, physics.tree._bounds.depth},
+    //         rl.GREEN,
+    //     )
+    // }
+    //
+    // for tag in ents {
+    //     ent := ew_get_entity(tag);
+    //     ent->render();
+    // }
+    //
+    // if (OE_DEBUG) {
+    //     for data_id in get_reg_data_ids() { draw_data_id(data_id); }
+    // }
+    //
     rl.rlDisableBackfaceCulling();
     for msc in physics.mscs {
         msc_render(msc);
@@ -123,7 +140,7 @@ ew_deinit :: proc() {
 
     rlg.DestroyContext(rlg_ctx);
 
-    ecs.deinit_ecs(&ecs_ctx);
+    ecs.ecs_deinit(&ecs_ctx);
 
     pw_deinit(&physics);
 

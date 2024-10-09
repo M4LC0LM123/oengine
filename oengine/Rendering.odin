@@ -12,6 +12,8 @@ DEF_SLICES :: 16
 SkyBox :: [6]Texture;
 CubeMap :: [6]Texture;
 
+DEFAULT_MATERIAL := rl.LoadMaterialDefault();
+
 CubeMapSide :: enum {
     FRONT,
     BACK,
@@ -349,6 +351,7 @@ draw_capsule_wireframe :: proc(pos, rot: Vec3, radius, height: f32, color: Color
 }
 
 draw_skybox :: proc(textures: [6]Texture, tint: Color, scale: i32 = 200) {
+    rl.rlEnableBackfaceCulling();
     fix: f32 = 0.5;
     rl.rlPushMatrix();
     rl.rlTranslatef(ecs_world.camera.position.x, ecs_world.camera.position.y, ecs_world.camera.position.z);

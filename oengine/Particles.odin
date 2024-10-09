@@ -2,6 +2,7 @@ package oengine
 
 import rl "vendor:raylib"
 import "core:fmt"
+import ecs "ecs"
 
 ParticleBehaviour :: struct {
     vel, accel, grav: Vec3,
@@ -26,10 +27,12 @@ Particles :: struct {
     timer: Timer,
 }
 
+checkered_image: Texture; 
+
 particle_init :: proc(spawn_pos: Vec3 = {}, test_behaviour: bool = true, s_grav: Vec3 = {0, -9.81, 0}, slf: f32 = 10, color: Color = WHITE) -> ^Particle {
     using res := new(Particle);
     tint = color;
-    texture = load_texture(rl.LoadTextureFromImage(rl.GenImageChecked(4, 4, 1, 1, WHITE, BLACK)));
+    texture = checkered_image;
     position = spawn_pos;
     size = {0.5, 0.5, 0.5};
     life_time = slf;
@@ -72,21 +75,20 @@ ps_add_particle :: proc(using self: ^Particles, p: ^Particle, delay: f32 = 0) {
     append(&particles, clone);
 }
 
-ps_init :: proc() -> ^Component {
-    using component := new(Component);
+ps_init :: proc() -> Particles {
+    ps: Particles;
 
-    variant = new(Particles);
-    ps_init_all(variant.(^Particles));
+    ps_init_all(&ps);
 
-    update = ps_update;
-    render = ps_render;
-
-    return component;
+    return ps;
 }
 
-ps_update :: proc(component: ^Component, ent: ^Entity) {
-    using self := component.variant.(^Particles);
-    position = ent.transform.position;
+ps_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
+    t, ps := ecs.get_components(ent, Transform, Particles);
+    if (is_nil(t, ps)) do return;
+    using ps;
+
+    position = t.position;
 
 
     for i in 0..<len(particles) {
@@ -101,13 +103,25 @@ ps_update :: proc(component: ^Component, ent: ^Entity) {
     }
 
     for &p in _removed_particles {
-        if (p != -1 && p < len(particles)) do ordered_remove(&particles, p);
+        if (p != -1 && p < len(particles)) { 
+            pr := particles[p];
+            
+            for b in pr.behaviours {
+                free(b.data); 
+            }
+
+            delete(pr.behaviours);
+            free(pr);
+            ordered_remove(&particles, p); 
+        }
         p = -1;
     }
 }
 
-ps_render :: proc(component: ^Component) {
-    using self := component.variant.(^Particles);
+ps_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
+    ps := ecs.get_component(ent, Particles);
+    if (is_nil(ps)) do return;
+    using ps;
 
     for p in particles {
         p->render();

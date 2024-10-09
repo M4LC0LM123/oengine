@@ -1,7 +1,7 @@
 package oengine
 
 import rl "vendor:raylib"
-import ecs "ecs/src"
+import ecs "ecs"
 import "core:fmt"
 
 Transform :: struct {
@@ -18,9 +18,9 @@ transform_default :: proc() -> Transform {
     };
 }
 
-transform_render :: proc(ctx: ^ecs.Context, ent: ecs.Entity) {
-    t, err := ecs.get_component(ctx, ent, Transform);
-    if (err != .NO_ERROR) do return;
+transform_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
+    t := ecs.get_component(ent, Transform);
+    if (is_nil(t)) do return;
 
-    draw_cube_wireframe(t.position, t.rotation, t.scale, GREEN); 
+    if (OE_DEBUG) do draw_cube_wireframe(t.position, t.rotation, t.scale, GREEN); 
 }

@@ -3,6 +3,7 @@ package oengine
 import "core:math"
 import "core:fmt"
 import rl "vendor:raylib"
+import ecs "ecs"
 
 Sprite :: struct {
     src: rl.Rectangle,
@@ -65,104 +66,73 @@ sm_init_all :: proc(using sm: ^SimpleMesh, s_shape: ShapeType, s_color: Color) {
     starting_color = color;
 }
 
-sm_init_def :: proc(s_shape: ShapeType = .BOX, s_color: Color = rl.WHITE) -> ^Component {
-    using component := new(Component);
+sm_init_def :: proc(s_shape: ShapeType = .BOX, s_color: Color = rl.WHITE) -> SimpleMesh {
+    sm: SimpleMesh;
 
-    component.variant = new(SimpleMesh);
-    sm_init_all(component.variant.(^SimpleMesh), s_shape, s_color);
+    sm_init_all(&sm, s_shape, s_color);
 
-    update = sm_update;
-    render = sm_render;
-    deinit = sm_deinit;
-
-    return component;
+    return sm;
 }
 
-sm_init_tex :: proc(s_texture: Texture, s_shape: ShapeType = .BOX, s_color: Color = rl.WHITE) -> ^Component {
-    using component := new(Component);
+sm_init_tex :: proc(s_texture: Texture, s_shape: ShapeType = .BOX, s_color: Color = rl.WHITE) -> SimpleMesh {
+    sm: SimpleMesh;
 
-    component.variant = new(SimpleMesh);
-    sm_init_all(component.variant.(^SimpleMesh), s_shape, s_color);
-    component.variant.(^SimpleMesh).texture = s_texture;
-    component.variant.(^SimpleMesh).tex.(Model).materials[0].maps[rl.MaterialMapIndex.ALBEDO].texture = s_texture.data;
+    sm_init_all(&sm, s_shape, s_color);
+    sm.texture = s_texture;
+    sm.tex.(Model).materials[0].maps[rl.MaterialMapIndex.ALBEDO].texture = s_texture.data;
 
-    update = sm_update;
-    render = sm_render;
-    deinit = sm_deinit;
-
-    return component;
+    return sm;
 }
 
-sm_init_cube :: proc(cube_map: CubeMap, s_color: Color = rl.WHITE) -> ^Component {
-    using component := new(Component);
+sm_init_cube :: proc(cube_map: CubeMap, s_color: Color = rl.WHITE) -> SimpleMesh {
+    sm: SimpleMesh;
 
-    component.variant = new(SimpleMesh);
-    sm_init_all(component.variant.(^SimpleMesh), .CUBEMAP, s_color);
-    component.variant.(^SimpleMesh).tex = cube_map;
+    sm_init_all(&sm, .CUBEMAP, s_color);
+    sm.tex = cube_map;
 
-    update = sm_update;
-    render = sm_render;
-    deinit = sm_deinit;
-
-    return component;
+    return sm;
 }
 
-sm_init_model :: proc(model: Model, s_color: Color = rl.WHITE) -> ^Component {
-    using component := new(Component);
+sm_init_model :: proc(model: Model, s_color: Color = rl.WHITE) -> SimpleMesh {
+    sm: SimpleMesh;
 
-    component.variant = new(SimpleMesh);
-    sm_init_all(component.variant.(^SimpleMesh), .MODEL, s_color);
-    component.variant.(^SimpleMesh).tex = model;
+    sm_init_all(&sm, .MODEL, s_color);
+    sm.tex = model;
 
-    update = sm_update;
-    render = sm_render;
-    deinit = sm_deinit;
-
-    return component;
+    return sm;
 }
 
-sm_init_slope :: proc(slope: Slope, s_color: Color = rl.WHITE) -> ^Component {
-    using component := new(Component);
+sm_init_slope :: proc(slope: Slope, s_color: Color = rl.WHITE) -> SimpleMesh {
+    sm: SimpleMesh;
 
-    component.variant = new(SimpleMesh);
-    sm_init_all(component.variant.(^SimpleMesh), .SLOPE, s_color);
-    component.variant.(^SimpleMesh).tex = slope;
+    sm_init_all(&sm, .SLOPE, s_color);
+    sm.tex = slope;
 
-    update = sm_update;
-    render = sm_render;
-    deinit = sm_deinit;
-
-    return component;
+    return sm;
 }
 
 // temp fix, since the sm_init_tex can also take only a texture as parameter here 
 // you have to pass .SPRITE or any int to distinguish it from sm_init_tex
-sm_init_sprite :: proc(s_texture: Texture, #any_int i: i32, s_color: Color = rl.WHITE) -> ^Component {
-    using component := new(Component);
+sm_init_sprite :: proc(s_texture: Texture, #any_int i: i32, s_color: Color = rl.WHITE) -> SimpleMesh {
+    sm: SimpleMesh;
 
-    component.variant = new(SimpleMesh);
-    sm_init_all(component.variant.(^SimpleMesh), .SPRITE, s_color);
-    component.variant.(^SimpleMesh).texture = s_texture;
-    component.variant.(^SimpleMesh).tex = sprite_default(s_texture);
+    sm_init_all(&sm, .SPRITE, s_color);
+    sm.texture = s_texture;
+    sm.tex = sprite_default(s_texture);
 
-    update = sm_update;
-    render = sm_render;
-    deinit = sm_deinit;
-
-    return component;
+    return sm;
 }
 
-sm_update :: proc(component: ^Component, ent: ^Entity) {
-    using self := component.variant.(^SimpleMesh);
-    transform = ent.transform;
+sm_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
+    t, sm:= ecs.get_components(ent, Transform, SimpleMesh);
+    if (is_nil(t, sm)) do return;
+    using sm;
+
+    transform = t^;
 
     if (ecs_world.FAE && use_fog) {
         color = mix_color(world_fog.color, starting_color, world_fog.visibility); 
     }
-}
-
-sm_render :: proc(component: ^Component) {
-    using self := component.variant.(^SimpleMesh);
 
     target := transform;
 
@@ -170,7 +140,7 @@ sm_render :: proc(component: ^Component) {
         target.position.y = transform.position.y - 0.5;
     }
 
-    if (!sm_tex_is(self, Model)) {
+    if (!sm_tex_is(sm, Model)) {
         if (shader_defined(shader)) {
             rl.BeginShaderMode(shader);
         }
@@ -196,7 +166,7 @@ sm_render :: proc(component: ^Component) {
             );
     }
 
-    if (sm_tex_is(self, Model)) do return;
+    if (sm_tex_is(sm, Model)) do return;
     rl.EndShaderMode();
 }
 

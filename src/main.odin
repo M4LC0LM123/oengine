@@ -4,12 +4,30 @@ import "core:fmt"
 import str "core:strings"
 import rl "vendor:raylib"
 import oe "../oengine"
-import ecs "../oengine/ecs/src"
+import ecs "../oengine/ecs"
 import "core:math"
 import "core:math/linalg"
 import rlg "../oengine/rllights"
+import "core:mem"
 
 main :: proc() {
+    def_allocator := context.allocator;
+    track_allocator: mem.Tracking_Allocator;
+    mem.tracking_allocator_init(&track_allocator, def_allocator);
+    context.allocator = mem.tracking_allocator(&track_allocator);
+
+    reset_track_allocator :: proc(a: ^mem.Tracking_Allocator) -> bool {
+        err := false;
+
+        for _, value in a.allocation_map {
+            fmt.printf("%v: leaked %v bytes\n", value.location, value.size);
+            err = true;
+        }
+
+        mem.tracking_allocator_clear(a);
+        return err;
+    }
+
     oe.w_create();
     oe.w_set_title("gejm");
     oe.w_set_target_fps(60);
@@ -25,68 +43,81 @@ main :: proc() {
     skybox := oe.get_asset_var("skybox", oe.SkyBox);
     oe.set_skybox_filtering(skybox);
     albedo := oe.get_asset_var("albedo", oe.Texture);
+    orm := oe.get_asset_var("orm", oe.Texture);
     troll := oe.get_asset_var("troll", oe.Texture);
     water_tex := oe.get_asset_var("water", oe.Texture);
     jump_sfx := oe.get_asset_var("huh", oe.Sound);
+    dudlic := oe.get_asset_var("dudlic", oe.Texture);
+    vesna := oe.get_asset_var("vesna", oe.Texture);
+    leon := oe.get_asset_var("leon", oe.Texture);
 
     floor := oe.aent_init("Floor");
     floor_tr := oe.get_component(floor, oe.Transform);
-    floor_tr.scale = oe.vec3_one() * 5;
+    floor_tr.scale = {50, 1, 50};
+    floor_rb := oe.add_component(floor, oe.rb_init(floor_tr^, 1.0, 0.5, true, oe.ShapeType.BOX));
+    floor_sm := oe.add_component(floor, oe.sm_init(orm));
+    oe.sm_set_tiling(floor_sm, 5);
 
-    // floor := oe.ent_init();
-    // oe.ent_add_component(floor, oe.rb_init(floor.starting, 1.0, 0.5, true, oe.ShapeType.BOX));
-    // oe.ent_add_component(floor, oe.sm_init(oe.get_asset_var("orm", oe.Texture)));
-    // oe.ent_set_scale(floor, {50, 1, 50});
-    // oe.sm_set_tiling(oe.ent_get_component_var(floor, ^oe.SimpleMesh), 10);
-    //
-    // wall := oe.ent_init();
-    // oe.ent_add_component(wall, oe.rb_init(wall.starting, 1.0, 0.5, true, oe.ShapeType.BOX));
-    // oe.ent_add_component(wall, oe.sm_init(albedo));
-    // oe.ent_set_pos(wall, {10, 5, 0});
-    // oe.ent_set_scale(wall, {1, 10, 10});
-    //
-    // wall2 := oe.ent_init();
-    // oe.ent_add_component(wall2, oe.rb_init(wall2.starting, 1.0, 0.5, true, oe.ShapeType.BOX));
-    // oe.ent_add_component(wall2, oe.sm_init(albedo));
-    // oe.ent_set_pos(wall2, {-10, 5, 0});
-    // oe.ent_set_scale(wall2, {1, 10, 10});
-    //
-    // player := oe.ent_init("player");
-    // oe.ent_add_component(player, oe.rb_init(player.starting, 1.0, 0.5, false, oe.ShapeType.BOX));
-    // oe.ent_add_component(player, oe.sm_init(oe.tex_flip_vert(troll)));
-    // oe.ent_get_component_var(player, ^oe.SimpleMesh).is_lit = false;
-    // oe.ent_set_pos_y(player, 5);
-    //
-    // light := oe.ent_init("light");
-    // oe.ent_add_component(light, oe.lc_init());
-    // oe.ent_set_pos_y(light, 5);
-    //
-    // water := oe.ent_init("water");
-    // oe.ent_set_pos_z(water, 37.5);
-    // oe.ent_set_scale(water, {25, 1, 25});
-    // oe.ent_add_component(water, oe.f_init(water_tex, water.transform));
-    //
-    // sprite := oe.ent_init("sprite_test");
-    // oe.ent_set_pos(sprite, {-5, 3, -10});
-    // oe.ent_add_component(sprite, oe.sm_init(troll, 0));
-    //
-    // ps := oe.ent_init("ParticleSystem");
-    // oe.ent_set_pos(ps, {5, 3, -10});
-    // oe.ent_add_component(ps, oe.ps_init());
-    // t: oe.Timer;
-    //
-    // msc := oe.msc_init();
-    // oe.msc_from_json(msc, "../assets/maps/test.json");
-    //
-    // msc2 := oe.msc_init();
-    // oe.msc_from_model(msc2, oe.load_model("../assets/maps/bowl.obj"), oe.vec3_z() * -35);
-    //
-    // light2 := oe.ent_init("light2");
-    // oe.ent_add_component(light2, oe.lc_init());
-    // oe.ent_set_pos(light2, {0, 5, -35});
+    wall := oe.aent_init();
+    wall_tr := oe.get_component(wall, oe.Transform);
+    wall_tr.position = {10, 5, 0};
+    wall_tr.scale = {1, 10, 10};
+    wall_rb := oe.add_component(wall, oe.rb_init(wall_tr^, 1.0, 0.5, true, oe.ShapeType.BOX));
+    wall_sm := oe.add_component(wall, oe.sm_init(albedo));
+
+    wall2 := oe.aent_init();
+    wall2_tr := oe.get_component(wall2, oe.Transform);
+    wall2_tr.position = {-10, 5, 0};
+    wall2_tr.scale = {1, 10, 10};
+    wall2_rb := oe.add_component(wall2, oe.rb_init(wall2_tr^, 1.0, 0.5, true, oe.ShapeType.BOX));
+    wall2_sm := oe.add_component(wall2, oe.sm_init(albedo));
+
+    player := oe.aent_init("player");
+    player_tr := oe.get_component(player, oe.Transform);
+    player_tr.position.y = 5;
+    player_rb := oe.add_component(player, oe.rb_init(player_tr^, 1.0, 0.5, false, oe.ShapeType.BOX));
+    player_sm := oe.add_component(player, oe.sm_init(oe.tex_flip_vert(troll)));
+    player_sm.is_lit = false;
+
+    light := oe.aent_init("light");
+    light_tr := oe.get_component(light, oe.Transform);
+    light_tr.position.y = 5;
+    light_lc := oe.add_component(light, oe.lc_init());
+
+    water := oe.aent_init("water");
+    water_tr := oe.get_component(water, oe.Transform);
+    water_tr.position.z = 37.5;
+    water_tr.scale = {25, 1, 25};
+    water_f := oe.add_component(water, oe.f_init(water_tex));
+
+    sprite := oe.aent_init("sprite_test");
+    sprite_tr := oe.get_component(sprite, oe.Transform);
+    sprite_tr.position = {-5, 3, -10};
+    sprite_sm := oe.add_component(sprite, oe.sm_init(troll, 0));
+
+    ps := oe.aent_init("ParticleSystem");
+    ps_tr := oe.get_component(ps, oe.Transform);
+    ps_tr.position = {5, 3, -10};
+    ps_ps := oe.add_component(ps, oe.ps_init());
+    t: oe.Timer;
+
+    msc := oe.msc_init();
+    oe.msc_from_json(msc, "../assets/maps/test.json");
+
+    msc2 := oe.msc_init();
+    oe.msc_from_model(msc2, oe.load_model("../assets/maps/bowl.obj"), oe.vec3_z() * -35);
+
+    light2 := oe.aent_init("light");
+    light2_tr := oe.get_component(light2, oe.Transform);
+    light2_tr.position = {0, 5, -35};
+    light2_lc := oe.add_component(light2, oe.lc_init());
+
+    // reset_track_allocator(&track_allocator);
 
     for (oe.w_tick()) {
+        oe.ew_update();
         // update
+        mem.tracking_allocator_clear(&track_allocator);
 
         if (oe.key_pressed(oe.Key.ESCAPE)) {
             is_mouse_locked = !is_mouse_locked;
@@ -97,63 +128,38 @@ main :: proc() {
         oe.cm_default_fps_matrix(&camera);
         oe.cm_update(&camera);
 
-        // if (oe.key_pressed(oe.Key.RIGHT_SHIFT)) {
-        //     oe.ent_get_component_var(player, ^oe.RigidBody).velocity.y = 15;
-        //
-        //     oe.detach_sound_filter(.LOWPASS);
-        //     oe.play_sound(jump_sfx);
-        //     oe.attach_sound_filter(.LOWPASS);
-        // }
-        //
-        // if (oe.key_down(oe.Key.LEFT)) {
-        //     oe.ent_get_component_var(player, ^oe.RigidBody).velocity.x = -7.5;
-        // } else if (oe.key_down(oe.Key.RIGHT)) {
-        //     oe.ent_get_component_var(player, ^oe.RigidBody).velocity.x = 7.5;
-        // } else if (oe.key_down(oe.Key.UP)) {
-        //     oe.ent_get_component_var(player, ^oe.RigidBody).velocity.z = -7.5;
-        // } else if (oe.key_down(oe.Key.DOWN)) {
-        //     oe.ent_get_component_var(player, ^oe.RigidBody).velocity.z = 7.5;
-        // } else {
-        //     oe.ent_get_component_var(player, ^oe.RigidBody).velocity.xz = {};
-        // }
-        //
-        // if (oe.key_pressed(oe.Key.F2)) {
-        //     ent := oe.ent_init();
-        //     oe.ent_add_component(ent, oe.rb_init(ent.starting, 1.0, 0.5, false, oe.ShapeType.BOX));
-        //     oe.ent_set_pos(ent, camera.position);
-        // }
-        //
-        // if (oe.ew_exists("parent")) {
-        //     ent := oe.ew_get_entity("parent");
-        //
-        //     if (oe.key_down(oe.Key.LEFT)) {
-        //         oe.ent_set_pos_x(ent, ent.transform.position.x - 10 * rl.GetFrameTime());
-        //     }
-        //
-        //     if (oe.key_down(oe.Key.RIGHT)) {
-        //         oe.ent_set_pos_x(ent, ent.transform.position.x + 10 * rl.GetFrameTime());
-        //     }
-        // }
-        //
-        // if (oe.key_pressed(oe.Key.F1)) {
-        //     ent := oe.ent_init("parent");
-        //     oe.ent_add_component(ent, oe.sm_init(troll, oe.ShapeType(rl.GetRandomValue(0, 3))));
-        //     oe.ent_starting_transform(ent, {
-        //         oe.vec3_x() * f32(rl.GetRandomValue(-10, 10)),
-        //         oe.vec3_zero(),
-        //         oe.vec3_one(),
-        //     });
-        //
-        //     if (ent.tag != "parent") {
-        //         oe.ent_set_parent(ent, oe.ew_get_entity("parent"));
-        //     }
-        // }
-        //
-        // if (oe.key_pressed(.F3)) do rlg.ToggleLight(0);
-        //
-        // prtcl := oe.particle_init(oe.circle_spawn(1, true), slf = 10, color = oe.RED);
-        // oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 200));
-        // oe.ps_add_particle(oe.ent_get_component_var(ps, ^oe.Particles), prtcl, 0.1);
+        if (oe.key_pressed(oe.Key.RIGHT_SHIFT)) {
+            player_rb.velocity.y = 15;
+
+            oe.detach_sound_filter(.LOWPASS);
+            oe.play_sound(jump_sfx);
+            oe.attach_sound_filter(.LOWPASS);
+        }
+
+        if (oe.key_down(oe.Key.LEFT)) {
+            player_rb.velocity.x = -7.5;
+        } else if (oe.key_down(oe.Key.RIGHT)) {
+            player_rb.velocity.x = 7.5;
+        } else if (oe.key_down(oe.Key.UP)) {
+            player_rb.velocity.z = -7.5;
+        } else if (oe.key_down(oe.Key.DOWN)) {
+            player_rb.velocity.z = 7.5;
+        } else {
+            player_rb.velocity.xz = {};
+        }
+
+        if (oe.key_down(oe.Key.F2)) {
+            ent := oe.aent_init();
+            ent_tr := oe.get_component(ent, oe.Transform);
+            ent_tr.position = camera.position;
+            ent_rb := oe.add_component(ent, oe.rb_init(ent_tr^, 1.0, 0.5, false, oe.ShapeType.BOX));
+        }
+
+        if (oe.key_pressed(.F3)) do rlg.ToggleLight(0);
+
+        prtcl := oe.particle_init(oe.circle_spawn(1, true), slf = 10, color = oe.RED);
+        oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 200));
+        oe.ps_add_particle(ps_ps, prtcl, 0.1);
 
         // render
         oe.w_begin_render();
@@ -161,19 +167,20 @@ main :: proc() {
 
         rl.BeginMode3D(camera.rl_matrix);
         oe.draw_skybox(skybox, rl.WHITE);
-        oe.ew_update();
-        // oe.ew_render();
+        oe.ew_render();
 
-        // coll, info := oe.rc_is_colliding_msc(camera.raycast, msc);
-        // if (coll) {
-        //     rl.DrawSphere(info.point, 0.5, oe.RED);
-        // }
+        coll, info := oe.rc_is_colliding_msc(camera.raycast, msc);
+        if (coll) {
+            rl.DrawSphere(info.point, 0.5, oe.RED);
+        }
 
         rl.EndMode3D();
         
         oe.w_end_render();
+        if (oe.key_pressed(.F4)) do reset_track_allocator(&track_allocator);
     }
 
+    // reset_track_allocator(&track_allocator);
     oe.ew_deinit();
     oe.w_close();
 }

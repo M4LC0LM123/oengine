@@ -291,7 +291,7 @@ msc_render :: proc(using self: ^MSCObject) {
 
             rl.rlSetTexture(0);
         } else {
-            material := rl.LoadMaterialDefault();
+            material := DEFAULT_MATERIAL;
             material.maps[rl.MaterialMapIndex.ALBEDO].color = color;
             if (asset_exists(tri.texture_tag)) {
                 tex := get_asset_var(tri.texture_tag, Texture);

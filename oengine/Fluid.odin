@@ -3,6 +3,7 @@ package oengine
 import strs "core:strings"
 import "core:fmt"
 import rl "vendor:raylib"
+import ecs "ecs"
 
 Fluid :: struct {
     transform: Transform,
@@ -21,8 +22,8 @@ Fluid :: struct {
 }
 
 @(private = "file")
-f_init_all :: proc(using f: ^Fluid, s_texture: Texture, s_transform: Transform) {
-    transform = s_transform;
+f_init_all :: proc(using f: ^Fluid, s_texture: Texture) {
+    transform = transform_default();
 
     texture = s_texture;
     color = WHITE;
@@ -55,17 +56,12 @@ f_init_all :: proc(using f: ^Fluid, s_texture: Texture, s_transform: Transform) 
     set = f_set;
 }
 
-f_init :: proc(s_texture: Texture, s_transform: Transform) -> ^Component {
-    using component := new(Component);
-    
-    component.variant = new(Fluid);
-    f_init_all(component.variant.(^Fluid), s_texture, s_transform);
+f_init :: proc(s_texture: Texture) -> Fluid {
+    f: Fluid;
 
-    update = f_update;
-    render = f_render;
-    deinit = f_deinit;
+    f_init_all(&f, s_texture);
 
-    return component;
+    return f;
 }
 
 f_update :: proc(component: ^Component, ent: ^Entity) {
@@ -75,8 +71,15 @@ f_update :: proc(component: ^Component, ent: ^Entity) {
     rl.SetShaderValue(_shader, shader_location(_shader, "seconds"), &seconds, .FLOAT);
 }
 
-f_render :: proc(component: ^Component) {
-    using self := c_variant(component, ^Fluid);
+f_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
+    f, t := ecs.get_components(ent, Fluid, Transform);
+    if (is_nil(f, t)) do return;
+    using f;
+
+    transform = t^;
+
+    seconds := f32(rl.GetTime());
+    rl.SetShaderValue(_shader, shader_location(_shader, "seconds"), &seconds, .FLOAT);
 
     render_pos := transform.position;
     render_pos.y = transform.position.y + transform.scale.y * 0.5;
