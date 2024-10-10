@@ -170,22 +170,6 @@ sm_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     rl.EndShaderMode();
 }
 
-sm_deinit :: proc(component: ^Component) {
-    using self := component.variant.(^SimpleMesh);
-
-    #partial switch v in tex {
-        case Model:
-            deinit_model(v);
-        case CubeMap:
-            for i in 0..<6 {
-                deinit_texture(v[i]);
-            }
-    }
-
-    deinit_texture(texture);
-    deinit_shader(shader);
-}
-
 sm_toggle_lit :: proc(using self: ^SimpleMesh) {
     is_lit = !is_lit;
 }

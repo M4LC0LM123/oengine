@@ -10,7 +10,6 @@ MAX_LIGHTS :: 44
 FIXED_TIME_STEP :: 1.0 / 60.0
 
 ecs_world: struct {
-    ents: map[string]^Entity,
     ecs_ctx: ecs.Context,
     physics: PhysicsWorld,
     camera: ^Camera,
@@ -21,26 +20,10 @@ ecs_world: struct {
     accumulator: f32,
 }
 
-ew_get_entity :: proc(tag: string) -> ^Entity {
-    using ecs_world;
-    ent := ents[tag];
-    if (ent == nil) do dbg_log(str_add({"Entity: ", tag, " is nil"}), .WARNING);
-    return ent;
-}
-
-ew_exists :: proc(tag: string) -> bool {
-    return ecs_world.ents[tag] != nil;
-}
-
-ew_remove :: proc(tag: string) {
-    ecs_world.ents[tag] = nil;
-}
-
 ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     using ecs_world;
     ecs_ctx = ecs.ecs_init();
 
-    ents = make(map[string]^Entity);
     asset_manager.registry = make(map[string]Asset);
     pw_init(&physics, s_gravity, s_iter);
 
@@ -81,13 +64,6 @@ ew_update :: proc() {
     rlg.SetViewPositionV(camera.position);
 
     ecs.ecs_update(&ecs_ctx);
-
-    for tag in ents {
-        ent := ew_get_entity(tag);
-        ent->update();
-    }
-
-    // if (!w_transform_changed()) do pw_update(&physics, rl.GetFrameTime());
 }
 
 @(private = "file")
@@ -108,27 +84,23 @@ ew_fixed_update :: proc() {
 ew_render :: proc() {
     using ecs_world;
 
+    rl.rlEnableBackfaceCulling();
+
     ecs.ecs_render(&ecs_ctx);
 
-    // rl.rlEnableBackfaceCulling();
-    // if (PHYS_DEBUG) {
-    //     draw_cube_wireframe(
-    //         {physics.tree._bounds.x, physics.tree._bounds.y, physics.tree._bounds.z},
-    //         vec3_zero(),
-    //         {physics.tree._bounds.width, physics.tree._bounds.height, physics.tree._bounds.depth},
-    //         rl.GREEN,
-    //     )
-    // }
-    //
-    // for tag in ents {
-    //     ent := ew_get_entity(tag);
-    //     ent->render();
-    // }
-    //
-    // if (OE_DEBUG) {
-    //     for data_id in get_reg_data_ids() { draw_data_id(data_id); }
-    // }
-    //
+    if (PHYS_DEBUG) {
+        draw_cube_wireframe(
+            {physics.tree._bounds.x, physics.tree._bounds.y, physics.tree._bounds.z},
+            vec3_zero(),
+            {physics.tree._bounds.width, physics.tree._bounds.height, physics.tree._bounds.depth},
+            rl.GREEN,
+        )
+    }
+
+    if (OE_DEBUG) {
+        for data_id in get_reg_data_ids() { draw_data_id(data_id); }
+    }
+
     rl.rlDisableBackfaceCulling();
     for msc in physics.mscs {
         msc_render(msc);
@@ -147,5 +119,4 @@ ew_deinit :: proc() {
     deinit_assets();
 
     delete(asset_manager.registry);
-    delete(ents);
 }

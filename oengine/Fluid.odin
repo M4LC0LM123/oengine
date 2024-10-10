@@ -64,13 +64,6 @@ f_init :: proc(s_texture: Texture) -> Fluid {
     return f;
 }
 
-f_update :: proc(component: ^Component, ent: ^Entity) {
-    using self := c_variant(component, ^Fluid);
-
-    seconds := f32(rl.GetTime());
-    rl.SetShaderValue(_shader, shader_location(_shader, "seconds"), &seconds, .FLOAT);
-}
-
 f_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     f, t := ecs.get_components(ent, Fluid, Transform);
     if (is_nil(f, t)) do return;
@@ -95,13 +88,6 @@ f_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     );
 
     rl.EndShaderMode();
-}
-
-f_deinit :: proc(component: ^Component) {
-    using self := c_variant(component, ^Fluid);
-
-    deinit_shader(_shader);
-    deinit_texture(texture);
 }
 
 f_set :: proc(using self: ^Fluid, name: string, val: f32) {

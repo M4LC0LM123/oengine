@@ -155,7 +155,7 @@ main :: proc() {
             ent_rb := oe.add_component(ent, oe.rb_init(ent_tr^, 1.0, 0.5, false, oe.ShapeType.BOX));
         }
 
-        if (oe.key_pressed(.F3)) do rlg.ToggleLight(0);
+        if (oe.key_pressed(.F3)) do oe.lc_toggle(light_lc);
 
         prtcl := oe.particle_init(oe.circle_spawn(1, true), slf = 10, color = oe.RED);
         oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 200));

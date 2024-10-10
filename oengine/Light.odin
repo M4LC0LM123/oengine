@@ -28,6 +28,10 @@ lc_init_all :: proc(using lc: ^Light, s_type: rlg.LightType = .OMNI, s_color: Co
     rlg.SetLightColor(id, color);
 }
 
+lc_toggle :: proc(using lc: ^Light) {
+    rlg.ToggleLight(id);
+}
+
 lc_init :: proc(s_type: rlg.LightType = .OMNI, s_color: Color = WHITE) -> Light {
     lc: Light;
 
