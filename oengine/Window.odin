@@ -85,6 +85,9 @@ w_create :: proc(name: string = "Game") {
     console_init();
 
     checkered_image = load_texture(rl.LoadTextureFromImage(rl.GenImageChecked(4, 4, 1, 1, WHITE, BLACK)));
+
+    rl.SetWindowIcon(rl.LoadImageFromTexture(get_tex_from_data(LOGO_WIDTH, LOGO_HEIGHT, raw_data(hex_to_rgb_img(logo[:])))));
+    dbg_log("Set window icon");
 }
 
 w_set_instance_name :: proc(name: string) {
@@ -328,6 +331,7 @@ w_transform_changed :: proc() -> bool {
 @(private)
 w_reload_target :: proc() {
     window.target = rl.LoadRenderTexture(window._render_width, window._render_height);
+    dev_console._rec = {0, -f32(w_render_height() / 2), f32(w_render_width()), f32(w_render_height() / 2)};
 }
 
 @(private = "file")

@@ -133,7 +133,7 @@ console_render :: proc() {
     using dev_console;
 
     if (active) {
-        rl.DrawRectangleRec(_rec, {0, 0, 0, 125});
+        rl.DrawRectangleRec(_rec, {125, 125, 125, 125});
 
         rl.BeginScissorMode(
             i32(_rec.x), i32(_rec.y), i32(_rec.width), i32(_rec.height - 40)

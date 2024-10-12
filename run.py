@@ -1,6 +1,14 @@
 import os
 import sys
 
+editor = False
+if (len(sys.argv) > 1):
+    if (sys.argv[1] == "-editor"):
+        editor = True
+
+if (editor):
+    os.chdir("editor")
+
 os.chdir("windows")
 run = "run.bat"
 
@@ -11,5 +19,8 @@ elif (sys.platform == "linux" or sys.platform == "linux2"):
     os.chdir("../linux")
     run = "sh run.sh"
 
+
 os.system(run)
-os.chdir("../")
+
+if (editor): os.chdir("../../")
+else: os.chdir("../")
