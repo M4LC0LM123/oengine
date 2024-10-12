@@ -68,6 +68,7 @@ ct_render :: proc(using self: ^CameraTool) {
         oe.draw_debug_axis(3);
         oe.ew_render();
         render();
+        render_tri(self);
         rl.EndMode3D();
     } else {
         rl.BeginMode2D(camera_orthographic);
@@ -242,6 +243,40 @@ ortho_tri_to_msc_tri :: proc(pts: [3]oe.Vec2, pts_3d: [3]oe.Vec3, mode: CameraMo
         {pts[1].x, pts[1].y, pts_3d[1].z}, 
         {pts[2].x, pts[2].y, pts_3d[2].z}, 
     };
+}
+
+@(private = "file")
+render_tri :: proc(using self: ^CameraTool) {
+    ray := oe.get_mouse_rc(camera_perspective);
+
+    for msc_id in 0..<len(oe.ecs_world.physics.mscs) {
+        msc := oe.ecs_world.physics.mscs[msc_id];
+        coll, info := oe.rc_is_colliding_msc(ray, msc);
+        if (coll) {
+            t := msc.tris[info.id];
+            rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], GRID_COLOR);
+
+            if (oe.mouse_pressed(.LEFT) && !oe.gui_mouse_over()) {
+                _active_id = i32(info.id);
+                _active_msc_id = i32(msc_id);
+            }
+        } else {
+            if (!oe.gui_mouse_over() &&
+                oe.mouse_pressed(.LEFT)) { 
+                _active_id = ACTIVE_EMPTY;
+                _active_msc_id = ACTIVE_EMPTY;
+            }
+        }
+    }
+
+    if (_active_id != ACTIVE_EMPTY && _active_msc_id != ACTIVE_EMPTY) {
+        if (oe.key_pressed(.T)) {
+            oe.gui_toggle_window("Texture tool");
+        }
+        msc := oe.ecs_world.physics.mscs[_active_msc_id];
+        t := msc.tris[_active_id];
+        rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], GRID_COLOR);
+    }
 }
 
 @(private = "file")

@@ -171,7 +171,7 @@ main :: proc() {
 
         coll, info := oe.rc_is_colliding_msc(camera.raycast, msc);
         if (coll) {
-            rl.DrawSphere(info.point, 0.5, oe.RED);
+            rl.DrawSphere(info.point, 0.25, oe.RED);
         }
 
         rl.EndMode3D();

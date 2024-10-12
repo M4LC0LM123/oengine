@@ -115,13 +115,23 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
 MSCCollisionInfo :: struct {
     t: ^TriangleCollider,
     point: Vec3,
+    id: int,
+}
+
+get_mouse_rc :: proc(camera: Camera, scalar: f32 = 100) -> Raycast {
+    rlc := rl.GetMouseRay(window.mouse_position, camera.rl_matrix);
+    return Raycast {
+        position = rlc.position,
+        target = rlc.position + (rlc.direction * scalar),
+    };
 }
 
 rc_is_colliding_msc :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, MSCCollisionInfo) {
-    for t in msc.tris {
+    for i in 0..<len(msc.tris) {
+        t := msc.tris[i];
         ok, pt := ray_tri_collision(self, t);
         if (ok) {
-            return true, {t, pt};
+            return true, {t, pt, i};
         }
     }
 

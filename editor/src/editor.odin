@@ -119,4 +119,5 @@ render :: proc() {
         t := editor_data.active_data_id.transform;
         oe.draw_cube_wireframe(t.position, t.rotation, t.scale, oe.BLUE); 
     }
+
 }
