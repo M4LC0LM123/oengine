@@ -13,6 +13,7 @@ TriangleCollider :: struct {
     color: Color,
     texture_tag: string,
     mesh: rl.Mesh,
+    rot: i32,
     is_lit: bool,
     use_fog: bool,
 }

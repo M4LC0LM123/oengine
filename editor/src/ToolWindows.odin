@@ -89,9 +89,20 @@ map_proj_tool :: proc(ct: CameraTool) {
 }
 
 texture_tool :: proc(ct: CameraTool) {
+    if (ct._active_msc_id == ACTIVE_EMPTY || ct._active_id == ACTIVE_EMPTY) do return;
+
     oe.gui_begin("Texture tool", x = 0, y = 560 + oe.gui_top_bar_height * 3, active = false);
 
     texs := oe.get_reg_textures_tags();
+
+    @static rot: i32;
+    if (oe.gui_button("R", BUTTON_WIDTH + 20, 10, 30, 30)) {
+        rot += 1;
+        if (rot > 3) do rot = 0;
+
+        active := oe.ecs_world.physics.mscs[ct._active_msc_id].tris[ct._active_id];
+        oe.tri_recalc_uvs(active, rot);
+    }
 
     for i in 0..<len(texs) {
         tag := texs[i];

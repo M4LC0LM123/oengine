@@ -415,12 +415,12 @@ allocate_mesh :: proc(mesh: ^rl.Mesh) {
     mesh.normals = raw_data(make([]f32, mesh.vertexCount * 3));
 }
 
-gen_mesh_triangle :: proc(verts: [3]Vec3) -> rl.Mesh {
+gen_mesh_triangle :: proc(verts: [3]Vec3, #any_int uv_rot: i32 = 0) -> rl.Mesh {
     mesh: rl.Mesh;
     mesh.triangleCount = 1;
     mesh.vertexCount = mesh.triangleCount * 3;
     allocate_mesh(&mesh);
-    uv1, uv2, uv3 := triangle_uvs(verts[0], verts[1], verts[2]);
+    uv1, uv2, uv3 := triangle_uvs(verts[0], verts[1], verts[2], uv_rot);
 
     // Vertex at (0, 0, 0)
     mesh.vertices[0] = verts[0].x;

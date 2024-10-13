@@ -90,35 +90,45 @@ closest_point_on_triangle :: proc(p, a, b, c: Vec3) -> Vec3 {
     return a + ab * v + ac * w // = u*a + v*b + w*c, u = va * denom = 1.0-v-w
 }
 
-triangle_uvs :: proc(v1, v2, v3: Vec3) -> (Vec2, Vec2, Vec2) {
-    // default XY plane
-    cp1 := v1.xy;
-    cp2 := v2.xy;
-    cp3 := v3.xy;
-    min_x := math.min(v1.x, min(v2.x, v3.x));
-    max_x := math.max(v1.x, max(v2.x, v3.x));
-    min_y := math.min(v1.y, min(v2.y, v3.y));
-    max_y := math.max(v1.y, max(v2.y, v3.y));
+triangle_uvs :: proc(v1, v2, v3: Vec3, #any_int rotation_steps: i32 = 0) -> (Vec2, Vec2, Vec2) {
+    edge1 := v2 - v1;
+    edge2 := v3 - v1;
+    normal := vec3_cross(edge1, edge2);
 
-    // ZY plane
-    if (v1.x == v2.x && v1.x == v3.x) {
+    abs_normal := Vec3 {
+        math.abs(normal.x),
+        math.abs(normal.y),
+        math.abs(normal.z)
+    };
+
+    cp1, cp2, cp3: Vec2;
+
+    if (abs_normal.z >= abs_normal.x && abs_normal.z >= abs_normal.y) {
+        // XY
+        cp1 = v1.xy;
+        cp2 = v2.xy;
+        cp3 = v3.xy;
+    } else if (abs_normal.x >= abs_normal.y && abs_normal.x >= abs_normal.z) {
+        // YZ 
         cp1 = v1.zy;
         cp2 = v2.zy;
         cp3 = v3.zy;
-        min_x = math.min(v1.z, min(v2.z, v3.z));
-        max_x = math.max(v1.z, max(v2.z, v3.z));
-    } else if (v1.y == v2.y && v1.y == v3.y) { // XZ plane
+    } else {
+        // XZ 
         cp1 = v1.xz;
         cp2 = v2.xz;
         cp3 = v3.xz;
-        min_y = math.min(v1.z, min(v2.z, v3.z));
-        max_y = math.max(v1.z, max(v2.z, v3.z));
     }
+
+    min_x := math.min(cp1.x, math.min(cp2.x, cp3.x));
+    max_x := math.max(cp1.x, math.max(cp2.x, cp3.x));
+    min_y := math.min(cp1.y, math.min(cp2.y, cp3.y));
+    max_y := math.max(cp1.y, math.max(cp2.y, cp3.y));
 
     delta_x := max_x - min_x;
     delta_y := max_y - min_y;
 
-    if (delta_x == 0) do delta_x = 1;
+    if (delta_x == 0) do delta_x = 1; 
     if (delta_y == 0) do delta_y = 1;
 
     uv1 := Vec2 {
@@ -135,6 +145,21 @@ triangle_uvs :: proc(v1, v2, v3: Vec3) -> (Vec2, Vec2, Vec2) {
         (cp3.x - min_x) / delta_x,
         (cp3.y - min_y) / delta_y
     };
+
+    rotate_uv := proc(uv: Vec2, #any_int steps: i32) -> Vec2 {
+        if (steps == 1) {
+            return Vec2{uv.y, -uv.x};
+        } else if (steps == 2) {
+            return Vec2{-uv.x, -uv.y};
+        } else if (steps == 3) {
+            return Vec2{-uv.y, uv.x};
+        }
+        return uv;
+    };
+
+    uv1 = rotate_uv(uv1, rotation_steps);
+    uv2 = rotate_uv(uv2, rotation_steps);
+    uv3 = rotate_uv(uv3, rotation_steps);
 
     return uv1, uv2, uv3;
 }

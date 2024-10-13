@@ -41,12 +41,13 @@ msc_init :: proc() -> ^MSCObject {
     return self;
 }
 
-msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = WHITE, texture_tag: string = "", is_lit: bool = true, use_fog: bool = OE_FAE) {
+msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = WHITE, texture_tag: string = "", is_lit: bool = true, use_fog: bool = OE_FAE, rot: i32 = 0) {
     t := new(TriangleCollider);
     t.pts = {a + offs, b + offs, c + offs};
     t.color = color;
     t.texture_tag = texture_tag;
-    t.mesh = gen_mesh_triangle(t.pts);
+    t.rot = rot;
+    t.mesh = gen_mesh_triangle(t.pts, t.rot);
     t.is_lit = is_lit;
     t.use_fog = use_fog;
     append(&tris, t);
@@ -55,12 +56,13 @@ msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, c
     _aabb = tris_to_aabb(tris);
 }
 
-msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {}, color : Color = WHITE, texture_tag: string = "", is_lit: bool = true, use_fog: bool = OE_FAE) {
+msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {}, color : Color = WHITE, texture_tag: string = "", is_lit: bool = true, use_fog: bool = OE_FAE, rot: i32 = 0) {
     t := new(TriangleCollider);
     t.pts = {b + offs, a + offs, c + offs};
     t.color = color;
     t.texture_tag = texture_tag;
-    t.mesh = gen_mesh_triangle(t.pts);
+    t.rot = rot;
+    t.mesh = gen_mesh_triangle(t.pts, t.rot);
     t.is_lit = is_lit;
     t.use_fog = use_fog;
     append(&tris, t);
@@ -69,7 +71,8 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {
     t2.pts = {b + offs, c + offs, d + offs};
     t2.color = color;
     t2.texture_tag = texture_tag;
-    t2.mesh = gen_mesh_triangle(t2.pts);
+    t2.rot = rot;
+    t2.mesh = gen_mesh_triangle(t2.pts, t2.rot);
     t2.is_lit = is_lit;
     t2.use_fog = use_fog;
     append(&tris, t2);
@@ -79,6 +82,10 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {
     _aabb = tris_to_aabb(tris);
 }
 
+tri_recalc_uvs :: proc(t: ^TriangleCollider, #any_int uv_rot: i32 = 0) {
+    t.rot = uv_rot;
+    t.mesh = gen_mesh_triangle(t.pts, t.rot);
+}
 
 // supports only .obj wavefront and tested with trenchbroom models
 // work in progress
@@ -114,6 +121,7 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         texture_tag: string,
         is_lit: bool,
         use_fog: bool,
+        rot: i32,
     }
 
     i := 0;
@@ -124,6 +132,7 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
             texture_tag = t.texture_tag,
             is_lit = t.is_lit,
             use_fog = t.use_fog,
+            rot = t.rot,
         };
         data, ok := json.marshal(tm, {pretty = true});
 
@@ -260,7 +269,12 @@ msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {
         use_fog = obj.(json.Object)["use_fog"].(json.Boolean);
     }
 
-    msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag), is_lit = is_lit, use_fog = use_fog);
+    rot: i32;
+    if (obj.(json.Object)["rot"] != nil) {
+        rot = i32(obj.(json.Object)["rot"].(json.Float));
+    }
+
+    msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag), is_lit = is_lit, use_fog = use_fog, rot = rot);
 }
 
 msc_render :: proc(using self: ^MSCObject) {
@@ -273,7 +287,7 @@ msc_render :: proc(using self: ^MSCObject) {
         color := tri.color;
 
         if (window.instance_name == EDITOR_INSTANCE) {
-            uv1, uv2, uv3 := triangle_uvs(v1, v2, v3);
+            uv1, uv2, uv3 := triangle_uvs(v1, v2, v3, tri.rot);
 
             rl.rlColor4ub(color.r, color.g, color.b, color.a);
             rl.rlBegin(rl.RL_TRIANGLES);

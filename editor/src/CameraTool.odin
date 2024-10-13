@@ -249,24 +249,32 @@ ortho_tri_to_msc_tri :: proc(pts: [3]oe.Vec2, pts_3d: [3]oe.Vec3, mode: CameraMo
 render_tri :: proc(using self: ^CameraTool) {
     ray := oe.get_mouse_rc(camera_perspective);
 
+    nearest_dist := math.inf_f32(1);
+    nearest_id := ACTIVE_EMPTY;
+    nearest_msc_id := ACTIVE_EMPTY;
+
     for msc_id in 0..<len(oe.ecs_world.physics.mscs) {
         msc := oe.ecs_world.physics.mscs[msc_id];
         coll, info := oe.rc_is_colliding_msc(ray, msc);
         if (coll) {
             t := msc.tris[info.id];
-            rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], GRID_COLOR);
-
-            if (oe.mouse_pressed(.LEFT) && !oe.gui_mouse_over()) {
-                _active_id = i32(info.id);
-                _active_msc_id = i32(msc_id);
+            if (!oe.gui_mouse_over()) {
+                rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], GRID_COLOR); 
             }
-        } else {
-            if (!oe.gui_mouse_over() &&
-                oe.mouse_pressed(.LEFT)) { 
-                _active_id = ACTIVE_EMPTY;
-                _active_msc_id = ACTIVE_EMPTY;
+
+            dist := oe.vec3_dist(info.point, ray.position);
+
+            if (dist < nearest_dist) {
+                nearest_dist = dist;
+                nearest_id = info.id;
+                nearest_msc_id = msc_id;
             }
         }
+    }
+
+    if (oe.mouse_pressed(.LEFT) && !oe.gui_mouse_over()) {
+        _active_id = i32(nearest_id);
+        _active_msc_id = i32(nearest_msc_id);
     }
 
     if (_active_id != ACTIVE_EMPTY && _active_msc_id != ACTIVE_EMPTY) {
