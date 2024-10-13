@@ -20,7 +20,7 @@ main :: proc() {
         err := false;
 
         for _, value in a.allocation_map {
-            fmt.printf("%v: leaked %v bytes\n", value.location, value.size);
+            fmt.printf("%v: allocated %v bytes\n", value.location, value.size);
             err = true;
         }
 
@@ -78,6 +78,7 @@ main :: proc() {
     player_rb := oe.add_component(player, oe.rb_init(player_tr^, 1.0, 0.5, false, oe.ShapeType.BOX));
     player_sm := oe.add_component(player, oe.sm_init(oe.tex_flip_vert(troll)));
     player_sm.is_lit = false;
+    player_jump := oe.add_component(player, oe.sa_init(player_tr.position, jump_sfx));
 
     light := oe.aent_init("light");
     light_tr := oe.get_component(light, oe.Transform);
@@ -132,7 +133,7 @@ main :: proc() {
             player_rb.velocity.y = 15;
 
             oe.detach_sound_filter(.LOWPASS);
-            oe.play_sound(jump_sfx);
+            oe.sa_play(player_jump);
             oe.attach_sound_filter(.LOWPASS);
         }
 

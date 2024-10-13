@@ -99,6 +99,14 @@ vec3_transform :: proc(v: Vec3, m: Mat4) -> Vec3 {
     return result;
 }
 
+vec3_dist :: proc(v1, v2: Vec3) -> f32 {
+    return math.sqrt_f32(
+        math.pow(v1.x - v2.x, 2) + 
+        math.pow(v1.y - v2.y, 2) + 
+        math.pow(v1.z - v2.z, 2)
+    );
+}
+
 vec3_dot :: proc(v1, v2: Vec3) -> f32 {
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }

@@ -42,6 +42,7 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     ecs.register_system(&ecs_ctx, rb_update, ecs.ECS_UPDATE);
     ecs.register_system(&ecs_ctx, lc_update, ecs.ECS_UPDATE);
     ecs.register_system(&ecs_ctx, ps_update, ecs.ECS_UPDATE);
+    ecs.register_system(&ecs_ctx, sa_update, ecs.ECS_UPDATE);
 
     ecs.register_system(&ecs_ctx, ps_render, ecs.ECS_RENDER);
     ecs.register_system(&ecs_ctx, sm_render, ecs.ECS_RENDER);
