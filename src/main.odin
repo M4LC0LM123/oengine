@@ -79,6 +79,7 @@ main :: proc() {
     player_sm := oe.add_component(player, oe.sm_init(oe.tex_flip_vert(troll)));
     player_sm.is_lit = false;
     player_jump := oe.add_component(player, oe.sa_init(player_tr.position, jump_sfx));
+    player_rb.collision_mask = oe.coll_mask(1);
 
     light := oe.aent_init("light");
     light_tr := oe.get_component(light, oe.Transform);
@@ -154,6 +155,7 @@ main :: proc() {
             ent_tr := oe.get_component(ent, oe.Transform);
             ent_tr.position = camera.position;
             ent_rb := oe.add_component(ent, oe.rb_init(ent_tr^, 1.0, 0.5, false, oe.ShapeType.BOX));
+            ent_rb.collision_mask = oe.coll_mask(..oe.range_slice(2, oe.COLLISION_MASK_SIZE));
         }
 
         if (oe.key_pressed(.F3)) do oe.lc_toggle(light_lc);

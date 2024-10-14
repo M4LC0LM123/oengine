@@ -386,6 +386,49 @@ contains :: proc(element, array: rawptr, arr_len: int, $T: typeid) -> bool {
     return false;
 }
 
+// bounds included
+range_slice :: proc(#any_int min, max: i32) -> []i32 {
+    res := make([]i32, max - min + 1);
+
+    for i in 0..<(max - min + 1) {
+        res[i] = i + min;
+    }
+
+    return res;
+}
+
+coll_mask :: proc(masks: ..i32) -> [COLLISION_MASK_SIZE]i32 {
+    res: [COLLISION_MASK_SIZE]i32;
+
+    if (len(masks) > COLLISION_MASK_SIZE) {
+        dbg_log(str_add({
+                "Amount of masks inputed: ",
+                str_add("", len(masks)), 
+                "is more than COLLISION_MASK_SIZE: ",
+                str_add("", i32(COLLISION_MASK_SIZE)),
+        }), DebugType.WARNING);
+        return res;
+    }
+
+    for i in 0..<len(masks) {
+        res[i] = masks[i];        
+    }
+
+    return res;
+}
+
+compare_masks :: proc(arr1, arr2: [COLLISION_MASK_SIZE]i32) -> bool {
+    for i in 0..<len(arr1) {
+        for j in 0..<len(arr2) {
+            if (arr1[i] == arr2[j] && (arr1[i] != 0 && arr2[j] != 0)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 arr_id :: proc(element, array: rawptr, arr_len: int, $T: typeid) -> int {
     elem := cast(^T)element;
     arr := cast([^]T)array;

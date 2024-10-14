@@ -52,6 +52,8 @@ RigidBody :: struct {
     is_static: bool,
 
     joints: [dynamic]u32,
+
+    collision_mask: [COLLISION_MASK_SIZE]i32,
 }
 
 rb_init :: proc {
@@ -97,6 +99,10 @@ rb_init_all :: proc(using rb: ^RigidBody, s_density, s_restitution: f32, s_stati
 
     id = u32(len(&ecs_world.physics.bodies));
     joints = make([dynamic]u32);
+
+    for i in 1..<COLLISION_MASK_SIZE+1 {
+        collision_mask[i - 1] = i32(i);
+    }
 }
 
 rb_init_def :: proc(s_starting: Transform, s_density, s_restitution: f32, s_static: bool, s_shape: ShapeType) -> RigidBody {

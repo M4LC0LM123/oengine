@@ -6,6 +6,7 @@ import "core:fmt"
 import rl "vendor:raylib"
 
 DEFAULT_RESTITUTION :: 0.5
+COLLISION_MASK_SIZE :: 10
 DAMPING_VEL_FACTOR :: 0.994
 
 TriangleCollider :: struct {
@@ -142,7 +143,8 @@ ignored :: proc(rb, rb2: ^RigidBody) -> bool {
     return rb.is_static && rb2.is_static ||
            rb.shape == ShapeType.HEIGHTMAP && rb2.shape == ShapeType.HEIGHTMAP ||
            rb.shape == ShapeType.SLOPE && rb2.shape == ShapeType.SLOPE ||
-           rb.id == rb2.id;
+           rb.id == rb2.id ||
+           !compare_masks(rb.collision_mask, rb2.collision_mask);
 }
 
 @(private = "file") 
