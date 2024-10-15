@@ -96,7 +96,7 @@ texture_tool :: proc(ct: CameraTool) {
     texs := oe.get_reg_textures_tags();
 
     @static rot: i32;
-    if (oe.gui_button("R", BUTTON_WIDTH + 20, 10, 30, 30)) {
+    if (oe.gui_button("R", oe.gui_window("Texture tool").width - 40, 10, 30, 30)) {
         rot += 1;
         if (rot > 3) do rot = 0;
 
@@ -106,7 +106,10 @@ texture_tool :: proc(ct: CameraTool) {
 
     for i in 0..<len(texs) {
         tag := texs[i];
-        if (oe.gui_button(tag, 10, 10 + f32(i) * 35, BUTTON_WIDTH, 30)) {
+        if (oe.gui_button(
+            tag, 10, 10 + f32(i) * 35, 30, 30, 
+            texture = oe.get_asset_var(tag, oe.Texture)
+            )) {
             active := oe.ecs_world.physics.mscs[ct._active_msc_id].tris[ct._active_id];
             active.texture_tag = tag;
         }

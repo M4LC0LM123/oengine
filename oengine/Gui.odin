@@ -153,7 +153,8 @@ text_right_pos :: proc(text: string, rec: rl.Rectangle) {
 }
 
 gui_button :: proc(text: string, x: f32 = 10, y: f32 = 10, w: f32 = 50, h: f32 = 25, 
-    text_pos: GuiTextPositioning = .CENTER, standalone: bool = false, decorated: bool = true) -> bool {
+    text_pos: GuiTextPositioning = .CENTER, standalone: bool = false, decorated: bool = true,
+    texture: Texture = {path = "empty"}) -> bool {
     active := gui_active();
     if (active != nil && !active.active && !standalone) do return false;
 
@@ -175,19 +176,26 @@ gui_button :: proc(text: string, x: f32 = 10, y: f32 = 10, w: f32 = 50, h: f32 =
     pressed := rl.CheckCollisionPointRec(window.mouse_position, rec) && mouse_released(.LEFT);
     held := rl.CheckCollisionPointRec(window.mouse_position, rec) && mouse_down(.LEFT);
 
-    if (decorated) {
-        rl.DrawRectangle(i32(rec.x - gui_bezel_size), i32(rec.y - gui_bezel_size), i32(rec.width + gui_bezel_size * 2),
-                i32(rec.height + gui_bezel_size * 2), gui_darker_color);
-        rl.DrawRectangle(i32(rec.x - gui_bezel_size), i32(rec.y - gui_bezel_size), i32(rec.width + gui_bezel_size), 
-                i32(rec.height + gui_bezel_size), gui_lighter_color);
+    if (texture.path == "empty") {
+        if (decorated) {
+            rl.DrawRectangle(i32(rec.x - gui_bezel_size), i32(rec.y - gui_bezel_size), i32(rec.width + gui_bezel_size * 2),
+                    i32(rec.height + gui_bezel_size * 2), gui_darker_color);
+            rl.DrawRectangle(i32(rec.x - gui_bezel_size), i32(rec.y - gui_bezel_size), i32(rec.width + gui_bezel_size), 
+                    i32(rec.height + gui_bezel_size), gui_lighter_color);
 
-        if (!held) do rl.DrawRectangleRec(rec, gui_main_color);
-        else do rl.DrawRectangleRec(rec, gui_accent_color);
+            if (!held) do rl.DrawRectangleRec(rec, gui_main_color);
+            else do rl.DrawRectangleRec(rec, gui_accent_color);
+        } else {
+            rl.DrawRectangleLinesEx(rec, 1, WHITE);
+        }
+
+        text_pos_renders[text_pos](text, rec);
     } else {
-        rl.DrawRectangleLinesEx(rec, 1, WHITE);
+        rl.DrawTexturePro(
+            texture, {0, 0, f32(texture.width), f32(texture.height)},
+            rec, {0, 0}, 0, WHITE
+        );
     }
-
-    text_pos_renders[text_pos](text, rec);
 
     return pressed;
 }

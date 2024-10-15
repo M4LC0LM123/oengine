@@ -137,3 +137,35 @@ rc_is_colliding_msc :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, MSCC
 
     return false, {};
 }
+
+// the resulting array is sorted by the distance of collision
+rc_colliding_tris :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, [dynamic]MSCCollisionInfo) {
+    res := make([dynamic]MSCCollisionInfo);
+    coll: bool;
+
+    for i in 0..<len(msc.tris) {
+        t := msc.tris[i];
+        ok, pt := ray_tri_collision(self, t);
+        if (ok) {
+            append(&res, MSCCollisionInfo{t, pt, i});
+            coll = true;
+        }
+    }
+
+    sort_tris(self, &res);
+    return coll, res;
+}
+
+sort_tris :: proc(ray: Raycast, tris: ^[dynamic]MSCCollisionInfo) {
+    for i in 0..<len(tris) {
+        d1 := vec3_dist(ray.position, tris[i].point);
+        for j in 0..<len(tris) {
+            d2 := vec3_dist(ray.position, tris[j].point);
+            if (d1 < d2) {
+                temp := tris[i];
+                tris[i] = tris[j];
+                tris[j] = temp;
+            }
+        }
+    }
+}
