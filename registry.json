@@ -46,5 +46,13 @@
         "volume": "1.0",
         "type": "Sound"
     },
+    "celsium_man": {
+        "path": "../assets/models/cesium_man.m3d",
+        "type": "Model"
+    },
+    "swat": {
+        "path": "../assets/models/man.m3d",
+        "type": "Model"
+    }
 }
 

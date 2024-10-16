@@ -50,6 +50,8 @@ main :: proc() {
     dudlic := oe.get_asset_var("dudlic", oe.Texture);
     vesna := oe.get_asset_var("vesna", oe.Texture);
     leon := oe.get_asset_var("leon", oe.Texture);
+    celsium := oe.get_asset_var("celsium_man", oe.Model);
+    swat := oe.get_asset_var("swat", oe.Model);
 
     floor := oe.aent_init("Floor");
     floor_tr := oe.get_component(floor, oe.Transform);
@@ -114,6 +116,13 @@ main :: proc() {
     light2_tr.position = {0, 5, -35};
     light2_lc := oe.add_component(light2, oe.lc_init());
 
+    animated := oe.aent_init("anim");
+    animated_tr := oe.get_component(animated, oe.Transform);
+    animated_tr.position = {0, 4, -10};
+    animated_tr.scale *= 3;
+    animated_sm := oe.add_component(animated, oe.sm_init(swat));
+    animated_ma := oe.ma_load(animated_sm.tex.(oe.Model).path);
+
     // reset_track_allocator(&track_allocator);
 
     for (oe.w_tick()) {
@@ -163,6 +172,8 @@ main :: proc() {
         prtcl := oe.particle_init(oe.circle_spawn(1, true), slf = 10, color = oe.RED);
         oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 200));
         oe.ps_add_particle(ps_ps, prtcl, 0.1);
+
+        oe.sm_apply_anim(animated_sm, &animated_ma, 0);
 
         // render
         oe.w_begin_render();

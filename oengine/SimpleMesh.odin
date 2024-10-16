@@ -2,6 +2,7 @@ package oengine
 
 import "core:math"
 import "core:fmt"
+import "core:strings"
 import rl "vendor:raylib"
 import ecs "ecs"
 
@@ -20,6 +21,21 @@ sprite_default :: proc(texture: Texture) -> Sprite {
         origin = {f32(texture.width) * 0.5, f32(texture.height) * 0.5},
         rotation = 0,
     };
+}
+
+ModelArmature :: struct {
+    animations: [^]rl.ModelAnimation,
+    anim_count: i32,
+    frame_counter: i32,
+    speed: f32,
+}
+
+ma_load :: proc(path: string, speed: f32 = 100) -> ModelArmature {
+    res: ModelArmature;
+    res.animations = rl.LoadModelAnimations(strings.clone_to_cstring(path), &res.anim_count);
+    res.speed = speed;
+
+    return res;
 }
 
 SimpleMesh :: struct {
@@ -121,6 +137,15 @@ sm_init_sprite :: proc(s_texture: Texture, #any_int i: i32, s_color: Color = rl.
     sm.tex = sprite_default(s_texture);
 
     return sm;
+}
+
+sm_apply_anim :: proc(using self: ^SimpleMesh, ma: ^ModelArmature, id: i32) {
+    ma.frame_counter += i32(ma.speed * rl.GetFrameTime());
+    rl.UpdateModelAnimation(tex.(Model), ma.animations[id], ma.frame_counter);
+
+    if (ma.frame_counter >= ma.animations[id].frameCount) {
+        ma.frame_counter = 0;
+    }
 }
 
 sm_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
