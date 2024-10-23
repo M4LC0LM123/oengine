@@ -122,6 +122,7 @@ main :: proc() {
     animated_tr.scale *= 3;
     animated_sm := oe.add_component(animated, oe.sm_init(swat));
     animated_ma := oe.ma_load(animated_sm.tex.(oe.Model).path);
+    oe.sm_set_texture(animated_sm, albedo);
 
     // reset_track_allocator(&track_allocator);
 
