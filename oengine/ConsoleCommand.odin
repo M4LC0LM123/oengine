@@ -113,6 +113,17 @@ ent_eval :: proc(args: []string) {
         ent = ew_get_ent(args[0]);
     }
 
+    if (len(args) == 2) {
+        for k, i in ent.components {
+            type := fmt.aprint(k);
+
+            if (type == args[1]) {
+                console_print(fmt.aprint(get_component(ent, type_of(k))^));
+                break;
+            }
+        }
+    }
+
     console_print(str_add("id: ", ent.id));
     console_print(str_add("tag: ", ent.tag));
     console_print(str_add("components: ", len(ent.components)));

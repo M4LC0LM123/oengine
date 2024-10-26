@@ -1,6 +1,9 @@
 package main
 
 import "core:fmt"
+import "core:bufio"
+import "core:os"
+import "core:io"
 import str "core:strings"
 import rl "vendor:raylib"
 import oe "../oengine"
