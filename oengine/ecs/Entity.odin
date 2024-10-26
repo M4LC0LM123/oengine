@@ -7,6 +7,7 @@ ECS_RENDER :: 1
 
 Entity :: struct {
     id: u32,
+    tag: string,
     components: map[typeid]rawptr,
 }
 
@@ -14,6 +15,7 @@ entity_init :: proc(ctx: ^Context) -> ^Entity {
     res := new(Entity);
     res.id = u32(len(ctx.entities));
     res.components = make(map[typeid]rawptr);
+    res.tag = "Entity";
     append(&ctx.entities, res);
     return res;
 }

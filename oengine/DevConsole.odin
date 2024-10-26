@@ -32,6 +32,7 @@ console_init :: proc() {
     console_register(new_command("set_fps", "Sets the target fps", set_fps));
     console_register(new_command("exit", "Exits the app", exit_cmd));
     console_register(new_command("clear", "Clears the console", clear_cmd));
+    console_register(new_command("get_ent", "Get entity", ent_eval));
 }
 
 console_register :: proc(s_command: ConsoleCommand) {

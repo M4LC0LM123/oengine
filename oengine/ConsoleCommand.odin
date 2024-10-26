@@ -2,7 +2,9 @@ package oengine
 
 import strs "core:strings"
 import sc "core:strconv"
+import "core:unicode/utf8"
 import "core:os"
+import "core:fmt"
 
 CommandAction :: proc(args: []string);
 
@@ -93,6 +95,16 @@ exit_cmd :: proc(args: []string) {
     w_close();
 
     os.exit(0); 
+}
+
+ent_eval :: proc(args: []string) {
+    using dev_console;
+    if (len(args) < 1) {
+        console_print("Incorrect usage!");
+        return;
+    }
+
+    fmt.println(is_digit(args[0]));
 }
 
 clear_cmd :: proc(args: []string) {

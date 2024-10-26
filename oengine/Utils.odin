@@ -353,6 +353,19 @@ mat4_perspective :: proc(fovY, aspect, nearPlane, farPlane: f32) -> Mat4 {
     return result;
 }
 
+DIGITS: string = "0123456789"
+
+is_digit :: proc(str: string) -> bool {
+    for i in 0..<len(str) {
+        r := str[i];
+        if (!contains(&r, &DIGITS, len(DIGITS), char)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 rand_val :: proc(min, max: f32) -> f32 {
     return rand.float32_range(min, max);
 }

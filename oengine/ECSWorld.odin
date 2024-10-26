@@ -57,6 +57,25 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
     }
 }
 
+ew_get_ent :: proc {
+    ew_get_ent_id,
+    ew_get_ent_tag,
+}
+
+ew_get_ent_id :: proc(id: u32) -> AEntity {
+    return ecs_world.ecs_ctx.entities[int(id)];
+}
+
+ew_get_ent_tag :: proc(tag: string) -> AEntity {
+    using ecs_world;
+
+    for ent in ecs_ctx.entities {
+        if (ent.tag == tag) do return ent;
+    }
+
+    return nil;
+}
+
 ew_update :: proc() {
     using ecs_world;
     thread.run(ew_fixed_update);
