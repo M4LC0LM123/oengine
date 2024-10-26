@@ -1,6 +1,7 @@
 package oengine
 
 import str "core:strings"
+import "core:strconv"
 import rl "vendor:raylib"
 import ecs "ecs"
 import "core:math"
@@ -353,12 +354,11 @@ mat4_perspective :: proc(fovY, aspect, nearPlane, farPlane: f32) -> Mat4 {
     return result;
 }
 
-DIGITS: string = "0123456789"
+DIGITS := "0123456789";
 
-is_digit :: proc(str: string) -> bool {
-    for i in 0..<len(str) {
-        r := str[i];
-        if (!contains(&r, &DIGITS, len(DIGITS), char)) {
+is_digit :: proc(s: string) -> bool {
+    for i in 0..<len(s) {
+        if (!str.contains_rune(DIGITS, char(s[i]))) {
             return false;
         }
     }

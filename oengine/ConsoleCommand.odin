@@ -104,7 +104,18 @@ ent_eval :: proc(args: []string) {
         return;
     }
 
-    fmt.println(is_digit(args[0]));
+    ent: AEntity;
+    if (is_digit(args[0])) {
+        id, _ := sc.parse_int(args[0]);
+
+        ent = ew_get_ent(u32(id));
+    } else {
+        ent = ew_get_ent(args[0]);
+    }
+
+    console_print(str_add("id: ", ent.id));
+    console_print(str_add("tag: ", ent.tag));
+    console_print(str_add("components: ", len(ent.components)));
 }
 
 clear_cmd :: proc(args: []string) {
