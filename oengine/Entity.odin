@@ -3,6 +3,7 @@ package oengine
 import "core:fmt"
 import ecs "ecs"
 import rl "vendor:raylib"
+import "fa"
 
 AEntity :: ^ecs.Entity
 
@@ -19,7 +20,7 @@ add_component :: proc(ent: AEntity, component: $T) -> ^T {
     c := ecs.add_component(ent, component);
   
     if (type_of(component) == RigidBody) {
-        append(&ecs_world.physics.bodies, cast(^RigidBody)c);
+        fa.append(&ecs_world.physics.bodies, cast(^RigidBody)c);
     }
 
     return c;

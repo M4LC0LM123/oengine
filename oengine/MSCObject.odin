@@ -8,6 +8,7 @@ import "core:encoding/json"
 import "core:io"
 import "core:os"
 import strs "core:strings"
+import "fa"
 
 /*
 EXAMPLE
@@ -36,7 +37,7 @@ msc_init :: proc() -> ^MSCObject {
 
     tris = make([dynamic]^TriangleCollider);
 
-    append(&ecs_world.physics.mscs, self);
+    fa.append(&ecs_world.physics.mscs, self);
 
     return self;
 }

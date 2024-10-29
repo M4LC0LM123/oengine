@@ -4,10 +4,15 @@ import "core:math"
 import "core:math/linalg"
 import "core:fmt"
 import rl "vendor:raylib"
+import "fa"
 
 DEFAULT_RESTITUTION :: 0.5
 COLLISION_MASK_SIZE :: 10
 DAMPING_VEL_FACTOR :: 0.994
+
+MAX_RBS :: 1024
+MAX_JOINTS :: 1024
+MAX_MSCS :: 64
 
 TriangleCollider :: struct {
     using pts: [3]Vec3,
@@ -20,10 +25,10 @@ TriangleCollider :: struct {
 }
 
 PhysicsWorld :: struct {
-    bodies: [dynamic]^RigidBody,
+    bodies: fa.FixedArray(^RigidBody),
     reverse_slopes: [dynamic]u32,
-    joints: [dynamic]^Joint,
-    mscs: [dynamic]^MSCObject,
+    joints: fa.FixedArray(^Joint),
+    mscs: fa.FixedArray(^MSCObject),
     tree: OcTree,
 
     gravity: Vec3,
@@ -32,9 +37,9 @@ PhysicsWorld :: struct {
 }
 
 pw_init :: proc(using self: ^PhysicsWorld, s_gravity: Vec3, s_iter: i32 = 8) {
-    bodies = make([dynamic]^RigidBody);
-    joints = make([dynamic]^Joint);
-    mscs = make([dynamic]^MSCObject);
+    bodies = fa.fixed_array(^RigidBody, MAX_RBS);
+    joints = fa.fixed_array(^Joint, MAX_JOINTS);
+    mscs = fa.fixed_array(^MSCObject, MAX_MSCS);
     tree = oct_init(0, {0, 0, 0, 1000, 1000, 1000});
 
     gravity = s_gravity;
@@ -51,11 +56,12 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
         //     oct_insert(&tree, body);
         // }
 
-        for i := 0; i < len(bodies); i += 1 {
-            rb := bodies[i];
+        for i := 0; i < fa.range(bodies); i += 1 {
+            rb := bodies.data[i];
             rb_fixed_update(rb, delta_time / f32(iterations));
 
-            for msc in mscs {
+            for i in 0..<fa.range(mscs) {
+                msc := mscs.data[i];
                 if (!aabb_collision(msc._aabb, trans_to_aabb(rb.transform))) {
                     continue;
                 }
@@ -67,8 +73,8 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
                 }
             }
 
-            for j := i + 1; j < len(bodies); j += 1 {
-                rb2 := bodies[j];
+            for j := i + 1; j < fa.range(bodies); j += 1 {
+                rb2 := bodies.data[j];
 
                 if (ignored(rb, rb2)) do continue;
                 if (!collision_transforms(rb.transform, rb2.transform)) do continue;
@@ -113,29 +119,31 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
             // }
         }
 
-        for joint in joints {
+        for i in 0..<fa.range(joints) {
+            joint := joints.data[i];
             joint.update(joint);
         }
     }
 }
 
 pw_deinit :: proc(using self: ^PhysicsWorld) {
-    for joint in joints {
+    for i in 0..<fa.range(joints) {
+        joint := joints.data[i];
         free(joint);
     }
 
-    delete(joints);
+    delete(joints.data);
 
-    for body in bodies {
-        free(body);
+    for i in 0..<fa.range(bodies) {
+        free(bodies.data[i]);
     }
 
-    for msc in mscs {
-        delete(msc.tris);
+    for i in 0..<fa.range(mscs) {
+        free(mscs.data[i]);
     }
 
-    delete(bodies);
-    delete(mscs);
+    delete(bodies.data);
+    delete(mscs.data);
 }
 
 @(private = "file")
@@ -223,8 +231,8 @@ resolve_aabb_collision :: proc(using self: ^PhysicsWorld, rb, rb2: ^RigidBody) {
         } else {
             if (len(rb.joints) != 0) {
                 for j in rb.joints {
-                    if (joints[j].variant.(^FixedJoint).child.id == rb2.id || 
-                        joints[j].variant.(^FixedJoint).parent.id == rb2.id) {
+                    if (joints.data[j].variant.(^FixedJoint).child.id == rb2.id || 
+                        joints.data[j].variant.(^FixedJoint).parent.id == rb2.id) {
                         return;
                     }
                 }
@@ -258,7 +266,7 @@ resolve_aabb_collision :: proc(using self: ^PhysicsWorld, rb, rb2: ^RigidBody) {
 resolve_joints :: proc(using self: ^PhysicsWorld, rb: ^RigidBody, normal: Vec3, depth: f32) {
     if (len(rb.joints) != 0) {
         for j in rb.joints {
-            joint := joints[j];
+            joint := joints.data[j];
             fj := joint.variant.(^FixedJoint);
 
             if (fj.parent.id == rb.id) {

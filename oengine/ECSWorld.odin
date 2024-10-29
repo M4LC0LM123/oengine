@@ -3,6 +3,7 @@ package oengine
 import rl "vendor:raylib"
 import rlg "rllights"
 import ecs "ecs"
+import "fa"
 import "core:fmt"
 import "core:thread"
 
@@ -63,13 +64,14 @@ ew_get_ent :: proc {
 }
 
 ew_get_ent_id :: proc(id: u32) -> AEntity {
-    return ecs_world.ecs_ctx.entities[int(id)];
+    return ecs_world.ecs_ctx.entities.data[int(id)];
 }
 
 ew_get_ent_tag :: proc(tag: string) -> AEntity {
     using ecs_world;
 
-    for ent in ecs_ctx.entities {
+    for i in 0..<fa.range(ecs_ctx.entities) {
+        ent := ecs_ctx.entities.data[i];
         if (ent.tag == tag) do return ent;
     }
 
@@ -122,8 +124,8 @@ ew_render :: proc() {
     }
 
     rl.rlDisableBackfaceCulling();
-    for msc in physics.mscs {
-        msc_render(msc);
+    for i in 0..<fa.range(physics.mscs) {
+        msc_render(physics.mscs.data[i]);
     }
 }
 

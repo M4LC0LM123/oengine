@@ -2,6 +2,7 @@ package oengine
 
 import "core:fmt"
 import rl "vendor:raylib"
+import "fa"
 
 /* 
 EXAMPLE
@@ -41,7 +42,7 @@ FixedJoint :: struct {
 
 fj_init :: proc(s_parent, s_child: ^RigidBody, starting_p: Vec3) -> ^Joint {
     res := new(Joint);
-    res.id = u32(len(ecs_world.physics.joints));
+    res.id = u32(ecs_world.physics.joints.len);
     res.variant = new(FixedJoint);
 
     using fj := res.variant.(^FixedJoint);
@@ -56,7 +57,7 @@ fj_init :: proc(s_parent, s_child: ^RigidBody, starting_p: Vec3) -> ^Joint {
     append(&parent.joints, res.id);
     append(&child.joints, res.id);
 
-    append(&ecs_world.physics.joints, res);
+    fa.append(&ecs_world.physics.joints, res);
     return res;
 }
 

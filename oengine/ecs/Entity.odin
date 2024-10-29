@@ -1,5 +1,7 @@
 package ecs
 
+import "../fa"
+
 SystemFunc :: #type proc(ctx: ^Context, entity: ^Entity)
 
 ECS_UPDATE :: 0
@@ -13,10 +15,10 @@ Entity :: struct {
 
 entity_init :: proc(ctx: ^Context) -> ^Entity {
     res := new(Entity);
-    res.id = u32(len(ctx.entities));
+    res.id = u32(ctx.entities.len);
     res.components = make(map[typeid]rawptr);
     res.tag = "Entity";
-    append(&ctx.entities, res);
+    fa.append_arr(&ctx.entities, res);
     return res;
 }
 

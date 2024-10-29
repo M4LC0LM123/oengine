@@ -97,7 +97,7 @@ rb_init_all :: proc(using rb: ^RigidBody, s_density, s_restitution: f32, s_stati
 
     shape_variant = 0;
 
-    id = u32(len(&ecs_world.physics.bodies));
+    id = u32(ecs_world.physics.bodies.len);
     joints = make([dynamic]u32);
 
     for i in 1..<COLLISION_MASK_SIZE+1 {
@@ -145,7 +145,7 @@ rb_starting_transform :: proc(using self: ^RigidBody, trans: Transform) {
 
 @(private = "package")
 rb_fixed_update :: proc(using self: ^RigidBody, dt: f32) {
-    if (is_static) do return;
+    if (is_static) do return; 
 
     acceleration.y = -ecs_world.physics.gravity.y;
 

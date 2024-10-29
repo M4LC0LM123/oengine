@@ -1,34 +1,40 @@
 package ecs
 
 import "core:fmt"
+import "../fa"
+
+MAX_ENTS :: 2048
+MAX_SYS :: 64
 
 Context :: struct {
-    entities: [dynamic]^Entity,
-    _update_systems: [dynamic]SystemFunc,
-    _render_systems: [dynamic]SystemFunc,
+    entities: fa.FixedArray(^Entity),
+    _update_systems: fa.FixedArray(SystemFunc),
+    _render_systems: fa.FixedArray(SystemFunc),
 }
 
 ecs_init :: proc() -> Context {
     return Context {
-        entities = make([dynamic]^Entity),
-        _update_systems = make([dynamic]SystemFunc),
-        _render_systems = make([dynamic]SystemFunc),
+        entities = fa.fixed_array(^Entity, MAX_ENTS),
+        _update_systems = fa.fixed_array(SystemFunc, MAX_SYS),
+        _render_systems = fa.fixed_array(SystemFunc, MAX_SYS),
     };
 }
 
 register_system :: proc(ctx: ^Context, sys: SystemFunc, #any_int render: i32) {
     if (!bool(render)) { 
-        append(&ctx._update_systems, sys); 
+        fa.append(&ctx._update_systems, sys); 
         return;
     }
 
-    append(&ctx._render_systems, sys);
+    fa.append(&ctx._render_systems, sys);
 }
 
 ecs_update :: proc(ctx: ^Context) {
     using ctx;
-    for entity in entities {
-        for system in _update_systems {
+    for i in 0..<fa.range(entities) {
+        entity := entities.data[i];
+        for j in 0..<fa.range(_update_systems) {
+            system := _update_systems.data[j];
             system(ctx, entity);
         }
     }
@@ -36,19 +42,21 @@ ecs_update :: proc(ctx: ^Context) {
 
 ecs_render :: proc(ctx: ^Context) {
     using ctx;
-    for entity in entities {
-        for system in _render_systems {
+    for i in 0..<fa.range(entities) {
+        entity := entities.data[i];
+        for j in 0..<fa.range(_render_systems) {
+            system := _render_systems.data[j];
             system(ctx, entity);
         }
     }
 }
 
 ecs_remove :: proc(ctx: ^Context, ent: ^Entity) {
-    ordered_remove(&ctx.entities, int(ent.id));
+    fa.remove_arr(&ctx.entities, int(ent.id));
 }
 
 ecs_deinit :: proc(ctx: ^Context) {
-    delete(ctx.entities);
-    delete(ctx._update_systems);
-    delete(ctx._render_systems);
+    delete(ctx.entities.data);
+    delete(ctx._update_systems.data);
+    delete(ctx._render_systems.data);
 }

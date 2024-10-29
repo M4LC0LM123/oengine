@@ -1,8 +1,8 @@
-package oengine
+package fa
 
 FixedArray :: struct($T: typeid) {
     data: []T,
-    _i, len, cap: i32,
+    len, cap: i32,
     empty: T,
 }
 
@@ -32,9 +32,11 @@ fixed_array_custom :: proc($T: typeid, #any_int size: i32, empty: T) -> FixedArr
 }
 
 append_arr :: proc(arr: ^$T/FixedArray, elem: $E) {
-    arr.data[arr._i] = elem;
-    arr._i += 1;
-    arr.len = arr._i + 1;
+    arr.data[arr.len] = elem;
+
+    if (arr.len == arr.cap) do return;
+
+    arr.len += 1;
 }
 
 remove_arr :: proc(arr: ^$T/FixedArray, #any_int id: i32) {
@@ -44,8 +46,7 @@ remove_arr :: proc(arr: ^$T/FixedArray, #any_int id: i32) {
 
     arr.data[arr.cap - 1] = arr.empty;
 
-    arr._i -= 1;
-    arr.len = arr._i + 1;
+    arr.len -= 1;
 }
 
 clear_arr :: proc(arr: ^$T/FixedArray) {
@@ -55,5 +56,10 @@ clear_arr :: proc(arr: ^$T/FixedArray) {
 }
 
 range_arr :: proc(arr: $T/FixedArray) -> int {
-    return int(arr._i);
+    return int(arr.len);
 }
+
+range :: range_arr
+append :: append_arr
+remove :: remove_arr
+clear :: clear_arr
