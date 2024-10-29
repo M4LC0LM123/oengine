@@ -129,6 +129,18 @@ main :: proc() {
 
     // reset_track_allocator(&track_allocator);
 
+    arr := oe.fixed_array(i32, 1048576);
+
+    for i in 0..<64 {
+        oe.append_arr(&arr, i32(i));
+    }
+
+    oe.remove_arr(&arr, 10);
+
+    for i in 0..<oe.range_arr(arr) {
+        fmt.println(arr.data[i]);
+    }
+
     for (oe.w_tick()) {
         oe.ew_update();
         // update
