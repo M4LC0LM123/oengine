@@ -7,9 +7,9 @@ MAX_ENTS :: 2048
 MAX_SYS :: 64
 
 Context :: struct {
-    entities: fa.FixedArray(^Entity),
-    _update_systems: fa.FixedArray(SystemFunc),
-    _render_systems: fa.FixedArray(SystemFunc),
+    entities: fa.FixedArray(^Entity, MAX_ENTS),
+    _update_systems: fa.FixedArray(SystemFunc, MAX_SYS),
+    _render_systems: fa.FixedArray(SystemFunc, MAX_SYS),
 }
 
 ecs_init :: proc() -> Context {
@@ -56,7 +56,4 @@ ecs_remove :: proc(ctx: ^Context, ent: ^Entity) {
 }
 
 ecs_deinit :: proc(ctx: ^Context) {
-    delete(ctx.entities.data);
-    delete(ctx._update_systems.data);
-    delete(ctx._render_systems.data);
 }

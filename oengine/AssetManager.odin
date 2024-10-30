@@ -209,7 +209,7 @@ get_path :: proc(path: string) -> string {
     return res;
 }
 
-get_reg_data_ids :: proc() -> fa.FixedArray(DataID) {
+get_reg_data_ids :: proc() -> fa.FixedArray(DataID, MAX_DIDS) {
     using asset_manager;
 
     res := fa.fixed_array(DataID, MAX_DIDS);

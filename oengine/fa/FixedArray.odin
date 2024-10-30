@@ -1,7 +1,7 @@
 package fa
 
-FixedArray :: struct($T: typeid) {
-    data: []T,
+FixedArray :: struct($T: typeid, $V: i32) {
+    data: [V]T,
     len, cap: i32,
     empty: T,
 }
@@ -11,22 +11,20 @@ fixed_array :: proc {
     fixed_array_custom,
 }
 
-fixed_array_simple :: proc($T: typeid, #any_int size: i32) -> FixedArray(T) {
-    res: FixedArray(T);
-    res.data = make([]T, size);
-    res.cap = size;
+fixed_array_simple :: proc($T: typeid, $V: i32) -> FixedArray(T, V) {
+    res: FixedArray(T, V);
+    res.cap = V;
     return res;
 }
 
-fixed_array_custom :: proc($T: typeid, #any_int size: i32, empty: T) -> FixedArray(T) {
-    res: FixedArray(T);
-    res.data = make([]T, size);
+fixed_array_custom :: proc($T: typeid, $V: i32, empty: T) -> FixedArray(T, V) {
+    res: FixedArray(T, V);
     
-    for i in 0..<size {
+    for i in 0..<V {
         res.data[i] = empty;
     }
 
-    res.cap = size;
+    res.cap = V;
     res.empty = empty;
     return res;
 }

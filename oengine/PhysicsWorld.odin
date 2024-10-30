@@ -25,10 +25,10 @@ TriangleCollider :: struct {
 }
 
 PhysicsWorld :: struct {
-    bodies: fa.FixedArray(^RigidBody),
+    bodies: fa.FixedArray(^RigidBody, MAX_RBS),
     reverse_slopes: [dynamic]u32,
-    joints: fa.FixedArray(^Joint),
-    mscs: fa.FixedArray(^MSCObject),
+    joints: fa.FixedArray(^Joint, MAX_JOINTS),
+    mscs: fa.FixedArray(^MSCObject, MAX_MSCS),
     tree: OcTree,
 
     gravity: Vec3,
@@ -132,8 +132,6 @@ pw_deinit :: proc(using self: ^PhysicsWorld) {
         free(joint);
     }
 
-    delete(joints.data);
-
     for i in 0..<fa.range(bodies) {
         free(bodies.data[i]);
     }
@@ -141,9 +139,6 @@ pw_deinit :: proc(using self: ^PhysicsWorld) {
     for i in 0..<fa.range(mscs) {
         free(mscs.data[i]);
     }
-
-    delete(bodies.data);
-    delete(mscs.data);
 }
 
 @(private = "file")
