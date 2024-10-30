@@ -11,6 +11,7 @@ import rl "vendor:raylib"
 import "fa"
 
 MAX_DIDS :: 2048
+MAX_TEXTURES :: 2048
 
 DataID :: struct {
     reg_tag: string, // tag registerd in registry
@@ -223,28 +224,28 @@ get_reg_data_ids :: proc() -> fa.FixedArray(DataID, MAX_DIDS) {
     return res;
 }
 
-get_reg_textures :: proc() -> map[string]Texture {
+get_reg_textures :: proc() -> fa.FixedMap(string, Texture, MAX_TEXTURES) {
     using asset_manager;
 
-    res := make(map[string]Texture);
+    res := fa.fixed_map(string, Texture, MAX_TEXTURES);
 
     for tag, asset in registry {
         if (asset_is(asset, Texture)) {
-            res[tag] = asset_variant(asset, Texture);
+            fa.map_set(&res, tag, asset_variant(asset, Texture));
         }
     }
 
     return res;
 }
 
-get_reg_textures_tags :: proc() -> [dynamic]string {
+get_reg_textures_tags :: proc() -> fa.FixedArray(string, MAX_TEXTURES) {
     using asset_manager;
 
-    res := make([dynamic]string);
+    res := fa.fixed_array(string, MAX_TEXTURES);
 
     for tag, asset in registry {
         if (asset_is(asset, Texture)) {
-            append(&res, tag);
+            fa.append(&res, tag);
         }
     }
 

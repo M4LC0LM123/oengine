@@ -107,7 +107,7 @@ texture_tool :: proc(ct: CameraTool) {
     }
 
     COLS :: 6
-    rows := i32(math.ceil(f32(len(texs)) / f32(COLS)));
+    rows := i32(math.ceil(f32(texs.len) / f32(COLS)));
     w: f32 = 30;
     h: f32 = 30;
 
@@ -115,10 +115,10 @@ texture_tool :: proc(ct: CameraTool) {
         for col: i32; col < COLS; col += 1 {
             curr_id := row * COLS + col;
 
-            if (curr_id < i32(len(texs))) {
+            if (curr_id < i32(texs.len)) {
                 x := 10 + f32(col) * (w + 5);
                 y := 10 + f32(row) * (h + 5);
-                tag := texs[curr_id];
+                tag := texs.data[curr_id];
 
                 if (oe.gui_button(
                     tag, x, y, w, h, 
