@@ -89,12 +89,13 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
     rl.DrawLineV({0, -5}, {0, 5}, oe.PINK);
     rl.rlPopMatrix();
 
-    for &data_id in oe.get_reg_data_ids() {
-        did_render_ortho(self, &data_id); 
+    dids := oe.get_reg_data_ids();
+    for i in 0..<dids.len {
+        did_render_ortho(self, &dids.data[i]); 
     }
 
-    for msc_id in 0..<len(oe.ecs_world.physics.mscs) {
-        msc := oe.ecs_world.physics.mscs[msc_id];
+    for msc_id in 0..<oe.ecs_world.physics.mscs.len {
+        msc := oe.ecs_world.physics.mscs.data[msc_id];
         for i in 0..<len(msc.tris) {
             tri_render_ortho(self, msc.tris[i], i, msc_id);
         }
@@ -107,13 +108,13 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
     }
 
     if (oe.key_pressed(.DELETE)) {
-        ordered_remove(&oe.ecs_world.physics.mscs[_active_msc_id].tris, int(_active_id));
+        ordered_remove(&oe.ecs_world.physics.mscs.data[_active_msc_id].tris, int(_active_id));
         _active_id = ACTIVE_EMPTY;
         _active_msc_id = ACTIVE_EMPTY;
         return;
     }
 
-    active_3d := oe.ecs_world.physics.mscs[_active_msc_id].tris[_active_id].pts;
+    active_3d := oe.ecs_world.physics.mscs.data[_active_msc_id].tris[_active_id].pts;
     active := msc_tri_to_ortho_tri(active_3d, mode);
 
     rl.rlPushMatrix();
@@ -249,8 +250,8 @@ ortho_tri_to_msc_tri :: proc(pts: [3]oe.Vec2, pts_3d: [3]oe.Vec3, mode: CameraMo
 render_tri :: proc(using self: ^CameraTool) {
     ray := oe.get_mouse_rc(camera_perspective);
 
-    for msc_id in 0..<len(oe.ecs_world.physics.mscs) {
-        msc := oe.ecs_world.physics.mscs[msc_id];
+    for msc_id in 0..<oe.ecs_world.physics.mscs.len {
+        msc := oe.ecs_world.physics.mscs.data[msc_id];
         coll, arr := oe.rc_colliding_tris(ray, msc);
         if (coll) {
             info := arr[0];
@@ -276,7 +277,7 @@ render_tri :: proc(using self: ^CameraTool) {
         if (oe.key_pressed(.T)) {
             oe.gui_toggle_window("Texture tool");
         }
-        msc := oe.ecs_world.physics.mscs[_active_msc_id];
+        msc := oe.ecs_world.physics.mscs.data[_active_msc_id];
         t := msc.tris[_active_id];
         rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], GRID_COLOR);
     }

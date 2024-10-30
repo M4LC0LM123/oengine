@@ -53,7 +53,9 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]^oe.
     clear(distances);
     clear(collided_dids);
     editor_data.hovered_data_id = nil;
-    for &data_id in oe.get_reg_data_ids() {
+    dids := oe.get_reg_data_ids();
+    for i in 0..<dids.len {
+        data_id := dids.data[i];
         mouse_ray := rl.GetMouseRay(oe.window.mouse_position, oe.ecs_world.camera.rl_matrix);
         collision := rl.GetRayCollisionBox(mouse_ray, oe.transform_to_rl_bb(data_id.transform));
 

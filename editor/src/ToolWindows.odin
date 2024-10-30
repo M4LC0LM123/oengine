@@ -4,6 +4,7 @@ import "core:fmt"
 import rl "vendor:raylib"
 import sdl "vendor:sdl2"
 import oe "../../oengine"
+import "../../oengine/fa"
 import "core:math"
 import "core:path/filepath"
 import sc "core:strconv"
@@ -50,7 +51,8 @@ msc_tool :: proc(ct: CameraTool) {
     }
 
     if (oe.gui_button("Recalc aabbs", 10, 130, BUTTON_WIDTH, 30)) {
-        for msc in oe.ecs_world.physics.mscs {
+        for i in 0..<oe.ecs_world.physics.mscs.len {
+            msc := oe.ecs_world.physics.mscs.data[i];
             msc._aabb = oe.tris_to_aabb(msc.tris);
         }
     }
@@ -75,14 +77,14 @@ map_proj_tool :: proc(ct: CameraTool) {
     if (oe.gui_button("Save map", 10, 50, BUTTON_WIDTH, 30)) {
         path := oe.fd_file_path();
         if (path != oe.STR_EMPTY) {
-            for msc in oe.ecs_world.physics.mscs {
-                 oe.msc_to_json(msc, path);
+            for i in 0..<oe.ecs_world.physics.mscs.len {
+                 oe.msc_to_json(oe.ecs_world.physics.mscs.data[i], path);
             }
         }
     }
 
     if (oe.gui_button("Clear", 10, 90, BUTTON_WIDTH, 30)) {
-        clear(&oe.ecs_world.physics.mscs);
+        fa.clear(&oe.ecs_world.physics.mscs);
     }
 
     oe.gui_end();
@@ -100,7 +102,7 @@ texture_tool :: proc(ct: CameraTool) {
         rot += 1;
         if (rot > 3) do rot = 0;
 
-        active := oe.ecs_world.physics.mscs[ct._active_msc_id].tris[ct._active_id];
+        active := oe.ecs_world.physics.mscs.data[ct._active_msc_id].tris[ct._active_id];
         oe.tri_recalc_uvs(active, rot);
     }
 
@@ -110,7 +112,7 @@ texture_tool :: proc(ct: CameraTool) {
             tag, 10, 10 + f32(i) * 35, 30, 30, 
             texture = oe.get_asset_var(tag, oe.Texture)
             )) {
-            active := oe.ecs_world.physics.mscs[ct._active_msc_id].tris[ct._active_id];
+            active := oe.ecs_world.physics.mscs.data[ct._active_msc_id].tris[ct._active_id];
             active.texture_tag = tag;
         }
     }
@@ -210,8 +212,8 @@ msc_check :: proc(new_instance: bool) -> ^oe.MSCObject {
     if (new_instance) {
         msc = oe.msc_init();
     } else {
-        if (len(oe.ecs_world.physics.mscs) > 0) {
-            msc = oe.ecs_world.physics.mscs[len(oe.ecs_world.physics.mscs) - 1];
+        if (oe.ecs_world.physics.mscs.len > 0) {
+            msc = oe.ecs_world.physics.mscs.data[oe.ecs_world.physics.mscs.len - 1];
         } else {
             msc = oe.msc_init();
         }
