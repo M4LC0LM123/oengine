@@ -135,6 +135,20 @@ main :: proc() {
     lara_tr.scale *= 3;
     lara_sm := oe.add_component(lara_ent, oe.sm_init(lara));
 
+    dict := fa.fixed_map(string, i32, 64);
+
+    fa.map_set(&dict, "idegas", i32(123));
+
+    for i in 0..<dict.len {
+        fmt.println(fa.map_pair(dict, i));
+    }
+
+    fmt.println(fa.map_value(dict, "idegas"));
+
+    fa.map_clear(&dict);
+
+    fmt.println(dict);
+
     // reset_track_allocator(&track_allocator);
 
     for (oe.w_tick()) {

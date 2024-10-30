@@ -51,6 +51,7 @@ clear_arr :: proc(arr: ^$T/FixedArray) {
     for i in 0..<arr.cap {
         arr.data[i] = arr.empty;
     }
+    arr.len = 0;
 }
 
 range_arr :: proc(arr: $T/FixedArray) -> int {
