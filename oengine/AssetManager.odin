@@ -8,6 +8,9 @@ import "core:path/filepath"
 import sc "core:strconv"
 import strs "core:strings"
 import rl "vendor:raylib"
+import "fa"
+
+MAX_DIDS :: 2048
 
 DataID :: struct {
     reg_tag: string, // tag registerd in registry
@@ -206,14 +209,14 @@ get_path :: proc(path: string) -> string {
     return res;
 }
 
-get_reg_data_ids :: proc() -> [dynamic]DataID {
+get_reg_data_ids :: proc() -> fa.FixedArray(DataID) {
     using asset_manager;
 
-    res := make([dynamic]DataID);
+    res := fa.fixed_array(DataID, MAX_DIDS);
 
     for tag, asset in registry {
         if (asset_is(asset, DataID)) {
-            append(&res, asset_variant(asset, DataID));
+            fa.append(&res, asset_variant(asset, DataID));
         }
     }
 

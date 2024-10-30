@@ -26,7 +26,7 @@ sprite_default :: proc(texture: Texture) -> Sprite {
 ModelArmature :: struct {
     animations: [^]rl.ModelAnimation,
     anim_count: i32,
-    frame_counter: i32,
+    frame_counter: f32,
     speed: f32,
 }
 
@@ -140,10 +140,11 @@ sm_init_sprite :: proc(s_texture: Texture, #any_int i: i32, s_color: Color = rl.
 }
 
 sm_apply_anim :: proc(using self: ^SimpleMesh, ma: ^ModelArmature, id: i32) {
-    ma.frame_counter += i32(ma.speed * rl.GetFrameTime());
-    rl.UpdateModelAnimation(tex.(Model), ma.animations[id], ma.frame_counter);
+    ma.frame_counter += ma.speed * rl.GetFrameTime();
+    fc := i32(math.floor(ma.frame_counter));
+    rl.UpdateModelAnimation(tex.(Model), ma.animations[id], fc);
 
-    if (ma.frame_counter >= ma.animations[id].frameCount) {
+    if (fc >= ma.animations[id].frameCount) {
         ma.frame_counter = 0;
     }
 }

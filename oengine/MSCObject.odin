@@ -154,7 +154,9 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
     };
 
     j := 0;
-    for data_id in get_reg_data_ids() {
+    dids := get_reg_data_ids();
+    for i in 0..<dids.len {
+        data_id := dids.data[i];
         mrshl := DataIDMarshall {data_id.tag, data_id.id, data_id.transform};
         data, ok := json.marshal(mrshl, {pretty = true});
 

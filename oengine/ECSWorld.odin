@@ -120,7 +120,8 @@ ew_render :: proc() {
     }
 
     if (OE_DEBUG) {
-        for data_id in get_reg_data_ids() { draw_data_id(data_id); }
+        dids := get_reg_data_ids();
+        for i in 0..<dids.len { draw_data_id(dids.data[i]); }
     }
 
     rl.rlDisableBackfaceCulling();

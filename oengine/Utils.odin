@@ -491,6 +491,25 @@ sys_os :: proc() -> OSType {
 
 str_add :: proc {
     str_add_strs,
+    str_add_any,
+}
+
+str_add_strs :: proc(bufs: []string) -> string {
+    return str.concatenate(bufs);
+}
+
+str_add_any :: proc(buf: string, elem: $E, _fmt: string = "%.2f") -> string {
+    type := typeid_of(type_of(elem));
+    if (type == f32 || type == f64) {
+        return fmt.aprintf(fmt.aprint("%v", _fmt, sep = ""), buf, elem);
+    }
+
+    return fmt.aprintf("%v%v", buf, elem);
+}
+
+/* not needed anymore but kept just in case
+str_add :: proc {
+    str_add_strs,
     str_add_str,
     str_add_f64,
     str_add_f32,
@@ -530,14 +549,7 @@ str_add_f32 :: proc(buf: string, n: f32, fmt: byte = 'f') -> string {
 }
 
 str_add_int :: proc(buf: string, #any_int n: int) -> string {
-    b: ^str.Builder = new(str.Builder);
-    defer free(b);
-    str.builder_init(b);
-
-    str.builder_reset(b);
-    str.write_int(b, n);
-
-    return str.concatenate({buf, str.to_string(b^)});
+    return fmt.aprintf("%v%v", buf, n);
 }
 
 str_add_uint :: proc(buf: string, n: uint) -> string {
@@ -572,3 +584,4 @@ str_add_char :: proc(buf: string, n: char) -> string {
 
     return str.concatenate({buf, str.to_string(b^)});
 }
+*/
