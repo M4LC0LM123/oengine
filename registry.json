@@ -51,7 +51,11 @@
         "type": "Model"
     },
     "swat": {
-        "path": "../assets/models/man2.m3d",
+        "path": "../assets/models/man.m3d",
+        "type": "Model"
+    },
+    "lara": {
+        "path": "../assets/models/lara.m3d",
         "type": "Model"
     }
 }
