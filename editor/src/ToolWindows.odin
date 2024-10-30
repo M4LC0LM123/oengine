@@ -106,14 +106,28 @@ texture_tool :: proc(ct: CameraTool) {
         oe.tri_recalc_uvs(active, rot);
     }
 
-    for i in 0..<len(texs) {
-        tag := texs[i];
-        if (oe.gui_button(
-            tag, 10, 10 + f32(i) * 35, 30, 30, 
-            texture = oe.get_asset_var(tag, oe.Texture)
-            )) {
-            active := oe.ecs_world.physics.mscs.data[ct._active_msc_id].tris[ct._active_id];
-            active.texture_tag = tag;
+    COLS :: 6
+    rows := i32(math.ceil(f32(len(texs)) / f32(COLS)));
+    w: f32 = 30;
+    h: f32 = 30;
+
+    for row: i32; row < rows; row += 1 {
+        for col: i32; col < COLS; col += 1 {
+            curr_id := row * COLS + col;
+
+            if (curr_id < i32(len(texs))) {
+                x := 10 + f32(col) * (w + 5);
+                y := 10 + f32(row) * (h + 5);
+                tag := texs[curr_id];
+
+                if (oe.gui_button(
+                    tag, x, y, w, h, 
+                    texture = oe.get_asset_var(tag, oe.Texture)
+                    )) {
+                    active := oe.ecs_world.physics.mscs.data[ct._active_msc_id].tris[ct._active_id];
+                    active.texture_tag = tag;
+                }
+            }
         }
     }
 
