@@ -5,6 +5,7 @@ import sc "core:strconv"
 import "core:unicode/utf8"
 import "core:os"
 import "core:fmt"
+import "fa"
 
 CommandAction :: proc(args: []string);
 
@@ -114,7 +115,8 @@ ent_eval :: proc(args: []string) {
     }
 
     if (len(args) == 2) {
-        for k, i in ent.components {
+        for ii in 0..<ent.components.len {
+            k, i := fa.map_pair(ent.components, ii);
             type := fmt.aprint(k);
 
             if (type == args[1]) {
@@ -126,7 +128,7 @@ ent_eval :: proc(args: []string) {
 
     console_print(str_add("id: ", ent.id));
     console_print(str_add("tag: ", ent.tag));
-    console_print(str_add("components: ", len(ent.components)));
+    console_print(str_add("components: ", ent.components.len));
 }
 
 clear_cmd :: proc(args: []string) {

@@ -135,8 +135,6 @@ ew_deinit :: proc() {
 
     rlg.DestroyContext(rlg_ctx);
 
-    ecs.ecs_deinit(&ecs_ctx);
-
     pw_deinit(&physics);
 
     deinit_assets();

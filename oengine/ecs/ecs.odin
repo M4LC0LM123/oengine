@@ -54,6 +54,3 @@ ecs_render :: proc(ctx: ^Context) {
 ecs_remove :: proc(ctx: ^Context, ent: ^Entity) {
     fa.remove_arr(&ctx.entities, int(ent.id));
 }
-
-ecs_deinit :: proc(ctx: ^Context) {
-}

@@ -7,16 +7,18 @@ SystemFunc :: #type proc(ctx: ^Context, entity: ^Entity)
 ECS_UPDATE :: 0
 ECS_RENDER :: 1
 
+MAX_CMPNTS :: 64
+
 Entity :: struct {
     id: u32,
     tag: string,
-    components: map[typeid]rawptr,
+    components: fa.FixedMap(typeid, rawptr, MAX_CMPNTS),
 }
 
 entity_init :: proc(ctx: ^Context) -> ^Entity {
     res := new(Entity);
     res.id = u32(ctx.entities.len);
-    res.components = make(map[typeid]rawptr);
+    res.components = fa.fixed_map(typeid, rawptr, MAX_CMPNTS);
     res.tag = "Entity";
     fa.append_arr(&ctx.entities, res);
     return res;
@@ -25,12 +27,12 @@ entity_init :: proc(ctx: ^Context) -> ^Entity {
 // creates a pointer copy of the passed component
 add_component :: proc(ent: ^Entity, component: $T) -> ^T {
     type := typeid_of(type_of(component));
-    ent.components[type] = new_clone(component);
-    return cast(^T)ent.components[type];
+    fa.map_set(&ent.components, type, new_clone(component));
+    return cast(^T)fa.map_value(ent.components, type);
 }
 
 get_component :: proc(ent: ^Entity, $T: typeid) -> ^T {
-    return cast(^T)ent.components[T];
+    return cast(^T)fa.map_value(ent.components, T);
 }
 
 has_component :: proc(ent: ^Entity, $T: typeid) -> bool {

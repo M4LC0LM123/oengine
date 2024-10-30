@@ -48,7 +48,13 @@ map_pair :: proc(_map: FixedMap($K, $T, $V), #any_int id: i32) -> (K, T) {
 }
 
 map_value :: proc(_map: FixedMap($K, $T, $V), k: K) -> T {
-    return _map.v_data[map_index(_map, k)];
+    id := map_index(_map, k);
+
+    if (id == -1) {
+        return _map.v_empty;
+    }
+
+    return _map.v_data[id];
 }
 
 map_remove :: proc(_map: ^$T/FixedMap, k: $K) {
@@ -69,7 +75,6 @@ map_index :: proc(_map: $T/FixedMap, k: $K) -> i32 {
             return i;
         }
     }
-
     return -1;
 }
 
