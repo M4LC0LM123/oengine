@@ -224,8 +224,9 @@ resolve_aabb_collision :: proc(using self: ^PhysicsWorld, rb, rb2: ^RigidBody) {
             resolve_collision(rb2, contact.normal, -contact.depth);
             resolve_joints(self, rb2, contact.normal, -contact.depth);
         } else {
-            if (len(rb.joints) != 0) {
-                for j in rb.joints {
+            if (rb.joints.len != 0) {
+                for jj in 0..<rb.joints.len {
+                    j := rb.joints.data[jj];
                     if (joints.data[j].variant.(^FixedJoint).child.id == rb2.id || 
                         joints.data[j].variant.(^FixedJoint).parent.id == rb2.id) {
                         return;
@@ -259,9 +260,9 @@ resolve_aabb_collision :: proc(using self: ^PhysicsWorld, rb, rb2: ^RigidBody) {
 
 @(private = "file")
 resolve_joints :: proc(using self: ^PhysicsWorld, rb: ^RigidBody, normal: Vec3, depth: f32) {
-    if (len(rb.joints) != 0) {
-        for j in rb.joints {
-            joint := joints.data[j];
+    if (rb.joints.len != 0) {
+        for j in 0..<rb.joints.len {
+            joint := joints.data[rb.joints.data[j]];
             fj := joint.variant.(^FixedJoint);
 
             if (fj.parent.id == rb.id) {

@@ -36,7 +36,8 @@ print_command :: proc(args: []string) {
 list_cmds :: proc(args: []string) {
     using dev_console;
 
-    for i, v in commands {
+    for ii in 0..<commands.len {
+        i, v := fa.map_pair(commands, ii);
         console_print(str_add({v.name, " - ", v.description}));
     }
 }
@@ -131,7 +132,14 @@ ent_eval :: proc(args: []string) {
     console_print(str_add("components: ", ent.components.len));
 }
 
+add_car_cmd :: proc(args: []string) {
+    using dev_console;
+    add_car(ecs_world.camera.position);
+
+    console_print(str_add("Added car at: ", ecs_world.camera.position));
+}
+
 clear_cmd :: proc(args: []string) {
-    clear(&dev_console.output);
+    fa.clear(&dev_console.output);
     dev_console.offset = 0;
 }

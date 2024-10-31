@@ -4,6 +4,7 @@ import "core:math"
 import "core:fmt"
 import rl "vendor:raylib"
 import ecs "ecs"
+import "fa"
 
 MASS_SCALAR :: 100
 MAX_VEL :: 50
@@ -51,7 +52,7 @@ RigidBody :: struct {
 
     is_static: bool,
 
-    joints: [dynamic]u32,
+    joints: fa.FixedArray(u32, MAX_JOINTS),
 
     collision_mask: [COLLISION_MASK_SIZE]i32,
 }
@@ -98,7 +99,7 @@ rb_init_all :: proc(using rb: ^RigidBody, s_density, s_restitution: f32, s_stati
     shape_variant = 0;
 
     id = u32(ecs_world.physics.bodies.len);
-    joints = make([dynamic]u32);
+    joints = fa.fixed_array(u32, MAX_JOINTS);
 
     for i in 1..<COLLISION_MASK_SIZE+1 {
         collision_mask[i - 1] = i32(i);

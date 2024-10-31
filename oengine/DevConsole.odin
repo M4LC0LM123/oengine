@@ -3,16 +3,20 @@ package oengine
 import rl "vendor:raylib"
 import strs "core:strings"
 import "core:fmt"
+import "fa"
 
 DC_TEXTBOX_SIZE :: 30
+
+MAX_OTP_LINES :: 512
+MAX_COMMANDS :: 32
 
 dev_console: struct {
     _rec: rl.Rectangle,
     active: bool,
     _toggle_key: Key,
     command: string,
-    output: [dynamic]string,
-    commands: map[string]ConsoleCommand,
+    output: fa.FixedArray(string, MAX_OTP_LINES),
+    commands: fa.FixedMap(string, ConsoleCommand, MAX_COMMANDS),
     prev_input: string,
     offset: f32,
 }
@@ -20,8 +24,8 @@ dev_console: struct {
 console_init :: proc() {
     using dev_console;
     _toggle_key = .GRAVE;
-    output = make([dynamic]string);
-    commands = make(map[string]ConsoleCommand);
+    output = fa.fixed_array(string, MAX_OTP_LINES);
+    commands = fa.fixed_map(string, ConsoleCommand, MAX_COMMANDS);
     _rec = {0, -f32(w_render_height() / 2), f32(w_render_width()), f32(w_render_height() / 2)};
 
     console_register(new_command("listcmds", "List all available commands", list_cmds));
@@ -33,11 +37,12 @@ console_init :: proc() {
     console_register(new_command("exit", "Exits the app", exit_cmd));
     console_register(new_command("clear", "Clears the console", clear_cmd));
     console_register(new_command("get_ent", "Get entity", ent_eval));
+    console_register(new_command("add_car", "Adds a dummy car that tests joints", add_car_cmd));
 }
 
 console_register :: proc(s_command: ConsoleCommand) {
     using dev_console;    
-    commands[s_command.name] = s_command;
+    fa.map_set(&commands, s_command.name, s_command);
 }
 
 console_exec :: proc(command: string) {
@@ -47,8 +52,9 @@ console_exec :: proc(command: string) {
     name := strs.to_lower(parts[0]);
     args := len(parts) > 1 ? parts[1:] : {};
 
-    if (commands[name].action != nil) {
-        commands[name].action(args);
+    v := fa.map_value(commands, name);
+    if (v.action != nil) {
+        v.action(args);
     } else {
         console_print(str_add({"Command: ", name, " doesn't exist"}));
     }
@@ -75,7 +81,7 @@ console_print :: proc(str: string) {
     //     }
     // }
 
-    append(&output, strs.clone(str));
+    fa.append(&output, strs.clone(str));
 }
 
 console_update :: proc() {
@@ -140,8 +146,8 @@ console_render :: proc() {
             i32(_rec.x), i32(_rec.y), i32(_rec.width), i32(_rec.height - 40)
         );
 
-        for i in 0..<len(output) {
-            line := output[i];
+        for i in 0..<output.len {
+            line := output.data[i];
             y := (10 + f32(i) * 20) - offset;
 
             if (y + 18 >= _rec.height - 40) {
