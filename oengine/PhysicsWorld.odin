@@ -50,11 +50,11 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
     delta_time = dt;
 
     for n: i32; n < iterations; n += 1 {
-        // oct_clear(&tree);
+        oct_clear(&tree);
         
-        // for body in bodies {
-        //     oct_insert(&tree, body);
-        // }
+        for i in 0..<bodies.len {
+            oct_insert(&tree, bodies.data[i]);
+        }
 
         for i := 0; i < fa.range(bodies); i += 1 {
             rb := bodies.data[i];
@@ -73,9 +73,36 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
                 }
             }
 
-            for j := i + 1; j < fa.range(bodies); j += 1 {
-                rb2 := bodies.data[j];
+            // for j := i + 1; j < fa.range(bodies); j += 1 {
+            //     rb2 := bodies.data[j];
+            //
+            //     if (ignored(rb, rb2)) do continue;
+            //     if (!collision_transforms(rb.transform, rb2.transform)) do continue;
+            //
+            //     if (rb.shape == ShapeType.HEIGHTMAP) {
+            //         resolve_heightmap_collision(rb, rb2);
+            //     } else if (rb2.shape == ShapeType.HEIGHTMAP) {
+            //         resolve_heightmap_collision(rb2, rb);
+            //     } else if (rb.shape == ShapeType.SLOPE) {
+            //         resolve_slope_collision(self, rb, rb2);
+            //     } else if (rb2.shape == ShapeType.SLOPE) {
+            //         resolve_slope_collision(self, rb2, rb);
+            //     } else {
+            //         resolve_aabb_collision(self, rb, rb2);
+            //     }
+            // }
 
+            potential := oct_retrieve(&tree, {
+                rb.transform.position.x - 2.5,
+                rb.transform.position.y - 2.5,
+                rb.transform.position.z - 2.5,
+                rb.transform.scale.x + 5,
+                rb.transform.scale.y + 5,
+                rb.transform.scale.z + 5,
+            });
+
+            for j in 0..<potential.len {
+                rb2 := potential.data[j];
                 if (ignored(rb, rb2)) do continue;
                 if (!collision_transforms(rb.transform, rb2.transform)) do continue;
 
@@ -91,32 +118,6 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
                     resolve_aabb_collision(self, rb, rb2);
                 }
             }
-
-            // potential := oct_retrieve(&tree, {
-            //     rb.transform.position.x - 2.5,
-            //     rb.transform.position.y - 2.5,
-            //     rb.transform.position.z - 2.5,
-            //     rb.transform.scale.x + 5,
-            //     rb.transform.scale.y + 5,
-            //     rb.transform.scale.z + 5,
-            // });
-
-            // for rb2 in potential {
-            //     if (ignored(rb, rb2)) do continue;
-            //     if (!collision_transforms(rb.transform, rb2.transform)) do continue;
-
-            //     if (rb.shape == ShapeType.HEIGHTMAP) {
-            //         resolve_heightmap_collision(rb, rb2);
-            //     } else if (rb2.shape == ShapeType.HEIGHTMAP) {
-            //         resolve_heightmap_collision(rb2, rb);
-            //     } else if (rb.shape == ShapeType.SLOPE) {
-            //         resolve_slope_collision(self, rb, rb2);
-            //     } else if (rb2.shape == ShapeType.SLOPE) {
-            //         resolve_slope_collision(self, rb2, rb);
-            //     } else {
-            //         resolve_aabb_collision(self, rb, rb2);
-            //     }
-            // }
         }
 
         for i in 0..<fa.range(joints) {
