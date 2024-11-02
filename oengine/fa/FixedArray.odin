@@ -58,6 +58,14 @@ range_arr :: proc(arr: $T/FixedArray) -> int {
     return int(arr.len);
 }
 
+get_id :: proc(arr: $T/FixedArray, elem: $E) -> i32 {
+    for i in 0..<arr.len {
+        if (arr.data[i] == elem) do return i;
+    }
+
+    return -1;
+}
+
 range :: range_arr
 append :: append_arr
 remove :: remove_arr
