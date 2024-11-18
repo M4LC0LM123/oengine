@@ -39,7 +39,7 @@ PhysicsWorld :: struct {
     delta_time: f32,
     iterations: i32,
 
-    sbp_tree: SBPTree(WORLD_SECTOR_SIZE),
+    // sbp_tree: SBPTree(WORLD_SECTOR_SIZE),
 }
 
 pw_init :: proc(using self: ^PhysicsWorld, s_gravity: Vec3, s_iter: i32 = 8) {
@@ -51,31 +51,31 @@ pw_init :: proc(using self: ^PhysicsWorld, s_gravity: Vec3, s_iter: i32 = 8) {
     gravity = s_gravity;
     iterations = s_iter;
 
-    for i in 0..<WORLD_SECTOR_SIZE {
-        for j in 0..<WORLD_SECTOR_SIZE {
-            for k in 0..<WORLD_SECTOR_SIZE {
-                min := Vec3 {f32(i) * SECTOR_SIZE, f32(j) * SECTOR_SIZE, f32(k) * SECTOR_SIZE} - WORLD_SIZE * 0.5;
-                max := min + SECTOR_SIZE;
+    // for i in 0..<WORLD_SECTOR_SIZE {
+    //     for j in 0..<WORLD_SECTOR_SIZE {
+    //         for k in 0..<WORLD_SECTOR_SIZE {
+    //             min := Vec3 {f32(i) * SECTOR_SIZE, f32(j) * SECTOR_SIZE, f32(k) * SECTOR_SIZE} - WORLD_SIZE * 0.5;
+    //             max := min + SECTOR_SIZE;
 
-                sbp_tree._sectors[i][j][k] = sector_init(SBP_AABB{min, max});
-            }
-        }
-    }
+    //             sbp_tree._sectors[i][j][k] = sector_init(SBP_AABB{min, max});
+    //         }
+    //     }
+    // }
 }
 
 pw_debug :: proc(using self: PhysicsWorld) {
-    for i in 0..<WORLD_SECTOR_SIZE {
-        for j in 0..<WORLD_SECTOR_SIZE {
-            for k in 0..<WORLD_SECTOR_SIZE {
-                sector := sbp_tree._sectors[i][j][k];
-                // draw_cube_wireframe(sector.bounds.min, {}, sector.bounds.max - sector.bounds.min, WHITE);
+    // for i in 0..<WORLD_SECTOR_SIZE {
+    //     for j in 0..<WORLD_SECTOR_SIZE {
+    //         for k in 0..<WORLD_SECTOR_SIZE {
+    //             sector := sbp_tree._sectors[i][j][k];
+    //             // draw_cube_wireframe(sector.bounds.min, {}, sector.bounds.max - sector.bounds.min, WHITE);
 
-                if (sector._rbs.len > 0) {
-                    draw_cube_wireframe(sector.bounds.min, {}, sector.bounds.max - sector.bounds.min, GREEN);
-                }
-            }
-        }
-    }
+    //             if (sector._rbs.len > 0) {
+    //                 draw_cube_wireframe(sector.bounds.min, {}, sector.bounds.max - sector.bounds.min, GREEN);
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
@@ -83,7 +83,7 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
 
     for n: i32; n < iterations; n += 1 {
         oct_clear(&tree);
-        sbp_clear(&sbp_tree);
+        // sbp_clear(&sbp_tree);
         
         for i in 0..<bodies.len {
             oct_insert(&tree, bodies.data[i]);
@@ -93,29 +93,29 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
             rb := bodies.data[i];
             rb_fixed_update(rb, delta_time / f32(iterations));
 
-            sbp := aabb_to_sbp(trans_to_aabb(rb.transform));
+            // sbp := aabb_to_sbp(trans_to_aabb(rb.transform));
 
-            index_sbp := SBP_AABB {
-                min = {
-                    math.floor((sbp.min.x + WORLD_SIZE * 0.5) / SECTOR_SIZE),
-                    math.floor((sbp.min.y + WORLD_SIZE * 0.5) / SECTOR_SIZE),
-                    math.floor((sbp.min.z + WORLD_SIZE * 0.5) / SECTOR_SIZE),
-                },
-                max = {
-                    math.ceil((sbp.max.x + WORLD_SIZE * 0.5) / SECTOR_SIZE),
-                    math.ceil((sbp.max.y + WORLD_SIZE * 0.5) / SECTOR_SIZE),
-                    math.ceil((sbp.max.z + WORLD_SIZE * 0.5) / SECTOR_SIZE),
-                },
-            };
-            fmt.println(index_sbp.max - index_sbp.min, index_sbp, sbp);
+            // index_sbp := SBP_AABB {
+            //     min = {
+            //         math.floor((sbp.min.x + WORLD_SIZE * 0.5) / SECTOR_SIZE),
+            //         math.floor((sbp.min.y + WORLD_SIZE * 0.5) / SECTOR_SIZE),
+            //         math.floor((sbp.min.z + WORLD_SIZE * 0.5) / SECTOR_SIZE),
+            //     },
+            //     max = {
+            //         math.ceil((sbp.max.x + WORLD_SIZE * 0.5) / SECTOR_SIZE),
+            //         math.ceil((sbp.max.y + WORLD_SIZE * 0.5) / SECTOR_SIZE),
+            //         math.ceil((sbp.max.z + WORLD_SIZE * 0.5) / SECTOR_SIZE),
+            //     },
+            // };
+            // fmt.println(index_sbp.max - index_sbp.min, index_sbp, sbp);
 
-            for i in i32(index_sbp.min.x)..<i32(index_sbp.max.x) {
-                for j in i32(index_sbp.min.y)..<i32(index_sbp.max.y) {
-                    for k in i32(index_sbp.min.z)..<i32(index_sbp.max.z) {
-                        fa.append(&sbp_tree._sectors[i][j][k]._rbs, rb);
-                    }
-                }
-            }
+            // for i in i32(index_sbp.min.x)..<i32(index_sbp.max.x) {
+            //     for j in i32(index_sbp.min.y)..<i32(index_sbp.max.y) {
+            //         for k in i32(index_sbp.min.z)..<i32(index_sbp.max.z) {
+            //             fa.append(&sbp_tree._sectors[i][j][k]._rbs, rb);
+            //         }
+            //     }
+            // }
                     
             for i in 0..<fa.range(mscs) {
                 msc := mscs.data[i];

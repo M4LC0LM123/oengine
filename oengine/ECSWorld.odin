@@ -80,14 +80,12 @@ ew_get_ent_tag :: proc(tag: string) -> AEntity {
 
 ew_update :: proc() {
     using ecs_world;
-    t := thread.create_and_start(ew_fixed_update);
+    t := thread.create_and_start(ew_fixed_update, self_cleanup = true);
 
     fog_update(camera.position);
     rlg.SetViewPositionV(camera.position);
 
     ecs.ecs_update(&ecs_ctx);
-
-    thread.destroy(t);
 }
 
 @(private = "file")

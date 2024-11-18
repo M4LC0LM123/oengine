@@ -183,28 +183,28 @@ rb_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
         draw_slope_wireframe(shape_variant.(Slope), transform.position, transform.rotation, transform.scale, PHYS_DEBUG_COLOR);
     }
 
-    sbp := aabb_to_sbp(trans_to_aabb(rb.transform));
+    // sbp := aabb_to_sbp(trans_to_aabb(rb.transform));
 
-    draw_cube_wireframe((sbp.min + (sbp.max - sbp.min) * 0.5), {}, (sbp.max - sbp.min), RED);
-    draw_sphere_wireframe(sbp.min, {}, 1, RED);
-    draw_sphere_wireframe(sbp.max, {}, 1, RED);
+    // draw_cube_wireframe((sbp.min + (sbp.max - sbp.min) * 0.5), {}, (sbp.max - sbp.min), RED);
+    // draw_sphere_wireframe(sbp.min, {}, 1, RED);
+    // draw_sphere_wireframe(sbp.max, {}, 1, RED);
 
-    index_sbp := SBP_AABB {
-        min = {
-            math.floor((sbp.min.x) / SECTOR_SIZE),
-            math.floor((sbp.min.y) / SECTOR_SIZE),
-            math.floor((sbp.min.z) / SECTOR_SIZE),
-        },
-        max = {
-            math.ceil((sbp.max.x) / SECTOR_SIZE),
-            math.ceil((sbp.max.y) / SECTOR_SIZE),
-            math.ceil((sbp.max.z) / SECTOR_SIZE),
-        },
-    };
+    // index_sbp := SBP_AABB {
+    //     min = {
+    //         math.floor((sbp.min.x) / SECTOR_SIZE),
+    //         math.floor((sbp.min.y) / SECTOR_SIZE),
+    //         math.floor((sbp.min.z) / SECTOR_SIZE),
+    //     },
+    //     max = {
+    //         math.ceil((sbp.max.x) / SECTOR_SIZE),
+    //         math.ceil((sbp.max.y) / SECTOR_SIZE),
+    //         math.ceil((sbp.max.z) / SECTOR_SIZE),
+    //     },
+    // };
 
-    draw_cube_wireframe((index_sbp.min + (index_sbp.max - index_sbp.min) * 0.5) * SECTOR_SIZE, {}, (index_sbp.max - index_sbp.min) * SECTOR_SIZE, YELLOW);
-    draw_sphere_wireframe(index_sbp.min * SECTOR_SIZE, {}, 1, YELLOW);
-    draw_sphere_wireframe(index_sbp.max * SECTOR_SIZE, {}, 1, YELLOW);
+    // draw_cube_wireframe((index_sbp.min + (index_sbp.max - index_sbp.min) * 0.5) * SECTOR_SIZE, {}, (index_sbp.max - index_sbp.min) * SECTOR_SIZE, YELLOW);
+    // draw_sphere_wireframe(index_sbp.min * SECTOR_SIZE, {}, 1, YELLOW);
+    // draw_sphere_wireframe(index_sbp.max * SECTOR_SIZE, {}, 1, YELLOW);
     
     //else if (shape == .HEIGHTMAP) {
     //     draw_heightmap_wireframe(shape_variant.(HeightMap), transform.position, transform.rotation, transform.scale, PHYS_DEBUG_COLOR);
