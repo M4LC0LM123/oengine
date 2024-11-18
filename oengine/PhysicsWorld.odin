@@ -64,18 +64,24 @@ pw_init :: proc(using self: ^PhysicsWorld, s_gravity: Vec3, s_iter: i32 = 8) {
 }
 
 pw_debug :: proc(using self: PhysicsWorld) {
-    // for i in 0..<WORLD_SECTOR_SIZE {
-    //     for j in 0..<WORLD_SECTOR_SIZE {
-    //         for k in 0..<WORLD_SECTOR_SIZE {
-    //             sector := sbp_tree._sectors[i][j][k];
-    //             // draw_cube_wireframe(sector.bounds.min, {}, sector.bounds.max - sector.bounds.min, WHITE);
+//     for i in 0..<WORLD_SECTOR_SIZE {
+//         for j in 0..<WORLD_SECTOR_SIZE {
+//             for k in 0..<WORLD_SECTOR_SIZE {
+//                 sector := sbp_tree._sectors[i][j][k];
+//                 // draw_cube_wireframe(sector.bounds.min, {}, sector.bounds.max - sector.bounds.min, WHITE);
 
-    //             if (sector._rbs.len > 0) {
-    //                 draw_cube_wireframe(sector.bounds.min, {}, sector.bounds.max - sector.bounds.min, GREEN);
-    //             }
-    //         }
-    //     }
-    // }
+//                 if (sector._rbs.len > 0) {
+//                     // draw_cube_wireframe(sector.bounds.min, {}, sector.bounds.max - sector.bounds.min, GREEN);
+//                     draw_cube_wireframe(
+//                         (sector.bounds.min + (sector.bounds.max - sector.bounds.min) * 0.5), 
+//                         {}, 
+//                         (sector.bounds.max - sector.bounds.min), 
+//                         GREEN
+//                     );
+//                 }
+//             }
+//         }
+//     }
 }
 
 pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
@@ -107,12 +113,14 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
             //         math.ceil((sbp.max.z + WORLD_SIZE * 0.5) / SECTOR_SIZE),
             //     },
             // };
-            // fmt.println(index_sbp.max - index_sbp.min, index_sbp, sbp);
+            // // fmt.println(index_sbp.max - index_sbp.min, index_sbp, sbp);
 
-            // for i in i32(index_sbp.min.x)..<i32(index_sbp.max.x) {
-            //     for j in i32(index_sbp.min.y)..<i32(index_sbp.max.y) {
-            //         for k in i32(index_sbp.min.z)..<i32(index_sbp.max.z) {
-            //             fa.append(&sbp_tree._sectors[i][j][k]._rbs, rb);
+            // if (aabb_valid(index_sbp)) {
+            //     for i in i32(index_sbp.min.x)..<i32(index_sbp.max.x) {
+            //         for j in i32(index_sbp.min.y)..<i32(index_sbp.max.y) {
+            //             for k in i32(index_sbp.min.z)..<i32(index_sbp.max.z) {
+            //                 fa.append(&sbp_tree._sectors[i][j][k]._rbs, rb);
+            //             }
             //         }
             //     }
             // }
@@ -136,6 +144,27 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
             //     if (ignored(rb, rb2)) do continue;
             //     if (!collision_transforms(rb.transform, rb2.transform)) do continue;
             //
+            //     if (rb.shape == ShapeType.HEIGHTMAP) {
+            //         resolve_heightmap_collision(rb, rb2);
+            //     } else if (rb2.shape == ShapeType.HEIGHTMAP) {
+            //         resolve_heightmap_collision(rb2, rb);
+            //     } else if (rb.shape == ShapeType.SLOPE) {
+            //         resolve_slope_collision(self, rb, rb2);
+            //     } else if (rb2.shape == ShapeType.SLOPE) {
+            //         resolve_slope_collision(self, rb2, rb);
+            //     } else {
+            //         resolve_aabb_collision(self, rb, rb2);
+            //     }
+            // }
+
+            // if (!aabb_valid(index_sbp)) do return;
+            // potential := sbp_retrieve(sbp_tree, index_sbp);
+
+            // for i in 0..<potential._rbs.len {
+            //     rb2 := potential._rbs.data[i];
+            //     if (ignored(rb, rb2)) do continue;
+            //     if (!collision_transforms(rb.transform, rb2.transform)) do continue;
+
             //     if (rb.shape == ShapeType.HEIGHTMAP) {
             //         resolve_heightmap_collision(rb, rb2);
             //     } else if (rb2.shape == ShapeType.HEIGHTMAP) {

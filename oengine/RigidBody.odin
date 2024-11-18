@@ -182,6 +182,10 @@ rb_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     } else if (shape == .SLOPE) {
         draw_slope_wireframe(shape_variant.(Slope), transform.position, transform.rotation, transform.scale, PHYS_DEBUG_COLOR);
     }
+    
+    //else if (shape == .HEIGHTMAP) {
+    //     draw_heightmap_wireframe(shape_variant.(HeightMap), transform.position, transform.rotation, transform.scale, PHYS_DEBUG_COLOR);
+    // }
 
     // sbp := aabb_to_sbp(trans_to_aabb(rb.transform));
 
@@ -202,13 +206,14 @@ rb_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     //     },
     // };
 
-    // draw_cube_wireframe((index_sbp.min + (index_sbp.max - index_sbp.min) * 0.5) * SECTOR_SIZE, {}, (index_sbp.max - index_sbp.min) * SECTOR_SIZE, YELLOW);
+    // draw_cube_wireframe(
+    //     (index_sbp.min + (index_sbp.max - index_sbp.min) * 0.5) * SECTOR_SIZE, 
+    //     {}, 
+    //     (index_sbp.max - index_sbp.min) * SECTOR_SIZE, 
+    //     YELLOW
+    // );
     // draw_sphere_wireframe(index_sbp.min * SECTOR_SIZE, {}, 1, YELLOW);
     // draw_sphere_wireframe(index_sbp.max * SECTOR_SIZE, {}, 1, YELLOW);
-    
-    //else if (shape == .HEIGHTMAP) {
-    //     draw_heightmap_wireframe(shape_variant.(HeightMap), transform.position, transform.rotation, transform.scale, PHYS_DEBUG_COLOR);
-    // }
 }
 
 rb_clear :: proc(using self: ^RigidBody) {

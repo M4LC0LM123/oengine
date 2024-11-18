@@ -21,7 +21,7 @@ ecs_world: struct {
     accumulator: f32,
 }
 
-ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 15) {
+ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     using ecs_world;
     ecs_ctx = ecs.ecs_init();
 
