@@ -66,6 +66,13 @@ get_id :: proc(arr: $T/FixedArray, elem: $E) -> i32 {
     return -1;
 }
 
+contains :: proc(arr: $T/FixedArray, elem: $E) -> bool {
+    id := get_id(arr, elem);
+    if (id == -1) do return false;
+
+    return true;
+}
+
 range :: range_arr
 append :: append_arr
 remove :: remove_arr

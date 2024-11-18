@@ -118,12 +118,14 @@ ew_render :: proc() {
             vec3_zero(),
             {physics.tree._bounds.width, physics.tree._bounds.height, physics.tree._bounds.depth},
             rl.GREEN,
-        )
+        );
+        pw_debug(physics);
     }
 
     if (OE_DEBUG) {
         dids := get_reg_data_ids();
         for i in 0..<dids.len { draw_data_id(dids.data[i]); }
+        draw_debug_axis();
     }
 
     rl.rlDisableBackfaceCulling();
