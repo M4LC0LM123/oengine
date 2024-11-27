@@ -57,6 +57,15 @@
     "lara": {
         "path": "../assets/models/lara.m3d",
         "type": "Model"
+    },
+    "test_component": {
+    	"position": [0, 6, 0],
+    	"rotation": [0, 0, 0],
+    	"scale": [1, 1, 1],
+      "density": 1,
+      "restitution": 0.5,
+      "shape": 1,
+      "is_static": false,
+    	"type": "RigidBody",
     }
 }
-

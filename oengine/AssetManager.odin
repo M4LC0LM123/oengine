@@ -29,8 +29,51 @@ Asset :: union {
     DataID,
 }
 
+LoadInstruction :: #type proc(asset_json: json.Object) -> rawptr
+
+ComponentParse :: struct {
+    name: string,
+    instr: LoadInstruction
+}
+
+ComponentType :: struct {
+    name: string,
+    type: typeid,
+}
+
 asset_manager: struct {
     registry: map[string]Asset,
+    component_types: map[ComponentParse]typeid,
+    component_reg: map[ComponentType]rawptr,
+}
+
+reg_component :: proc(t: typeid, instr: LoadInstruction) {
+    using asset_manager;
+    tag := fmt.aprintf("%v", t);
+
+    component_types[{tag, instr}] = t;
+}
+
+get_component_type :: proc(s: string) -> typeid {
+    using asset_manager;
+    for k, v in component_types {
+        if (k.name == s) do return v;
+    }
+
+    return nil;
+}
+
+get_component_instr :: proc(s: string) -> LoadInstruction {
+    using asset_manager;
+    for k, v in component_types {
+        if (k.name == s) do return k.instr;
+    }
+
+    return nil;
+}
+
+get_component_data :: proc(s: string, $T: typeid) -> ^T {
+    return cast(^T)asset_manager.component_reg[{s, T}];
 }
 
 save_registry :: proc(path: string) {
@@ -44,14 +87,14 @@ save_registry :: proc(path: string) {
         #partial switch var in asset {
             case Texture:
                 res = str_add(
-                    {res, "\n\t\"", strs.clone(tag), "\": {\n", 
+                    {res, "\n\t\"", strs.clone(tag), "\": {\n",
                         "\t\t\"path\": \"", strs.clone(var.path), "\",\n",
                         "\t\t\"type\": \"", "Texture", "\"",
                     "\n\t},"}
                 );
             case Model:
                 res = str_add(
-                    {res, "\n\t\"", strs.clone(tag), "\": {\n", 
+                    {res, "\n\t\"", strs.clone(tag), "\": {\n",
                         "\t\t\"path\": \"", var.path, "\",\n",
                         "\t\t\"type\": \"", "Model", "\"",
                     "\n\t},"}
@@ -70,7 +113,7 @@ save_registry :: proc(path: string) {
                 );
             case Sound:
                 res = str_add(
-                    {res, "\n\t\"", strs.clone(tag), "\": {\n", 
+                    {res, "\n\t\"", strs.clone(tag), "\": {\n",
                         "\t\t\"path\": \"", strs.clone(var.path), "\",\n",
                         "\t\t\"volume\": \"", strs.clone(str_add("", var.volume)), "\",\n",
                         "\t\t\"type\": \"", "Sound", "\"",
@@ -122,16 +165,27 @@ load_registry :: proc(path: string) {
             vol, ok := sc.parse_f32(asset_json["path"].(json.String));
             res := load_sound(strs.clone(path));
             if (ok) do set_sound_vol(&res, vol);
-            
+
             reg_asset(strs.clone(tag), res);
-        } else {
+        } else if (type == "Texture") {
             res := get_path(asset_json["path"].(json.String));
 
-            if (type == "Texture") {
-                tex := load_texture(strs.clone(res));
-                reg_asset(strs.clone(tag), tex);
-            } else if (type == "Model") {
-                reg_asset(strs.clone(tag), load_model(strs.clone(res)));
+            tex := load_texture(strs.clone(res));
+            reg_asset(strs.clone(tag), tex);
+        } else if (type == "Model") {
+            res := get_path(asset_json["path"].(json.String));
+            reg_asset(strs.clone(tag), load_model(strs.clone(res)));
+        } else {
+            ct := ComponentType {
+                name = strs.clone(tag),
+                type = get_component_type(type),
+            };
+
+            instr := get_component_instr(type);
+            if (instr != nil) {
+                asset_manager.component_reg[ct] = instr(asset_json);
+            } else {
+                dbg_log("Parse instructions are nil", .ERROR);
             }
         }
     }
@@ -145,7 +199,7 @@ reload_assets :: proc() {
 
     for tag, &asset in registry {
         if (asset_has_path(asset)) {
-            load_asset(&asset); 
+            load_asset(&asset);
         }
     }
 }
@@ -185,10 +239,10 @@ load_asset :: proc(asset: ^Asset) {
 get_asset_type :: proc(asset: Asset) -> $T {
     #partial switch v in asset {
         case Texture:
-            return asset.(Texture); 
+            return asset.(Texture);
         case Model:
             return asset.(Model);
-        case Shader: 
+        case Shader:
             return asset.(Shader);
         case CubeMap:
             return asset.(CubeMap);
@@ -276,7 +330,7 @@ unreg_asset :: proc(tag: string) {
 
 get_asset :: proc(tag: string) -> Asset {
     using asset_manager;
-    
+
     if (registry[tag] == nil) {
         dbg_log(str_add({"Asset ", tag, " doesn\'t exist"}), DebugType.WARNING);
         return nil;
@@ -287,7 +341,7 @@ get_asset :: proc(tag: string) -> Asset {
 
 get_asset_var :: proc(tag: string, $T: typeid) -> T {
     using asset_manager;
-    
+
     if (registry[tag] == nil) {
         dbg_log(str_add({"Asset ", tag, " doesn\'t exist"}), DebugType.WARNING);
     }

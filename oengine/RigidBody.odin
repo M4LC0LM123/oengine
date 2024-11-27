@@ -5,6 +5,7 @@ import "core:fmt"
 import rl "vendor:raylib"
 import ecs "ecs"
 import "fa"
+import "core:encoding/json"
 
 MASS_SCALAR :: 100
 MAX_VEL :: 50
@@ -72,7 +73,7 @@ rb_init_all :: proc(using rb: ^RigidBody, s_density, s_restitution: f32, s_stati
     };
 
     starting = transform;
-    
+
     acceleration = {};
     velocity = {};
     force = {};
@@ -146,7 +147,7 @@ rb_starting_transform :: proc(using self: ^RigidBody, trans: Transform) {
 
 @(private = "package")
 rb_fixed_update :: proc(using self: ^RigidBody, dt: f32) {
-    if (is_static) do return; 
+    if (is_static) do return;
 
     acceleration.y = -ecs_world.physics.gravity.y;
 
@@ -182,7 +183,7 @@ rb_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     } else if (shape == .SLOPE) {
         draw_slope_wireframe(shape_variant.(Slope), transform.position, transform.rotation, transform.scale, PHYS_DEBUG_COLOR);
     }
-    
+
     //else if (shape == .HEIGHTMAP) {
     //     draw_heightmap_wireframe(shape_variant.(HeightMap), transform.position, transform.rotation, transform.scale, PHYS_DEBUG_COLOR);
     // }
@@ -207,9 +208,9 @@ rb_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     // };
 
     // draw_cube_wireframe(
-    //     (index_sbp.min + (index_sbp.max - index_sbp.min) * 0.5) * SECTOR_SIZE, 
-    //     {}, 
-    //     (index_sbp.max - index_sbp.min) * SECTOR_SIZE, 
+    //     (index_sbp.min + (index_sbp.max - index_sbp.min) * 0.5) * SECTOR_SIZE,
+    //     {},
+    //     (index_sbp.max - index_sbp.min) * SECTOR_SIZE,
     //     YELLOW
     // );
     // draw_sphere_wireframe(index_sbp.min * SECTOR_SIZE, {}, 1, YELLOW);
@@ -251,7 +252,7 @@ rb_get_height_terrain_at :: proc(using self: ^RigidBody, x, z: f32) -> f32 {
     grid_x := i32(math.floor(terrain_x / HEIGHTMAP_SCALE));
     grid_z := i32(math.floor(terrain_z / HEIGHTMAP_SCALE));
 
-    if (grid_x >= i32(len(shape_variant.(HeightMap))) - 1 || 
+    if (grid_x >= i32(len(shape_variant.(HeightMap))) - 1 ||
         grid_z >= i32(len(shape_variant.(HeightMap))) - 1 ||
         grid_x < 0 || grid_z < 0) {
         return 0;
@@ -292,13 +293,13 @@ rb_slope_get_height_at :: proc(slope: Slope, s_x: f32) -> f32{
     if (x1 == x2 && x1 > y1 && x2 > y2) {
         x1 = slope[1][0];
         y1 = slope[0][0];
-        
+
         x2 = slope[1][1];
     }
 
     if (x1 == x2 && x1 < y1 && x2 < y2) {
         y1 = slope[1][0];
-        
+
         x2 = slope[1][1];
         y2 = slope[0][1];
     }
@@ -322,7 +323,7 @@ rb_slope_max :: proc(slope: Slope) -> f32 {
     } else if (slope[1][1] > maxi) {
         maxi = slope[1][1];
     }
-    
+
     return maxi;
 }
 
@@ -336,7 +337,7 @@ slope_orientation :: proc(slope: Slope) -> SlopeOrientation {
 }
 
 slope_negative :: proc(slope: Slope) -> bool {
-    return (slope[0][0] == slope[1][0] && 
+    return (slope[0][0] == slope[1][0] &&
             slope[0][0] > slope[0][1]) ||
             (slope[0][0] == slope[0][1] &&
             slope[0][0] > slope[1][0]);
@@ -347,8 +348,28 @@ rb_slope_orientation :: proc(using self: ^RigidBody) -> SlopeOrientation {
 }
 
 rb_slope_negative :: proc(using self: ^RigidBody) -> bool {
-    return (shape_variant.(Slope)[0][0] == shape_variant.(Slope)[1][0] && 
+    return (shape_variant.(Slope)[0][0] == shape_variant.(Slope)[1][0] &&
             shape_variant.(Slope)[0][0] > shape_variant.(Slope)[0][1]) ||
             (shape_variant.(Slope)[0][0] == shape_variant.(Slope)[0][1] &&
             shape_variant.(Slope)[0][0] > shape_variant.(Slope)[1][0]);
+}
+
+rb_parse :: proc(asset_json: json.Object) -> rawptr {
+    pos_h := asset_json["position"].(json.Array);
+    rot_h := asset_json["rotation"].(json.Array);
+    sc_h := asset_json["scale"].(json.Array);
+
+    t := Transform {
+        position = json_vec3_to_vec3(pos_h),
+        rotation = json_vec3_to_vec3(rot_h),
+        scale = json_vec3_to_vec3(sc_h),
+    };
+
+    density := f32(asset_json["density"].(json.Float));
+    restitution := f32(asset_json["restitution"].(json.Float));
+    shape := ShapeType(i32(asset_json["shape"].(json.Float)));
+    is_static := bool(asset_json["is_static"].(json.Boolean));
+
+    rb := rb_init(t, density, restitution, is_static, shape);
+    return new_clone(rb);
 }

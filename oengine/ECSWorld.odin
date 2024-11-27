@@ -26,6 +26,8 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     ecs_ctx = ecs.ecs_init();
 
     asset_manager.registry = make(map[string]Asset);
+    asset_manager.component_types = make(map[ComponentParse]typeid);
+    asset_manager.component_reg = make(map[ComponentType]rawptr);
     pw_init(&physics, s_gravity, s_iter);
 
     accumulator = 0;
@@ -39,6 +41,14 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
 
     img := rl.GenImageGradientLinear(128, 64, 0, WHITE, BLACK);
     tag_image = load_texture(rl.LoadTextureFromImage(img));
+
+    reg_component(Transform, transform_parse);
+    reg_component(RigidBody, rb_parse);
+    reg_component(SimpleMesh, nil);
+    reg_component(Light, nil);
+    reg_component(Particles, nil);
+    reg_component(SpatialAudio, nil);
+    reg_component(Fluid, nil);
 
     ecs.register_system(&ecs_ctx, rb_update, ecs.ECS_UPDATE);
     ecs.register_system(&ecs_ctx, lc_update, ecs.ECS_UPDATE);

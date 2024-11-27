@@ -8,6 +8,7 @@ import "core:math"
 import "core:fmt"
 import "core:math/linalg"
 import "core:math/rand"
+import "core:encoding/json"
 
 STR_EMPTY :: ""
 
@@ -82,7 +83,7 @@ vec3_length :: proc(v: Vec3) -> f32 {
 
 vec3_normalize :: proc(v: Vec3) -> Vec3 {
     length := vec3_length(v);
-    
+
     return Vec3 {
         v.x / length,
         v.y / length,
@@ -102,8 +103,8 @@ vec3_transform :: proc(v: Vec3, m: Mat4) -> Vec3 {
 
 vec3_dist :: proc(v1, v2: Vec3) -> f32 {
     return math.sqrt_f32(
-        math.pow(v1.x - v2.x, 2) + 
-        math.pow(v1.y - v2.y, 2) + 
+        math.pow(v1.x - v2.x, 2) +
+        math.pow(v1.y - v2.y, 2) +
         math.pow(v1.z - v2.z, 2)
     );
 }
@@ -416,7 +417,7 @@ coll_mask :: proc(masks: ..i32) -> [COLLISION_MASK_SIZE]i32 {
     if (len(masks) > COLLISION_MASK_SIZE) {
         dbg_log(str_add({
                 "Amount of masks inputed: ",
-                str_add("", len(masks)), 
+                str_add("", len(masks)),
                 "is more than COLLISION_MASK_SIZE: ",
                 str_add("", i32(COLLISION_MASK_SIZE)),
         }), DebugType.WARNING);
@@ -424,7 +425,7 @@ coll_mask :: proc(masks: ..i32) -> [COLLISION_MASK_SIZE]i32 {
     }
 
     for i in 0..<len(masks) {
-        res[i] = masks[i];        
+        res[i] = masks[i];
     }
 
     return res;
