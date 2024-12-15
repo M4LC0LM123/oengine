@@ -53,7 +53,7 @@ ct_update :: proc(using self: ^CameraTool) {
     }
 
     key := i32(oe.keycode_pressed());
-    if (key >= 49 && key <= 52 && !oe.gui_mouse_over()) {
+    if (key >= 49 && key <= 52 && !oe.gui_mouse_over() && !oe.gui_text_active()) {
         mode = CameraMode(key - 49);
     }
 

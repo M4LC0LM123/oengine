@@ -62,7 +62,7 @@ sdl_window :: proc(window: ^sdl.Window, renderer: ^sdl.Renderer, update: proc(),
             }
         }
 
-        if (render != nil) do render(renderer, &running);
+        if (render != nil) { render(renderer, &running); }
         else {
             sdl.SetRenderDrawColor(renderer, 0, 0, 0, 255);
             sdl.RenderClear(renderer);
@@ -92,7 +92,7 @@ sdl_draw_text :: proc(renderer: ^sdl.Renderer, font: ^ttf.Font, text: string, #a
     defer sdl.FreeSurface(text_surface);
     text_tex := sdl.CreateTextureFromSurface(renderer, text_surface);
     defer sdl.DestroyTexture(text_tex);
-    
+
     render_quad := sdl.Rect {x, y, text_surface.w * size, text_surface.h * size};
     sdl.RenderCopy(renderer, text_tex, nil, &render_quad);
 }

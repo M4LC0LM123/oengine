@@ -101,6 +101,10 @@ vec3_transform :: proc(v: Vec3, m: Mat4) -> Vec3 {
     return result;
 }
 
+vec3_zerone :: proc(v: Vec3, min, max: f32) -> Vec3 {
+    return (v - min) / (max - min);
+}
+
 vec3_dist :: proc(v1, v2: Vec3) -> f32 {
     return math.sqrt_f32(
         math.pow(v1.x - v2.x, 2) +

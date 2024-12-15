@@ -80,6 +80,24 @@ tile_texture :: proc(texture: Texture, tx: i32) -> Texture {
     return load_texture(target.texture);
 }
 
+draw_quad :: proc(pts: [4]Vec3, tex: Texture, clr: Color) {
+    rl.rlPushMatrix();
+
+    rl.rlColor4ub(clr.r, clr.g, clr.b, clr.a);
+    rl.rlBegin(rl.RL_QUADS);
+    rl.rlSetTexture(tex.id);
+
+    rl.rlTexCoord2f(0, 0); rl.rlVertex3f(pts[0].x, pts[0].y, pts[0].z);
+    rl.rlTexCoord2f(0, 1); rl.rlVertex3f(pts[1].x, pts[1].y, pts[1].z);
+    rl.rlTexCoord2f(1, 1); rl.rlVertex3f(pts[2].x, pts[2].y, pts[2].z);
+    rl.rlTexCoord2f(1, 0); rl.rlVertex3f(pts[3].x, pts[3].y, pts[3].z);
+
+    rl.rlEnd();
+    rl.rlSetTexture(0);
+
+    rl.rlPopMatrix();
+}
+
 draw_debug_axis :: proc(#any_int size: i32 = 1) {
     rl.DrawLine3D({}, vec3_x(), BLUE);
     rl.DrawLine3D({}, vec3_y(), RED);
@@ -120,7 +138,7 @@ draw_text_codepoint_3d :: proc(font: rl.Font, codepoint: char, pos: Vec3, size: 
 
     rl.rlCheckRenderBatchLimit(4 + 4 * i32(backface));
     rl.rlSetTexture(font.texture.id);
-    
+
     rl.rlPushMatrix();
     rl.rlTranslatef(position.x, position.y, position.z);
     rl.rlRotatef(90, 1, 0, 0);
@@ -173,10 +191,10 @@ measure_text_3d :: proc(font: rl.Font, text: string, size, spacing, line_spacing
         r := string([]u8{text[i]});
         letter = rl.GetCodepoint(strs.clone_to_cstring(r), &next);
         index = rl.GetGlyphIndex(font, letter);
-        
+
         if (letter == 0x3f) do next = 1;
         i += int(next) - 1;
-        
+
         if (letter != '\n') {
             if (font.glyphs[index].advanceX != 0) do text_width += (f32(font.glyphs[index].advanceX) + spacing) / f32(font.baseSize) * scale;
             else do text_width += f32(font.recs[index].width + f32(font.glyphs[index].offsetX)) / f32(font.baseSize) * scale;
@@ -214,9 +232,9 @@ draw_text_3d :: proc(font: rl.Font, text: string, position: Vec3, size: f32, col
     text_offset_y: f32 = 0;
 
     rl.rlPushMatrix();
-    if (rotate) { 
+    if (rotate) {
         rot := Rad2Deg * math.atan2_f32(position.z - ecs_world.camera.position.z, ecs_world.camera.position.x - position.x) + 90;
-        rl.rlRotatef(rot, 0, 1, 0); 
+        rl.rlRotatef(rot, 0, 1, 0);
     }
 
     length := rl.TextLength(strs.clone_to_cstring(text));
@@ -234,7 +252,7 @@ draw_text_3d :: proc(font: rl.Font, text: string, position: Vec3, size: f32, col
         } else {
             if ((codepoint != ' ') && (codepoint != '\t')) {
                 draw_text_codepoint_3d(
-                    font, codepoint, 
+                    font, codepoint,
                     {adjusted_position.x + text_offset_x, adjusted_position.y, adjusted_position.z + text_offset_y},
                     size, backface, color
                 );
@@ -242,8 +260,8 @@ draw_text_3d :: proc(font: rl.Font, text: string, position: Vec3, size: f32, col
 
             if (font.glyphs[index].advanceX == 0) {
                 text_offset_x += f32(font.recs[index].width + spacing) / f32(font.baseSize) * scale;
-            } else { 
-                text_offset_x += (f32(font.glyphs[index].advanceX) + spacing) / f32(font.baseSize) * scale; 
+            } else {
+                text_offset_x += (f32(font.glyphs[index].advanceX) + spacing) / f32(font.baseSize) * scale;
             }
         }
 
@@ -255,19 +273,19 @@ draw_text_3d :: proc(font: rl.Font, text: string, position: Vec3, size: f32, col
 
 draw_grid2D :: proc(slices, spacing: i32, color: Color) {
     rl.rlPushMatrix();
-            
+
     rl.rlTranslatef(f32(-slices * spacing) * 0.5, f32(-slices * spacing) * 0.5, 0);
-    
+
     for i: i32 = 0; i <= slices; i += 1 {
         y := i * spacing;
         rl.DrawLine(0, y, slices * spacing, y, color);
-        
+
         x := i * spacing;
         rl.DrawLine(x, 0, x, slices * spacing, color);
     }
 
     rl.DrawCircleV(vec2_one() * f32(slices) * 0.5 * f32(spacing), 5, RED);
-    
+
     rl.rlPopMatrix();
 }
 
@@ -318,7 +336,7 @@ draw_cube_wireframe :: proc(pos, rot, scale: Vec3, color: Color) {
     rl.rlRotatef(rot.x, 1, 0, 0);
     rl.rlRotatef(rot.y, 0, 1, 0);
     rl.rlRotatef(rot.z, 0, 0, 1);
-        
+
     rl.DrawCubeWiresV(pos, scale, color);
 
     rl.rlPopMatrix();
@@ -329,7 +347,7 @@ draw_sphere_wireframe :: proc(pos, rot: Vec3, radius: f32, color: Color) {
     rl.rlRotatef(rot.x, 1, 0, 0);
     rl.rlRotatef(rot.y, 0, 1, 0);
     rl.rlRotatef(rot.z, 0, 0, 1);
-        
+
     rl.DrawSphereWires(pos, radius, DEF_RINGS, DEF_SLICES, color);
 
     rl.rlPopMatrix();
@@ -340,7 +358,7 @@ draw_capsule_wireframe :: proc(pos, rot: Vec3, radius, height: f32, color: Color
     rl.rlRotatef(rot.x, 1, 0, 0);
     rl.rlRotatef(rot.y, 0, 1, 0);
     rl.rlRotatef(rot.z, 0, 0, 1);
-        
+
     rl.DrawCapsuleWires(
         {pos.x, pos.y - height * 0.5, pos.z},
         {pos.x, pos.y + height * 0.5, pos.z},
@@ -463,7 +481,7 @@ draw_model :: proc(model: Model, transform: Transform, color: Color, is_lit: boo
     rl.rlRotatef(transform.rotation.y, 0, 1, 0);
     rl.rlRotatef(transform.rotation.z, 0, 0, 1);
     rl.rlScalef(transform.scale.x, transform.scale.y, transform.scale.z);
-    
+
     if(is_lit) do rlg.DrawModel(model, {}, 1, color);
     else do rl.DrawModel(model, {}, 1, color);
 
@@ -485,7 +503,7 @@ draw_sphere_texture :: proc(texture: Texture, transform: Transform, color: Color
     rl.rlRotatef(transform.rotation.y, 0, 1, 0);
     rl.rlRotatef(transform.rotation.z, 0, 0, 1);
     rl.rlScalef(transform.scale.x, transform.scale.y, transform.scale.z);
-    
+
     rl.DrawModel(sphere_shape, {}, 1, color);
 
     rl.rlPopMatrix();
@@ -512,10 +530,10 @@ draw_cube_map :: proc(cube_map: CubeMap, transform: Transform, color: Color) {
     rl.rlSetTexture(cube_map[0].id);
     rl.rlBegin(rl.RL_QUADS);
     rl.rlNormal3f(0.0, 0.0, 1.0);
-    rl.rlTexCoord2f(0.0, 1.0); rl.rlVertex3f(-0.5, -0.5, 0.5);  
-    rl.rlTexCoord2f(1.0, 1.0); rl.rlVertex3f(0.5, -0.5, 0.5); 
-    rl.rlTexCoord2f(1.0, 0.0); rl.rlVertex3f(0.5, 0.5, 0.5); 
-    rl.rlTexCoord2f(0.0, 0.0); rl.rlVertex3f(-0.5, 0.5, 0.5); 
+    rl.rlTexCoord2f(0.0, 1.0); rl.rlVertex3f(-0.5, -0.5, 0.5);
+    rl.rlTexCoord2f(1.0, 1.0); rl.rlVertex3f(0.5, -0.5, 0.5);
+    rl.rlTexCoord2f(1.0, 0.0); rl.rlVertex3f(0.5, 0.5, 0.5);
+    rl.rlTexCoord2f(0.0, 0.0); rl.rlVertex3f(-0.5, 0.5, 0.5);
     rl.rlEnd();
 
     // back
@@ -589,10 +607,10 @@ draw_cube_texture :: proc(texture: Texture, transform: Transform, color: Color) 
 
     // front
     rl.rlNormal3f(0.0, 0.0, 1.0);
-    rl.rlTexCoord2f(0.0, 1.0); rl.rlVertex3f(-0.5, -0.5, 0.5);  
-    rl.rlTexCoord2f(1.0, 1.0); rl.rlVertex3f(0.5, -0.5, 0.5); 
-    rl.rlTexCoord2f(1.0, 0.0); rl.rlVertex3f(0.5, 0.5, 0.5); 
-    rl.rlTexCoord2f(0.0, 0.0); rl.rlVertex3f(-0.5, 0.5, 0.5); 
+    rl.rlTexCoord2f(0.0, 1.0); rl.rlVertex3f(-0.5, -0.5, 0.5);
+    rl.rlTexCoord2f(1.0, 1.0); rl.rlVertex3f(0.5, -0.5, 0.5);
+    rl.rlTexCoord2f(1.0, 0.0); rl.rlVertex3f(0.5, 0.5, 0.5);
+    rl.rlTexCoord2f(0.0, 0.0); rl.rlVertex3f(-0.5, 0.5, 0.5);
 
     // back
     rl.rlNormal3f(0.0, 0.0, -1.0);
@@ -741,7 +759,7 @@ draw_slope :: proc(slope: Slope, pos, rot, scale: Vec3, tex: Texture, color: Col
         }
 
     }
-   
+
     // quad
     rl.rlSetTexture(tex.id);
     rl.rlBegin(rl.RL_QUADS);
@@ -846,4 +864,3 @@ rotate_slope :: proc(slope: Slope) -> Slope {
 
     return res;
 }
-

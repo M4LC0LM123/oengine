@@ -106,6 +106,22 @@ texture_tool :: proc(ct: CameraTool) {
         oe.tri_recalc_uvs(active, rot);
     }
 
+    t := oe.gui_text_box("TilingTextBox", oe.gui_window("Texture tool").width - 40, 50, 30, 30);
+    @static tiling: int; ok: bool;
+    tiling, ok = sc.parse_int(t);
+    if (oe.gui_button("OK", oe.gui_window("Texture tool").width - 40, 90, 30, 30)) {
+        active := oe.ecs_world.physics.mscs.data[ct._active_msc_id].tris[ct._active_id];
+
+        tag := oe.str_add(active.texture_tag, oe.str_add("_tiling_", tiling));
+        oe.reg_asset(
+            tag,
+            oe.tile_texture(oe.get_asset_var(active.texture_tag, oe.Texture), i32(tiling))
+        );
+
+        active.texture_tag = tag;
+        oe.gui.text_boxes["TilingTextBox"].text = "";
+    }
+
     COLS :: 6
     rows := i32(math.ceil(f32(texs.len) / f32(COLS)));
     w: f32 = 30;

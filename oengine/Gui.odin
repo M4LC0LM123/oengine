@@ -63,6 +63,14 @@ gui_mouse_over :: proc() -> bool {
     return false;
 }
 
+gui_text_active :: proc() -> bool {
+    for k, t in gui.text_boxes {
+        if (t.active) do return true;
+    }
+
+    return false;
+}
+
 gui_text :: proc(text: string, size: f32, x: f32 = 10, y: f32 = 10, standalone: bool = false) {
     active := gui_active();
     if (active != nil && !active.active && !standalone) do return;
