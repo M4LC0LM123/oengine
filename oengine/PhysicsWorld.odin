@@ -138,24 +138,24 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
                 }
             }
 
-            // for j := i + 1; j < fa.range(bodies); j += 1 {
-            //     rb2 := bodies.data[j];
-            //
-            //     if (ignored(rb, rb2)) do continue;
-            //     if (!collision_transforms(rb.transform, rb2.transform)) do continue;
-            //
-            //     if (rb.shape == ShapeType.HEIGHTMAP) {
-            //         resolve_heightmap_collision(rb, rb2);
-            //     } else if (rb2.shape == ShapeType.HEIGHTMAP) {
-            //         resolve_heightmap_collision(rb2, rb);
-            //     } else if (rb.shape == ShapeType.SLOPE) {
-            //         resolve_slope_collision(self, rb, rb2);
-            //     } else if (rb2.shape == ShapeType.SLOPE) {
-            //         resolve_slope_collision(self, rb2, rb);
-            //     } else {
-            //         resolve_aabb_collision(self, rb, rb2);
-            //     }
-            // }
+            for j := i + 1; j < fa.range(bodies); j += 1 {
+                rb2 := bodies.data[j];
+
+                if (ignored(rb, rb2)) do continue;
+                if (!collision_transforms(rb.transform, rb2.transform)) do continue;
+
+                if (rb.shape == ShapeType.HEIGHTMAP) {
+                    resolve_heightmap_collision(rb, rb2);
+                } else if (rb2.shape == ShapeType.HEIGHTMAP) {
+                    resolve_heightmap_collision(rb2, rb);
+                } else if (rb.shape == ShapeType.SLOPE) {
+                    resolve_slope_collision(self, rb, rb2);
+                } else if (rb2.shape == ShapeType.SLOPE) {
+                    resolve_slope_collision(self, rb2, rb);
+                } else {
+                    resolve_aabb_collision(self, rb, rb2);
+                }
+            }
 
             // if (!aabb_valid(index_sbp)) do return;
             // potential := sbp_retrieve(sbp_tree, index_sbp);
@@ -178,32 +178,32 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
             //     }
             // }
 
-            potential := oct_retrieve(&tree, {
-                rb.transform.position.x - 2.5,
-                rb.transform.position.y - 2.5,
-                rb.transform.position.z - 2.5,
-                rb.transform.scale.x + 5,
-                rb.transform.scale.y + 5,
-                rb.transform.scale.z + 5,
-            });
-
-            for j in 0..<potential.len {
-                rb2 := potential.data[j];
-                if (ignored(rb, rb2)) do continue;
-                if (!collision_transforms(rb.transform, rb2.transform)) do continue;
-
-                if (rb.shape == ShapeType.HEIGHTMAP) {
-                    resolve_heightmap_collision(rb, rb2);
-                } else if (rb2.shape == ShapeType.HEIGHTMAP) {
-                    resolve_heightmap_collision(rb2, rb);
-                } else if (rb.shape == ShapeType.SLOPE) {
-                    resolve_slope_collision(self, rb, rb2);
-                } else if (rb2.shape == ShapeType.SLOPE) {
-                    resolve_slope_collision(self, rb2, rb);
-                } else {
-                    resolve_aabb_collision(self, rb, rb2);
-                }
-            }
+            // potential := oct_retrieve(&tree, {
+            //     rb.transform.position.x - 2.5,
+            //     rb.transform.position.y - 2.5,
+            //     rb.transform.position.z - 2.5,
+            //     rb.transform.scale.x + 5,
+            //     rb.transform.scale.y + 5,
+            //     rb.transform.scale.z + 5,
+            // });
+            //
+            // for j in 0..<potential.len {
+            //     rb2 := potential.data[j];
+            //     if (ignored(rb, rb2)) do continue;
+            //     if (!collision_transforms(rb.transform, rb2.transform)) do continue;
+            //
+            //     if (rb.shape == ShapeType.HEIGHTMAP) {
+            //         resolve_heightmap_collision(rb, rb2);
+            //     } else if (rb2.shape == ShapeType.HEIGHTMAP) {
+            //         resolve_heightmap_collision(rb2, rb);
+            //     } else if (rb.shape == ShapeType.SLOPE) {
+            //         resolve_slope_collision(self, rb, rb2);
+            //     } else if (rb2.shape == ShapeType.SLOPE) {
+            //         resolve_slope_collision(self, rb2, rb);
+            //     } else {
+            //         resolve_aabb_collision(self, rb, rb2);
+            //     }
+            // }
         }
 
         for i in 0..<fa.range(joints) {

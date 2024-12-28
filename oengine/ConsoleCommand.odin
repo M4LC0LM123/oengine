@@ -132,6 +132,19 @@ ent_eval :: proc(args: []string) {
     console_print(str_add("components: ", ent.components.len));
 }
 
+list_ents :: proc(args: []string) {
+    using dev_console;
+
+    for i in 0..<ecs_world.ecs_ctx.entities.len {
+        ent := ew_get_ent(i);
+        console_print(ent.tag);
+    }
+}
+
+get_cam_pos :: proc(args: []string) {
+    console_print(str_add("camera position: ", ecs_world.camera.position));
+}
+
 add_car_cmd :: proc(args: []string) {
     using dev_console;
     add_car(ecs_world.camera.position);

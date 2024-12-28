@@ -30,6 +30,7 @@ Asset :: union {
 }
 
 LoadInstruction :: #type proc(asset_json: json.Object) -> rawptr
+LoaderFunc :: #type proc(ent: AEntity, tag: string)
 
 ComponentParse :: struct {
     name: string,
@@ -44,14 +45,20 @@ ComponentType :: struct {
 asset_manager: struct {
     registry: map[string]Asset,
     component_types: map[ComponentParse]typeid,
+    component_loaders: map[string]LoaderFunc,
     component_reg: map[ComponentType]rawptr,
 }
 
-reg_component :: proc(t: typeid, instr: LoadInstruction) {
+reg_component :: proc(
+    t: typeid, 
+    instr: LoadInstruction = nil, 
+    loader: LoaderFunc = nil
+) {
     using asset_manager;
     tag := fmt.aprintf("%v", t);
 
     component_types[{tag, instr}] = t;
+    component_loaders[tag] = loader;
 }
 
 get_component_type :: proc(s: string) -> typeid {
@@ -144,6 +151,12 @@ load_registry :: proc(path: string) {
     root := json_data.(json.Object);
 
     for tag, asset in root {
+        if (tag == "dbg_pos") {
+            val := i32(asset.(json.Float));
+            window._dbg_stats_pos = val;
+            continue;
+        }
+
         asset_json := asset.(json.Object);
         type := asset_json["type"].(json.String);
 
@@ -264,14 +277,14 @@ get_path :: proc(path: string) -> string {
     return res;
 }
 
-get_reg_data_ids :: proc() -> fa.FixedArray(DataID, MAX_DIDS) {
+get_reg_data_ids :: proc() -> [dynamic]DataID {
     using asset_manager;
 
-    res := fa.fixed_array(DataID, MAX_DIDS);
+    res := make([dynamic]DataID);
 
     for tag, asset in registry {
         if (asset_is(asset, DataID)) {
-            fa.append(&res, asset_variant(asset, DataID));
+            append(&res, asset_variant(asset, DataID));
         }
     }
 

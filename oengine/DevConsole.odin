@@ -37,6 +37,8 @@ console_init :: proc() {
     console_register(new_command("exit", "Exits the app", exit_cmd));
     console_register(new_command("clear", "Clears the console", clear_cmd));
     console_register(new_command("get_ent", "Get entity", ent_eval));
+    console_register(new_command("list_ents", "Lists all entities", list_ents));
+    console_register(new_command("cam_pos", "Gets main camera pos", get_cam_pos));
     console_register(new_command("add_car", "Adds a dummy car that tests joints", add_car_cmd));
 }
 

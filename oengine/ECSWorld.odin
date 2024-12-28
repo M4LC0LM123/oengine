@@ -27,6 +27,7 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
 
     asset_manager.registry = make(map[string]Asset);
     asset_manager.component_types = make(map[ComponentParse]typeid);
+    asset_manager.component_loaders = make(map[string]LoaderFunc);
     asset_manager.component_reg = make(map[ComponentType]rawptr);
     pw_init(&physics, s_gravity, s_iter);
 
@@ -43,12 +44,12 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     tag_image = load_texture(rl.LoadTextureFromImage(img));
 
     reg_component(Transform, transform_parse);
-    reg_component(RigidBody, rb_parse);
-    reg_component(SimpleMesh, nil);
-    reg_component(Light, nil);
-    reg_component(Particles, nil);
-    reg_component(SpatialAudio, nil);
-    reg_component(Fluid, nil);
+    reg_component(RigidBody, rb_parse, rb_loader);
+    reg_component(SimpleMesh);
+    reg_component(Light);
+    reg_component(Particles);
+    reg_component(SpatialAudio);
+    reg_component(Fluid);
 
     ecs.register_system(&ecs_ctx, rb_update, ecs.ECS_UPDATE);
     ecs.register_system(&ecs_ctx, lc_update, ecs.ECS_UPDATE);
@@ -73,7 +74,7 @@ ew_get_ent :: proc {
     ew_get_ent_tag,
 }
 
-ew_get_ent_id :: proc(id: u32) -> AEntity {
+ew_get_ent_id :: proc(#any_int id: u32) -> AEntity {
     return ecs_world.ecs_ctx.entities.data[int(id)];
 }
 
@@ -86,6 +87,30 @@ ew_get_ent_tag :: proc(tag: string) -> AEntity {
     }
 
     return nil;
+}
+
+ew_get_ents :: proc(tag: string) -> []AEntity {
+    using ecs_world;
+
+    count: i32;
+    for i in 0..<fa.range(ecs_ctx.entities) {
+        ent := ecs_ctx.entities.data[i];
+        if (ent.tag == tag) {
+            count += 1;
+        }
+    }
+
+    res := make([]AEntity, count);
+    j: i32;
+    for i in 0..<fa.range(ecs_ctx.entities) {
+        ent := ecs_ctx.entities.data[i];
+        if (ent.tag == tag) {
+            res[j] = ent;
+            j += 1;
+        }
+    }
+
+    return res;
 }
 
 ew_update :: proc() {
@@ -132,7 +157,8 @@ ew_render :: proc() {
 
     if (OE_DEBUG) {
         dids := get_reg_data_ids();
-        for i in 0..<dids.len { draw_data_id(dids.data[i]); }
+        for i in 0..<len(dids) { draw_data_id(dids[i]); }
+        delete(dids);
         draw_debug_axis();
     }
 

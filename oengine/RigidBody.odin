@@ -373,3 +373,13 @@ rb_parse :: proc(asset_json: json.Object) -> rawptr {
     rb := rb_init(t, density, restitution, is_static, shape);
     return new_clone(rb);
 }
+
+rb_loader :: proc(ent: AEntity, tag: string) {
+    ent_tr := get_component(ent, Transform);
+
+    comp := get_component_data(tag, RigidBody);
+    comp.id = u32(ecs_world.physics.bodies.len);
+    comp.starting = ent_tr^;
+    comp.transform = ent_tr^;
+    add_component(ent, comp^);
+}

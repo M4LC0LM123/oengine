@@ -155,8 +155,8 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
 
     j := 0;
     dids := get_reg_data_ids();
-    for i in 0..<dids.len {
-        data_id := dids.data[i];
+    for i in 0..<len(dids) {
+        data_id := dids[i];
         mrshl := DataIDMarshall {data_id.tag, data_id.id, data_id.transform};
         data, ok := json.marshal(mrshl, {pretty = true});
 
@@ -169,6 +169,7 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         res = str_add({res, "\n", name, string(data[1:len(data) - 1]), "},\n"});
         j += 1;
     }
+    delete(dids);
 
     res = str_add(res, "\n}");
     file_write(file, res);
@@ -223,6 +224,22 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
     if (asset_manager.registry[reg_tag] != nil) do reg_tag = str_add(reg_tag, rl.GetRandomValue(1000, 9999));
 
     reg_asset(reg_tag, DataID {reg_tag, tag, u32(id), transform});
+
+    ent := aent_init(tag);
+    ent_tr := get_component(ent, Transform);
+    ent_tr^ = transform;
+
+    if (obj.(json.Object)["components"] != nil) {
+        comps_handle := obj.(json.Object)["components"].(json.Array);
+        for i in comps_handle {
+            tag := i.(json.Object)["tag"].(json.String);
+            type := i.(json.Object)["type"].(json.String);
+      
+            loader := asset_manager.component_loaders[type];
+            if (loader != nil) { loader(ent, tag); }
+        }
+    }
+
 }
 
 msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {

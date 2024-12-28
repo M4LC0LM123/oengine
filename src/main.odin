@@ -137,21 +137,6 @@ main :: proc() {
 
     // fmt.println(oe.get_component_data("test_component", oe.RigidBody));
 
-    calc_fourth :: proc(tri: [3]oe.Vec3) -> oe.Vec3 {
-        return tri[0] + (tri[2] - tri[1]);
-
-        // symmetric expansion
-        // g := (tri[0] + tri[1] + tri[2]) / 3;
-        // return 2 * g - tri[0];
-    }
-
-    tri := [3]oe.Vec3 {
-        {oe.rand_val(-2, 2), oe.rand_val(-2, 2) + 5, oe.rand_val(-2, 2)},
-        {oe.rand_val(-2, 2), oe.rand_val(-2, 2) + 5, oe.rand_val(-2, 2)},
-        {oe.rand_val(-2, 2), oe.rand_val(-2, 2) + 5, oe.rand_val(-2, 2)},
-    };
-    tri_e := calc_fourth(tri);
-
     // reset_track_allocator(&track_allocator);
     for (oe.w_tick()) {
         oe.ew_update();
@@ -188,14 +173,15 @@ main :: proc() {
             player_rb.velocity.xz = {};
         }
 
-        if (oe.key_pressed(.F5)) {
-            tri = [3]oe.Vec3 {
-                {oe.rand_val(-2, 2), oe.rand_val(-2, 2), oe.rand_val(-2, 2)},
-                {oe.rand_val(-2, 2), oe.rand_val(-2, 2), oe.rand_val(-2, 2)},
-                {oe.rand_val(-2, 2), oe.rand_val(-2, 2), oe.rand_val(-2, 2)},
-            };
-
-            tri_e = calc_fourth(tri);
+        triggers := oe.ew_get_ents("trigger");
+        for i in 0..<len(triggers) {
+            if (oe.has_component(triggers[i], oe.RigidBody)) {
+                rb := oe.get_component(triggers[i], oe.RigidBody);
+                if (oe.key_down(.F5)) { 
+                    rb.transform.position = rb.starting.position;
+                    rb.velocity = {};
+                }
+            }
         }
 
         if (oe.key_down(oe.Key.F2)) {
@@ -225,51 +211,7 @@ main :: proc() {
         coll, info := oe.rc_is_colliding_msc(camera.raycast, msc);
         if (coll) {
             rl.DrawSphere(info.point, 0.25, oe.RED);
-
-            dw: f32 = 0.5;
-            dh: f32 = 0.5;
-            dp := info.t.pts[0];
-
-            edge1 := info.t.pts[1] - info.t.pts[0];
-            edge2 := info.t.pts[2] - info.t.pts[0];
-            normal := oe.vec3_normalize(oe.vec3_cross(edge1, edge2));
-            u := oe.vec3_normalize(edge1);
-            v := oe.vec3_normalize(oe.vec3_cross(normal, u));
-
-            quad := [4]oe.Vec3 {
-                dp + ((u * (-dw * 0.5)) + (v * (-dh * 0.5))),
-                dp + ((u * (dw * 0.5)) + (v * (-dh * 0.5))),
-                dp + ((u * (dw * 0.5)) + (v * (dh * 0.5))),
-                dp + ((u * (-dw * 0.5)) + (v * (dh * 0.5))),
-            };
-            fmt.println(quad);
-
-            oe.draw_quad(quad, troll, oe.GREEN);
-
-            // MIN :: -10
-            // MAX :: 10
-            //
-            // ep := calc_fourth(info.t.pts);
-            // // oe.draw_quad(info.point, {
-            // //     oe.vec3_zerone(info.t.pts[0], MIN, MAX),
-            // //     oe.vec3_zerone(info.t.pts[1], MIN, MAX),
-            // //     oe.vec3_zerone(info.t.pts[2], MIN, MAX),
-            // //     oe.vec3_zerone(ep, MIN, MAX)},
-            // //     troll, oe.GREEN
-            // // );
-            // oe.draw_quad({
-            //     info.t.pts[0],
-            //     info.t.pts[1],
-            //     info.t.pts[2],
-            //     ep},
-            //     troll, oe.GREEN
-            // );
         }
-
-        // rl.DrawTriangle3D(tri[0], tri[1], tri[2], oe.WHITE);
-        // for i in 0..<3 {
-        //     rl.DrawLine3D(tri_e, tri[i], oe.YELLOW);
-        // }
 
         rl.EndMode3D();
         oe.w_end_render();
