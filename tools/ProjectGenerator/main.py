@@ -1,0 +1,105 @@
+import tkinter as tk
+from tkinter import filedialog
+from dataclasses import dataclass
+
+WIDTH = 300
+HEIGHT = 200
+OFFS = 5
+
+@dataclass
+class Color:
+    r: int
+    g: int
+    b: int
+
+    def to_hex(self):
+        return "#%02x%02x%02x" % (self.r, self.g, self.b)
+
+def to_hex(color: Color):
+    return "#%02x%02x%02x" % (color.r, color.g, color.b)
+
+@dataclass
+class Colors:
+    WHITE: Color = Color(255, 255, 255)
+    main: Color = Color(99, 141, 160)
+    accent: Color = Color(63, 105, 135)
+    darker: Color = Color(41, 59, 68)
+    lighter: Color = Color(119, 169, 191)
+colors = Colors()
+
+def str_vec2(x, y, sep = "x"):
+    return str(x) + sep + str(y)
+
+def str_trans(x, y, w, h):
+    return "%dx%d+%d+%d" % (w, h, x, y) 
+
+def move_win(e: tk.Event):
+    root.geometry(str_trans(e.x_root - WIDTH / 2, e.y_root - 25 / 2, WIDTH, HEIGHT))
+
+def get_dir():
+    global path
+    path = filedialog.askdirectory()
+    path_label = tk.Label(
+        text=path,
+        bg=colors.main.to_hex(),
+        fg=colors.WHITE.to_hex()
+    ); path_label.place(x=50 + OFFS * 2, y=25 + OFFS)
+
+path = ""
+
+root = tk.Tk()
+root.geometry(str_trans(200, 200, WIDTH, HEIGHT))
+root.resizable(False, False)
+root.overrideredirect(True)
+root.configure(bg=colors.main.to_hex())
+
+title_bar = tk.Frame(root, bg=colors.main.to_hex(), relief="raised")
+title_bar.place(x=0, y=0, width=WIDTH, height=25)
+title_bar.bind("<B1-Motion>", move_win)
+
+title_label = tk.Label(title_bar, text="Oengine generator", bg=colors.main.to_hex(), fg=colors.WHITE.to_hex())
+title_label.pack(side=tk.LEFT, pady=2)
+
+exit_btn = tk.Button(
+    title_bar, 
+    text="X", 
+    command=root.quit, 
+    bg=colors.main.to_hex(), 
+    fg=colors.WHITE.to_hex(),
+    activebackground=colors.accent.to_hex(),
+    activeforeground=colors.WHITE.to_hex()
+); exit_btn.pack(side=tk.RIGHT, padx=3, pady=3, ipadx=5)
+
+path_btn = tk.Button(
+    root, 
+    text="Path",
+    bg=colors.main.to_hex(),
+    fg=colors.WHITE.to_hex(),
+    activebackground=colors.accent.to_hex(),
+    activeforeground=colors.WHITE.to_hex(),
+    command=get_dir
+); path_btn.place(x=OFFS, y=25 + OFFS, width=50, height=25)
+
+name_label = tk.Label(
+    root,
+    text="Name",
+    bg=colors.main.to_hex(),
+    fg=colors.WHITE.to_hex(),
+); name_label.place(x=OFFS, y=50 + OFFS * 2, width=50, height=25)
+
+name_entry = tk.Entry(
+    root,
+    bg=colors.accent.to_hex(),
+    fg=colors.WHITE.to_hex()
+); name_entry.place(x=50 + OFFS * 2, y=50 + OFFS * 2, width=100, height=25)
+
+create_btn = tk.Button(
+    root,
+    text="Create",
+    bg=colors.main.to_hex(),
+    fg=colors.WHITE.to_hex(),
+    activebackground=colors.accent.to_hex(),
+    activeforeground=colors.WHITE.to_hex()
+); create_btn.place(x=WIDTH - 50 - OFFS, y=HEIGHT - 25 - OFFS, width=50, height=25)
+
+root.mainloop()
