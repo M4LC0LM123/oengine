@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import messagebox
 from dataclasses import dataclass
+import os
+import shutil
 
 WIDTH = 300
 HEIGHT = 200
@@ -45,6 +48,18 @@ def get_dir():
         fg=colors.WHITE.to_hex()
     ); path_label.place(x=50 + OFFS * 2, y=25 + OFFS)
 
+def create_proj():
+    global path
+    global name_entry
+    os.chdir("../../../")
+
+    res_dir = path + "/" + name_entry.get()
+
+    if (not os.path.exists(res_dir)):
+        shutil.copytree("oengine", res_dir)
+    else:
+        messagebox.showerror("Directory error", "Error: the directory" + res_dir + " already exists")
+    
 path = ""
 
 root = tk.Tk()
@@ -99,7 +114,8 @@ create_btn = tk.Button(
     bg=colors.main.to_hex(),
     fg=colors.WHITE.to_hex(),
     activebackground=colors.accent.to_hex(),
-    activeforeground=colors.WHITE.to_hex()
+    activeforeground=colors.WHITE.to_hex(),
+    command=create_proj
 ); create_btn.place(x=WIDTH - 50 - OFFS, y=HEIGHT - 25 - OFFS, width=50, height=25)
 
 root.mainloop()
