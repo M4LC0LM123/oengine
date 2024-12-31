@@ -59,6 +59,56 @@ fd_file_path :: proc() -> string {
     return res_path;
 }
 
+fd_dir :: proc() -> string {
+    @static curr_dir: string;
+    @static files: rl.FilePathList;
+    curr_dir, files = fd_dir_and_files(string(rl.GetWorkingDirectory()));
+    @static res_path: string;
+    res_path = "";
+
+    if (ttf.WasInit() == 0) {
+        ttf.Init();
+    }
+
+    @static fd_font: ^ttf.Font;
+    fd_font = ttf.OpenFont(strs.clone_to_cstring(str_add(OE_FONTS_PATH, "default_font.ttf")), 28);
+    if (fd_font == nil) {
+        dbg_log(str_add("Failed to load font: ", string(ttf.GetError())), DebugType.ERROR);
+    } 
+    defer ttf.CloseFont(fd_font);
+
+    @(static) render: proc(^sdl.Renderer, ^bool);
+    render = proc(renderer: ^sdl.Renderer, running: ^bool) {
+        sdl.SetRenderDrawColor(renderer, gui_main_color.r, gui_main_color.g, gui_main_color.b, gui_main_color.a);
+        sdl.RenderClear(renderer);
+
+        sdl_draw_text(renderer, fd_font, string(curr_dir), 10, 10, 1, WHITE);
+        if (sdl_button(renderer, "<", fd_font, 740, 10, 50, 25)) {
+            curr_dir, files = fd_dir_and_files(filepath.dir(curr_dir));
+        }
+
+        for i in 0..<files.count {
+            path := string(files.paths[i]);
+            if (sdl_button(renderer, filepath.base(path), fd_font, 10, 45 + 35 * f32(i), 500, 25)) {
+                if (rl.DirectoryExists(strs.clone_to_cstring(path))) {
+                    curr_dir, files = fd_dir_and_files(path);
+                }
+            }
+
+            if (sdl_button(renderer, "select", fd_font, 800 - 110, 600 - 35, 100, 25)) {
+                res_path = curr_dir;
+                sdl_quit(running);
+            }
+        }
+    };
+
+
+    window := sdl_create_window(800, 600, "Files");
+    sdl_window(window, sdl_create_renderer(window), nil, render);
+
+    return res_path;
+}
+
 fd_dir_and_files :: proc(dir: string) -> (string, rl.FilePathList) {
     curr_dir, t := strs.replace_all(dir, "\\", "/");
     files := rl.LoadDirectoryFiles(strs.clone_to_cstring(curr_dir));

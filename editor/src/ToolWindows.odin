@@ -8,17 +8,28 @@ import "../../oengine/fa"
 import "core:math"
 import "core:path/filepath"
 import sc "core:strconv"
+import strs "core:strings"
 
 BUTTON_WIDTH :: 180
 
 registry_tool :: proc(ct: CameraTool) {
     oe.gui_begin("Registry", x = 0, y = 0, h = 150, can_exit = false);
 
-    if (oe.gui_button("Load registry", 10, 10, BUTTON_WIDTH, 30)) {
+    root := strs.clone_from_cstring(rl.GetWorkingDirectory());
+    @static dir: string;
+    if (oe.gui_button("Set asset dir", 10, 10, BUTTON_WIDTH, 30)) {
+        dir = oe.fd_dir();
+        rl.ChangeDirectory(strs.clone_to_cstring(dir));
+    }
+
+    oe.gui_text(dir, 20, 10, 50);
+
+    if (oe.gui_button("Load registry", 10, 100, BUTTON_WIDTH, 30)) {
         path := oe.fd_file_path();
         if (filepath.ext(path) == ".json") {
             oe.load_registry(path);
         }
+        rl.ChangeDirectory(strs.clone_to_cstring(root));
     }
 
     oe.gui_end();

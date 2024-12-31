@@ -90,8 +90,8 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
     rl.rlPopMatrix();
 
     dids := oe.get_reg_data_ids();
-    for i in 0..<dids.len {
-        did_render_ortho(self, &dids.data[i]); 
+    for i in 0..<len(dids) {
+        did_render_ortho(self, &dids[i]); 
     }
 
     for msc_id in 0..<oe.ecs_world.physics.mscs.len {
