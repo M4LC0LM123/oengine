@@ -201,3 +201,27 @@ rand_digits :: proc(digit_count: i32) -> i32 {
 
     return 0;
 }
+
+look_at :: proc(pos, target: Vec3, up: Vec3 = {0, 1, 0}) -> Vec3 {
+    quat := linalg.quaternion_look_at(pos, target, up);
+    quat = linalg.quaternion_normalize(quat);
+    x, y, z := linalg.euler_angles_from_quaternion_f32(quat, .XYZ);
+    x *= Rad2Deg; y *= Rad2Deg; z *= Rad2Deg;
+
+    forward := linalg.quaternion128_mul_vector3(quat, vec3_z());
+    expected_forward := vec3_normalize(target - pos);
+
+    if (vec3_dot(forward, expected_forward) < 0) {
+        x = -x;
+        y = -y;
+        z = -z;
+    }
+
+    // gimbal lock
+    if (math.is_nan(x) || math.is_nan(y) || math.is_nan(z)) {
+        x = 90; y = 0; z = 0;
+    }
+
+    // pitch yaw roll
+    return {x, y, z};
+}

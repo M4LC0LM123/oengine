@@ -2,6 +2,7 @@ package oengine
 
 import rl "vendor:raylib"
 import "core:math"
+import "core:math/linalg"
 
 Raycast :: struct {
     position, target: Vec3,
@@ -115,6 +116,7 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
 MSCCollisionInfo :: struct {
     t: ^TriangleCollider,
     point: Vec3,
+    normal: Vec3,
     id: int,
 }
 
@@ -131,7 +133,9 @@ rc_is_colliding_msc :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, MSCC
         t := msc.tris[i];
         ok, pt := ray_tri_collision(self, t);
         if (ok) {
-            return true, {t, pt, i};
+            normal := linalg.cross(t.pts[1] - t.pts[0], t.pts[2] - t.pts[0]);
+            normal = linalg.normalize(normal);
+            return true, {t, pt, normal, i};
         }
     }
 
@@ -147,7 +151,9 @@ rc_colliding_tris :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, [dynam
         t := msc.tris[i];
         ok, pt := ray_tri_collision(self, t);
         if (ok) {
-            append(&res, MSCCollisionInfo{t, pt, i});
+            normal := linalg.cross(t.pts[1] - t.pts[0], t.pts[2] - t.pts[0]);
+            normal = linalg.normalize(normal);
+            append(&res, MSCCollisionInfo{t, pt, normal, i});
             coll = true;
         }
     }

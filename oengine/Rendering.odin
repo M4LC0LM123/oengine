@@ -5,6 +5,7 @@ import rlg "rllights"
 import "core:fmt"
 import "core:math"
 import strs "core:strings"
+import "core:math/linalg"
 
 DEF_RINGS :: 16
 DEF_SLICES :: 16
@@ -91,6 +92,30 @@ draw_quad :: proc(pts: [4]Vec3, tex: Texture, clr: Color) {
     rl.rlTexCoord2f(0, 1); rl.rlVertex3f(pts[1].x, pts[1].y, pts[1].z);
     rl.rlTexCoord2f(1, 1); rl.rlVertex3f(pts[2].x, pts[2].y, pts[2].z);
     rl.rlTexCoord2f(1, 0); rl.rlVertex3f(pts[3].x, pts[3].y, pts[3].z);
+
+    rl.rlEnd();
+    rl.rlSetTexture(0);
+
+    rl.rlPopMatrix();
+}
+
+draw_sprite :: proc(pos: Vec3, size: Vec2, rot: Vec3, tex: Texture, clr: Color) {
+    rl.rlPushMatrix();
+
+    rl.rlTranslatef(pos.x, pos.y, pos.z);
+    rl.rlRotatef(rot.x, 1, 0, 0);
+    rl.rlRotatef(rot.y, 0, 1, 0);
+    rl.rlRotatef(rot.z, 0, 0, 1);
+    rl.rlScalef(size.x, size.y, 1);
+
+    rl.rlColor4ub(clr.r, clr.g, clr.b, clr.a);
+    rl.rlBegin(rl.RL_QUADS);
+    rl.rlSetTexture(tex.id);
+
+    rl.rlTexCoord2f(0, 0); rl.rlVertex3f(-0.5, 0.5, 0);
+    rl.rlTexCoord2f(0, 1); rl.rlVertex3f(-0.5, -0.5, 0);
+    rl.rlTexCoord2f(1, 1); rl.rlVertex3f(0.5, -0.5, 0);
+    rl.rlTexCoord2f(1, 0); rl.rlVertex3f(0.5, 0.5, 0);
 
     rl.rlEnd();
     rl.rlSetTexture(0);
