@@ -4,6 +4,7 @@ from tkinter import messagebox
 from dataclasses import dataclass
 import os
 import shutil
+import enum
 
 WIDTH = 300
 HEIGHT = 200
@@ -20,6 +21,15 @@ class Color:
 
 def to_hex(color: Color):
     return "#%02x%02x%02x" % (color.r, color.g, color.b)
+
+class FileType(enum.Enum):
+    FILE = 0
+    FOLDER = 1
+    
+@dataclass
+class Module:
+    type: FileType
+    name: str
 
 @dataclass
 class Colors:
@@ -48,19 +58,49 @@ def get_dir():
         fg=colors.WHITE.to_hex()
     ); path_label.place(x=50 + OFFS * 2, y=25 + OFFS)
 
+def copy_module(path, name, type):
+    res = path + "/" + name
+
+    if (type == FileType.FOLDER):
+        shutil.copytree(name, res)
+    elif (type == FileType.FILE):
+        shutil.copy(name, res)
+
 def create_proj():
     global path
     global name_entry
-    os.chdir("../../../")
+    global mods
+    os.chdir("../../")
 
-    res_dir = path + "/" + name_entry.get()
+    name = "OengineProject"
+    if (name_entry.get() != ""):
+        name = name_entry.get()
 
-    if (not os.path.exists(res_dir)):
-        shutil.copytree("oengine", res_dir)
-    else:
+    res_dir = path + "/" + name
+
+    if (os.path.exists(res_dir)):
         messagebox.showerror("Directory error", "Error: the directory" + res_dir + " already exists")
+        return
+
+    os.mkdir(res_dir)
+
+    for mod in mods:
+        copy_module(res_dir, mod.name, mod.type)
     
 path = ""
+mods = [
+    Module(FileType.FOLDER, "resources"),
+    Module(FileType.FOLDER, "macos"),
+    Module(FileType.FOLDER, "macos-arm64"),
+    Module(FileType.FOLDER, "assets"),
+    Module(FileType.FOLDER, "linux"),
+    Module(FileType.FOLDER, "oengine"),
+    Module(FileType.FOLDER, "src"),
+    Module(FileType.FOLDER, "windows"),
+    Module(FileType.FILE, "ols.json"),
+    Module(FileType.FILE, "odinfmt.json"),
+    Module(FileType.FILE, "run.py"),
+]
 
 root = tk.Tk()
 root.geometry(str_trans(200, 200, WIDTH, HEIGHT))
