@@ -10,6 +10,59 @@ WIDTH = 300
 HEIGHT = 200
 OFFS = 5
 
+main_text = """package main
+
+import "core:fmt"
+import str "core:strings"
+import rl "vendor:raylib"
+import oe "../oengine"
+
+main :: proc() {
+    oe.w_create();
+    oe.w_set_title("gejm");
+    oe.w_set_target_fps(60);
+    oe.window.debug_stats = true;
+
+    oe.ew_init(oe.vec3_y() * 50);
+    oe.load_registry("../registry.json");
+
+    camera := oe.cm_init(oe.vec3_zero());
+    is_mouse_locked: bool = false;
+    oe.ecs_world.camera = &camera;
+
+    for (oe.w_tick()) {
+        oe.ew_update();
+
+        if (oe.key_pressed(oe.Key.ESCAPE)) {
+            is_mouse_locked = !is_mouse_locked;
+        }
+
+        oe.cm_set_fps(&camera, 0.1, is_mouse_locked);
+        oe.cm_set_fps_controls(&camera, 10, is_mouse_locked, true);
+        oe.cm_default_fps_matrix(&camera);
+        oe.cm_update(&camera);
+
+        // render
+        oe.w_begin_render();
+        rl.ClearBackground(rl.SKYBLUE);
+
+        rl.BeginMode3D(camera.rl_matrix);
+        oe.ew_render();
+
+        rl.EndMode3D();
+        oe.w_end_render();
+    }
+
+    oe.ew_deinit();
+    oe.w_close();
+}
+"""
+
+reg_text = """{
+    "dbg_pos": 3,
+}
+"""
+
 @dataclass
 class Color:
     r: int
@@ -70,6 +123,9 @@ def create_proj():
     global path
     global name_entry
     global mods
+    global main_text
+    global reg_text
+    global editor
     os.chdir("../../")
 
     name = "OengineProject"
@@ -86,16 +142,26 @@ def create_proj():
 
     for mod in mods:
         copy_module(res_dir, mod.name, mod.type)
+
+    if (editor.get()):
+        copy_module(res_dir, "editor", FileType.FOLDER)
+
+    fr = open(res_dir + "/registry.json", "w")
+    fr.write(reg_text)
+    fr.close()
+
+    os.mkdir(res_dir + "/src")
+    fm = open(res_dir + "/src/main.odin", "w")
+    fm.write(main_text)
+    fm.close()
     
 path = ""
 mods = [
     Module(FileType.FOLDER, "resources"),
     Module(FileType.FOLDER, "macos"),
     Module(FileType.FOLDER, "macos-arm64"),
-    Module(FileType.FOLDER, "assets"),
     Module(FileType.FOLDER, "linux"),
     Module(FileType.FOLDER, "oengine"),
-    Module(FileType.FOLDER, "src"),
     Module(FileType.FOLDER, "windows"),
     Module(FileType.FILE, "ols.json"),
     Module(FileType.FILE, "odinfmt.json"),
@@ -107,6 +173,8 @@ root.geometry(str_trans(200, 200, WIDTH, HEIGHT))
 root.resizable(False, False)
 root.overrideredirect(True)
 root.configure(bg=colors.main.to_hex())
+
+editor = tk.BooleanVar()
 
 title_bar = tk.Frame(root, bg=colors.main.to_hex(), relief="raised")
 title_bar.place(x=0, y=0, width=WIDTH, height=25)
@@ -147,6 +215,22 @@ name_entry = tk.Entry(
     bg=colors.accent.to_hex(),
     fg=colors.WHITE.to_hex()
 ); name_entry.place(x=50 + OFFS * 2, y=50 + OFFS * 2, width=100, height=25)
+
+editor_check = tk.Checkbutton(
+    root,
+    bg=colors.main.to_hex(),
+    activebackground=colors.main.to_hex(),
+    variable=editor,
+    onvalue=True,
+    offvalue=False,
+); editor_check.place(x=OFFS, y=75 + OFFS * 3, width=25, height=25)
+
+editor_label = tk.Label(
+    root,
+    text="Include editor",
+    bg=colors.main.to_hex(),
+    fg=colors.WHITE.to_hex(),
+); editor_label.place(x=25 + OFFS * 2, y = 75 + OFFS * 3, width=75, height=25)
 
 create_btn = tk.Button(
     root,
