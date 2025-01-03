@@ -33,6 +33,36 @@ world_fog: struct {
     color: Color,
 }
 
+Decal :: struct {
+    position, normal: Vec3,
+    size: Vec2,
+    color: Color,
+    texture_tag: string,
+    _rot: Vec3,
+}
+
+new_decal :: proc(pos, normal: Vec3, size: Vec2, texture_tag: string, color: Color = WHITE) {
+    d := new(Decal);
+    d.position = pos;
+    d.normal = normal;
+    d.size = size;
+    d.color = color;
+    d.texture_tag = texture_tag;
+    d._rot = look_at(d.position, d.position + d.normal);
+
+    append(&ecs_world.decals, d);
+}
+
+decal_render :: proc(using d: Decal) {
+    draw_sprite(
+        position, 
+        size,
+        d._rot,
+        get_asset_var(texture_tag, Texture), 
+        color
+    );
+}
+
 @(private)
 fog_update :: proc(target: Vec3) {
     using world_fog;

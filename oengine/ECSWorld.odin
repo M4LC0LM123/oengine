@@ -15,6 +15,7 @@ ecs_world: struct {
     physics: PhysicsWorld,
     camera: ^Camera,
     rlg_ctx: rlg.Context,
+    decals: [dynamic]^Decal,
     light_count: u32,
     FAE: bool, // fog affects everything
 
@@ -42,6 +43,8 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
 
     img := rl.GenImageGradientLinear(128, 64, 0, WHITE, BLACK);
     tag_image = load_texture(rl.LoadTextureFromImage(img));
+
+    decals = make([dynamic]^Decal);
 
     reg_component(Transform, transform_parse);
     reg_component(RigidBody, rb_parse, rb_loader);
@@ -144,6 +147,10 @@ ew_render :: proc() {
     rl.rlEnableBackfaceCulling();
 
     ecs.ecs_render(&ecs_ctx);
+
+    for &d in decals {
+        decal_render(d^);
+    }
 
     if (PHYS_DEBUG) {
         draw_cube_wireframe(

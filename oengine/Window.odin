@@ -245,7 +245,7 @@ w_begin_render :: proc() {
     rl.BeginTextureMode(window.target);
 }
 
-DBG_INFO_STAT_COUNT :: 7
+DBG_INFO_STAT_COUNT :: 8
 DBG_INFO_POS_COUNT :: 5
 
 w_end_render :: proc() {
@@ -285,6 +285,7 @@ w_end_render :: proc() {
         rl.DrawText(str.clone_to_cstring(str_add("sys_rndrs: ", ecs_world.ecs_ctx._render_systems.len)), top_left.x, top_left.y + OFFSET * 5, 16, rl.YELLOW);
         rl.DrawText(str.clone_to_cstring(str_add("rbs: ", ecs_world.physics.bodies.len)), top_left.x, top_left.y + OFFSET * 6, 16, rl.YELLOW);
         rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), top_left.x, top_left.y + OFFSET * 7, 16, rl.YELLOW);
+        rl.DrawText(str.clone_to_cstring(str_add("decals: ", len(ecs_world.decals))), top_left.x, top_left.y + OFFSET * 8, 16, rl.YELLOW);
     }
 
     rl.EndTextureMode();

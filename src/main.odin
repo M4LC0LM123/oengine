@@ -177,7 +177,7 @@ main :: proc() {
         for i in 0..<len(triggers) {
             if (oe.has_component(triggers[i], oe.RigidBody)) {
                 rb := oe.get_component(triggers[i], oe.RigidBody);
-                if (oe.key_down(.F5)) { 
+                if (oe.key_down(.F5)) {
                     rb.transform.position = rb.starting.position;
                     rb.velocity = {};
                 }
@@ -211,9 +211,12 @@ main :: proc() {
         coll, info := oe.rc_is_colliding_msc(camera.raycast, msc);
         if (coll) {
             rl.DrawLine3D(info.point, info.point + info.normal, oe.RED);
-            
+
             // rl.DrawSphere(info.point, 0.25, oe.RED);
             oe.draw_sprite(info.point, oe.vec2_one(), oe.look_at(info.point, info.point + info.normal), troll, oe.WHITE);
+            if (oe.mouse_pressed(.LEFT)) {
+                oe.new_decal(info.point, info.normal, oe.vec2_one(), "troll");
+            }
         }
 
         rl.EndMode3D();
