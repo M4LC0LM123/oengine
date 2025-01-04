@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:strings"
 import rl "vendor:raylib"
 import ecs "ecs"
+import "core:encoding/json"
 
 Sprite :: struct {
     src: rl.Rectangle,
@@ -272,4 +273,54 @@ sm_set_shader :: proc(using self: ^SimpleMesh, s_shader: Shader) {
     if (sm_tex_is(self, Model)) {
         sm_tex(self, Model).materials[0].shader = shader.data;
     }
+}
+
+sm_parse :: proc(asset_json: json.Object) -> rawptr {
+    shape := ShapeType(asset_json["shape"].(json.Float));
+
+    is_lit := true;
+    if (json_contains(asset_json, "is_lit")) {
+        is_lit = asset_json["is_lit"].(json.Boolean);
+    }
+
+    use_fog: bool;
+    if (json_contains(asset_json, "use_fog")) {
+        use_fog = asset_json["use_fog"].(json.Boolean);
+    }
+
+    texture: Texture;
+    if (json_contains(asset_json, "texture")) {
+        texture_tag := asset_json["texture"].(json.String);
+        texture = get_asset_var(texture_tag, Texture);
+    }
+
+    color_arr := asset_json["color"].(json.Array);
+    color := Color {
+        u8(color_arr[0].(json.Float)), 
+        u8(color_arr[1].(json.Float)), 
+        u8(color_arr[2].(json.Float)), 
+        u8(color_arr[3].(json.Float))
+    };
+
+    if (shape == .MODEL) {
+        model_tag := asset_json["model"].(json.String);
+        model := get_asset_var(model_tag, Model);
+
+        sm := sm_init(model, color);
+        sm.is_lit = is_lit;
+        sm.use_fog = use_fog;
+
+        return new_clone(sm);
+    }
+
+    sm := sm_init(texture, shape, color);
+    sm.is_lit = is_lit;
+    sm.use_fog = use_fog;
+
+    return new_clone(sm);
+}
+
+sm_loader :: proc(ent: AEntity, tag: string) {
+    comp := get_component_data(tag, SimpleMesh);
+    add_component(ent, comp^);
 }

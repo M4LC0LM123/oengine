@@ -150,6 +150,7 @@ load_registry :: proc(path: string) {
 
     root := json_data.(json.Object);
 
+    // first load components
     for tag, asset in root {
         if (tag == "dbg_pos") {
             val := i32(asset.(json.Float));
@@ -188,18 +189,31 @@ load_registry :: proc(path: string) {
         } else if (type == "Model") {
             res := get_path(asset_json["path"].(json.String));
             reg_asset(strs.clone(tag), load_model(strs.clone(res)));
-        } else {
-            ct := ComponentType {
-                name = strs.clone(tag),
-                type = get_component_type(type),
-            };
+        }
+    }
 
-            instr := get_component_instr(type);
-            if (instr != nil) {
-                asset_manager.component_reg[ct] = instr(asset_json);
-            } else {
-                dbg_log("Parse instructions are nil", .ERROR);
-            }
+    // then load components
+    for tag, asset in root {
+        if (tag == "dbg_pos") { continue; }
+
+        asset_json := asset.(json.Object);
+        type := asset_json["type"].(json.String);
+
+        if (type == "CubeMap" ||
+            type == "Sound" ||
+            type == "Texture" ||
+            type == "Model") { continue; }
+
+        ct := ComponentType {
+            name = strs.clone(tag),
+            type = get_component_type(type),
+        };
+
+        instr := get_component_instr(type);
+        if (instr != nil) {
+            asset_manager.component_reg[ct] = instr(asset_json);
+        } else {
+            dbg_log("Parse instructions are nil", .ERROR);
         }
     }
 

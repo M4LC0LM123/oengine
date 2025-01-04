@@ -127,15 +127,12 @@ main :: proc() {
     animated_tr.scale *= 3;
     animated_sm := oe.add_component(animated, oe.sm_init(swat));
     animated_ma := oe.ma_load(animated_sm.tex.(oe.Model).path);
-    oe.sm_set_texture(animated_sm, albedo);
 
     lara_ent := oe.aent_init("lara");
     lara_tr := oe.get_component(lara_ent, oe.Transform);
     lara_tr.position = {2.5, 4, -10};
     lara_tr.scale *= 3;
     lara_sm := oe.add_component(lara_ent, oe.sm_init(lara));
-
-    // fmt.println(oe.get_component_data("test_component", oe.RigidBody));
 
     // reset_track_allocator(&track_allocator);
     for (oe.w_tick()) {

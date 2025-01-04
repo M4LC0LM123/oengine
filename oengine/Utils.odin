@@ -404,6 +404,10 @@ contains :: proc(element, array: rawptr, arr_len: int, $T: typeid) -> bool {
     return false;
 }
 
+json_contains :: proc(object: json.Object, tag: string) -> bool {
+    return object[tag] != nil;
+}
+
 // bounds included
 range_slice :: proc(#any_int min, max: i32) -> []i32 {
     res := make([]i32, max - min + 1);

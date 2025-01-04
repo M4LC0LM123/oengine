@@ -416,7 +416,10 @@
 			1.00000000
 		]
 	},
-    "components": [{"tag": "test_component", "type": "RigidBody"}]
+    "components": [
+		{"tag": "test_component", "type": "RigidBody"},
+		{"tag": "mesh_component", "type": "SimpleMesh"}
+	]
 },
 
 }
