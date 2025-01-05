@@ -49,7 +49,7 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     reg_component(Transform, transform_parse);
     reg_component(RigidBody, rb_parse, rb_loader);
     reg_component(SimpleMesh, sm_parse, sm_loader);
-    reg_component(Light);
+    reg_component(Light, lc_parse, lc_loader);
     reg_component(Particles);
     reg_component(SpatialAudio);
     reg_component(Fluid);

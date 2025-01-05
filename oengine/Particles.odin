@@ -3,6 +3,7 @@ package oengine
 import rl "vendor:raylib"
 import "core:fmt"
 import ecs "ecs"
+import "core:encoding/json"
 
 ParticleBehaviour :: struct {
     vel, accel, grav: Vec3,
@@ -128,3 +129,6 @@ ps_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     }
 }
 
+ps_parse :: proc(aj: json.Object) -> rawptr {
+    
+}

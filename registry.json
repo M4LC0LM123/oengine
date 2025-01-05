@@ -74,5 +74,10 @@
 		"texture": "troll",
 		"color": [255, 255, 255, 255],
 		"type": "SimpleMesh",
+	},
+	"light_component": {
+		"light_type": 1,
+		"color": [255, 255, 255, 255],
+		"type": "Light",
 	}
 }

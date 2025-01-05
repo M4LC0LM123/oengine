@@ -4,6 +4,7 @@ import "core:fmt"
 import rl "vendor:raylib"
 import rlg "rllights"
 import ecs "ecs"
+import "core:encoding/json"
 
 Light :: struct {
     id: u32,
@@ -51,3 +52,28 @@ lc_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     rlg.SetLightColor(id, color);
 }
 
+lc_parse :: proc(asset_json: json.Object) -> rawptr {
+    type := rlg.LightType(asset_json["light_type"].(json.Float));
+
+    color_arr := asset_json["color"].(json.Array);
+    color := Color {
+        u8(color_arr[0].(json.Float)), 
+        u8(color_arr[1].(json.Float)), 
+        u8(color_arr[2].(json.Float)), 
+        u8(color_arr[3].(json.Float))
+    };
+
+    enabled := true;
+    if (json_contains(asset_json, "enabled")) {
+        enabled = asset_json["enabled"].(json.Boolean);
+    }
+
+    lc := lc_init(type, color);
+    lc.enabled = enabled;
+    return new_clone(lc);
+}
+
+lc_loader :: proc(ent: AEntity, tag: string) {
+    comp := get_component_data(tag, Light);
+    add_component(ent, comp^);
+}

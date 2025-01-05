@@ -311,6 +311,15 @@ sm_parse :: proc(asset_json: json.Object) -> rawptr {
         sm.use_fog = use_fog;
 
         return new_clone(sm);
+    } else if (shape == .CUBEMAP) {
+        cubemap_tag := asset_json["cubemap"].(json.String);
+        cubemap := get_asset_var(cubemap_tag, CubeMap);
+
+        sm := sm_init(cubemap, color);
+        sm.is_lit = is_lit;
+        sm.use_fog = use_fog;
+
+        return new_clone(sm);
     }
 
     sm := sm_init(texture, shape, color);

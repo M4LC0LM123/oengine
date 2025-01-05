@@ -134,6 +134,8 @@ main :: proc() {
     lara_tr.scale *= 3;
     lara_sm := oe.add_component(lara_ent, oe.sm_init(lara));
 
+    fmt.println(oe.get_component_data("light_component", oe.Light));
+
     // reset_track_allocator(&track_allocator);
     for (oe.w_tick()) {
         oe.ew_update();
