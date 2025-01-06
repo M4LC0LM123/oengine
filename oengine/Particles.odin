@@ -130,5 +130,27 @@ ps_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
 }
 
 ps_parse :: proc(aj: json.Object) -> rawptr {
-    
+    life_time := f32(aj["life_time"].(json.Float));
+
+    color_arr := aj["color"].(json.Array);
+    color := json_clr_parse(color_arr);
+
+    def_beh := true;
+    if (json_contains(aj, "default_behaviour")) {
+        def_beh = aj["default_behaviour"].(json.Boolean);
+    }
+
+    gravity := Vec3 {0, -9.81, 0};
+    if (json_contains(aj, "gravity")) {
+        vec_arr := aj["gravity"].(json.Array);
+        gravity = json_vec3_to_vec3(vec_arr);
+    }
+
+    ps := ps_init();
+    return new_clone(ps);
+}
+
+ps_loader :: proc(ent: AEntity, tag: string) {
+    comp := get_component_data(tag, Particles);
+    add_component(ent, comp^);
 }

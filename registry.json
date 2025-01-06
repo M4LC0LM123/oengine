@@ -79,5 +79,23 @@
 		"light_type": 1,
 		"color": [255, 255, 255, 255],
 		"type": "Light",
+	},
+	"particles": {
+		"life_time": 10,
+		"color": [255, 255, 255, 255],
+		"default_behaviour": true,
+		"gravity": [0, -9.81, 0],
+		"type": "Particles",
+	},
+	"spatial_audio": {
+		"sound": "huh",
+		"strength": 1,
+		"can_play": true,
+		"type": "SpatialAudio",
+	},
+	"fluid_component": {
+		"texture": "water",
+		"color": [255, 255, 255, 255],
+		"type": "Fluid",
 	}
 }

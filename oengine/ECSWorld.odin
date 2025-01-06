@@ -50,9 +50,9 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     reg_component(RigidBody, rb_parse, rb_loader);
     reg_component(SimpleMesh, sm_parse, sm_loader);
     reg_component(Light, lc_parse, lc_loader);
-    reg_component(Particles);
-    reg_component(SpatialAudio);
-    reg_component(Fluid);
+    reg_component(Particles, ps_parse, ps_loader);
+    reg_component(SpatialAudio, sa_parse, sa_loader);
+    reg_component(Fluid, f_parse, f_loader);
 
     ecs.register_system(&ecs_ctx, rb_update, ecs.ECS_UPDATE);
     ecs.register_system(&ecs_ctx, lc_update, ecs.ECS_UPDATE);

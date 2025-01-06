@@ -359,6 +359,15 @@ mat4_perspective :: proc(fovY, aspect, nearPlane, farPlane: f32) -> Mat4 {
     return result;
 }
 
+json_clr_parse :: proc(color_arr: json.Array) -> Color {
+    return {
+        u8(color_arr[0].(json.Float)), 
+        u8(color_arr[1].(json.Float)), 
+        u8(color_arr[2].(json.Float)), 
+        u8(color_arr[3].(json.Float))
+    };
+}
+
 DIGITS := "0123456789";
 
 is_digit :: proc(s: string) -> bool {

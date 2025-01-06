@@ -3,6 +3,7 @@ package oengine
 import "ecs"
 import "core:fmt"
 import rl "vendor:raylib"
+import "core:encoding/json"
 
 MAX_SOUND_DISTANCE :: 10
 
@@ -33,6 +34,8 @@ sa_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     if (is_nil(t, sa)) do return;
     using sa;
 
+    position = t.position;
+
     if (ecs_world.camera != nil) { 
         _target = ecs_world.camera.position; 
     }
@@ -42,4 +45,26 @@ sa_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     strength = clamp(strength, 0.0, 1.0); 
 
     rl.SetSoundVolume(sound, strength);
+}
+
+sa_parse :: proc(aj: json.Object) -> rawptr {
+    sound_tag := aj["sound"].(json.String);
+    sound := get_asset_var(sound_tag, Sound);
+
+    strength := f32(aj["strength"].(json.Float));
+
+    can_play := true;
+    if (json_contains(aj, "can_play")) {
+        can_play = aj["can_play"].(json.Boolean);
+    }
+
+    sa := sa_init({}, sound);
+    sa.strength = strength;
+    sa.can_play = can_play;
+    return new_clone(sa);
+}
+
+sa_loader :: proc(ent: AEntity, tag: string) {
+    comp := get_component_data(tag, SimpleMesh);
+    add_component(ent, comp^);
 }

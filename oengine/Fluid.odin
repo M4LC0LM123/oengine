@@ -4,6 +4,7 @@ import strs "core:strings"
 import "core:fmt"
 import rl "vendor:raylib"
 import ecs "ecs"
+import "core:encoding/json"
 
 Fluid :: struct {
     transform: Transform,
@@ -98,4 +99,21 @@ f_set :: proc(using self: ^Fluid, name: string, val: f32) {
         shader_location(_shader, strs.clone_to_cstring(name)),
         &value, .FLOAT
     );
+}
+
+f_parse :: proc(aj: json.Object) -> rawptr {
+    texture_tag := aj["texture"].(json.String);
+    texture := get_asset_var(texture_tag, Texture);
+
+    color_arr := aj["color"].(json.Array);
+    color := json_clr_parse(color_arr);
+
+    f := f_init(texture);
+    f.color = color;
+    return new_clone(f);
+}
+
+f_loader :: proc(ent: AEntity, tag: string) {
+    comp := get_component_data(tag, Fluid);
+    add_component(ent, comp^);
 }
