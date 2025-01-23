@@ -6,6 +6,7 @@ import ecs "ecs"
 import "fa"
 import "core:fmt"
 import "core:thread"
+import "nfd"
 
 MAX_LIGHTS :: 44
 FIXED_TIME_STEP :: 1.0 / 60.0
@@ -31,6 +32,8 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     asset_manager.component_loaders = make(map[string]LoaderFunc);
     asset_manager.component_reg = make(map[ComponentType]rawptr);
     pw_init(&physics, s_gravity, s_iter);
+
+    nfd.Init();
 
     accumulator = 0;
 
@@ -179,6 +182,8 @@ ew_deinit :: proc() {
     using ecs_world;
 
     rlg.DestroyContext(rlg_ctx);
+
+    nfd.Quit();
 
     pw_deinit(&physics);
 

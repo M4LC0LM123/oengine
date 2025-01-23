@@ -13,6 +13,7 @@ import "core:math"
 import "core:math/linalg"
 import rlg "../oengine/rllights"
 import "core:mem"
+import "../oengine/nfd"
 
 main :: proc() {
     def_allocator := context.allocator;

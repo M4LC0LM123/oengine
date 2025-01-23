@@ -17,15 +17,15 @@ registry_tool :: proc(ct: CameraTool) {
 
     root := strs.clone_from_cstring(rl.GetWorkingDirectory());
     @static dir: string;
-    if (oe.gui_button("Set asset dir", 10, 10, BUTTON_WIDTH, 30)) {
-        dir = oe.fd_dir();
+    if (oe.gui_button("Set exe dir", 10, 10, BUTTON_WIDTH, 30)) {
+        dir = oe.nfd_folder();
         rl.ChangeDirectory(strs.clone_to_cstring(dir));
     }
 
     oe.gui_text(dir, 20, 10, 50);
 
     if (oe.gui_button("Load registry", 10, 100, BUTTON_WIDTH, 30)) {
-        path := oe.fd_file_path();
+        path := oe.nfd_file();
         if (filepath.ext(path) == ".json") {
             oe.load_registry(path);
         }
@@ -75,7 +75,7 @@ map_proj_tool :: proc(ct: CameraTool) {
     oe.gui_begin("Map project", x = 0, y = 360 + oe.gui_top_bar_height * 2, can_exit = false);
 
     if (oe.gui_button("Load map", 10, 10, BUTTON_WIDTH, 30)) {
-        path := oe.fd_file_path();
+        path := oe.nfd_file();
         if (filepath.ext(path) == ".json") {
             msc := oe.msc_init();
             oe.msc_from_json(msc, path);
@@ -86,7 +86,7 @@ map_proj_tool :: proc(ct: CameraTool) {
     }
 
     if (oe.gui_button("Save map", 10, 50, BUTTON_WIDTH, 30)) {
-        path := oe.fd_file_path();
+        path := oe.nfd_file();
         if (path != oe.STR_EMPTY) {
             for i in 0..<oe.ecs_world.physics.mscs.len {
                  oe.msc_to_json(oe.ecs_world.physics.mscs.data[i], path);

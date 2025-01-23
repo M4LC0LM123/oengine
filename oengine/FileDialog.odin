@@ -7,6 +7,7 @@ import sdl "vendor:sdl2"
 import ttf "vendor:sdl2/ttf"
 import strs "core:strings"
 import "core:thread"
+import "nfd"
 
 BUTTON_WIDTH :: 180
 BUTTON_HEIGHT :: 30
@@ -119,4 +120,33 @@ fd_dir_and_files :: proc(dir: string) -> (string, rl.FilePathList) {
     }
 
     return curr_dir, files;
+}
+
+nfd_file :: proc() -> string {
+    path: cstring;
+    filters := [?]nfd.Filter_Item{ };
+    args := nfd.Open_Dialog_Args{
+        filter_list = raw_data(filters[:]),
+        filter_count = len(filters),
+    };
+    result := nfd.OpenDialogU8_With(&path, &args);
+
+    if (result == .Error) {
+        return "";
+    }
+
+    res, ok := strs.replace_all(strs.clone_from_cstring(path), "\\", "/");
+    return res;
+}
+
+nfd_folder :: proc() -> string {
+    path: cstring;
+    result := nfd.PickFolderU8(&path, "");
+
+    if (result == .Error) {
+        return "";
+    }
+
+    res, ok := strs.replace_all(strs.clone_from_cstring(path), "\\", "/");
+    return res;
 }
