@@ -134,7 +134,15 @@ main :: proc() {
     lara_tr.scale *= 3;
     lara_sm := oe.add_component(lara_ent, oe.sm_init(lara));
 
-    fmt.println(oe.get_component_data("fluid_component", oe.Fluid));
+    for ent in oe.ew_get_ents("light") {
+        if (!oe.has_component(ent, oe.Light)) { continue; }
+        ent_l := oe.get_component(ent, oe.Light);
+        if (ent_l.type == .DIRECTIONAL) {
+            rlg.SetLightVec3(ent_l.id, .DIRECTION, {0, -1, 0});
+            rlg.SetLightValue(ent_l.id, .ENERGY, 1);
+            rlg.SetLightValue(ent_l.id, .ATTENUATION_QUADRATIC, 0.01);
+        }
+    }
 
     // reset_track_allocator(&track_allocator);
     for (oe.w_tick()) {
