@@ -388,22 +388,24 @@ draw_textured_plane :: proc(texture: Texture, pos: Vec3, scale: Vec2, rot: f32, 
 
 draw_cube_wireframe :: proc(pos, rot, scale: Vec3, color: Color) {
     rl.rlPushMatrix();
+    rl.rlTranslatef(pos.x, pos.y, pos.z);
     rl.rlRotatef(rot.x, 1, 0, 0);
     rl.rlRotatef(rot.y, 0, 1, 0);
     rl.rlRotatef(rot.z, 0, 0, 1);
 
-    rl.DrawCubeWiresV(pos, scale, color);
+    rl.DrawCubeWiresV({}, scale, color);
 
     rl.rlPopMatrix();
 }
 
 draw_sphere_wireframe :: proc(pos, rot: Vec3, radius: f32, color: Color) {
     rl.rlPushMatrix();
+    rl.rlTranslatef(pos.x, pos.y, pos.z);
     rl.rlRotatef(rot.x, 1, 0, 0);
     rl.rlRotatef(rot.y, 0, 1, 0);
     rl.rlRotatef(rot.z, 0, 0, 1);
 
-    rl.DrawSphereWires(pos, radius, DEF_RINGS, DEF_SLICES, color);
+    rl.DrawSphereWires({}, radius, DEF_RINGS, DEF_SLICES, color);
 
     rl.rlPopMatrix();
 }

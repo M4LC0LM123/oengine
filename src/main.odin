@@ -104,7 +104,7 @@ main :: proc() {
     sprite_tr := oe.get_component(sprite, oe.Transform);
     sprite_tr.position = {-5, 3, -10};
     sprite_sm := oe.add_component(sprite, oe.sm_init(troll, 0));
-    sprite_path := oe.FollowPath {{-5, 3, -10}, {5, 3, -10}, {5, 10, -10}, {-5, 10, -10}, {-5, 3, -10}};
+    sprite_path := oe.FollowPath {{-5, 3, -10}, {0, 3, -11}, {5, 3, -10}, {5, 3, -15}, {-5, 3, -15}, {-5, 3, -10}};
 
     ps := oe.aent_init("ParticleSystem");
     ps_tr := oe.get_component(ps, oe.Transform);
@@ -127,7 +127,9 @@ main :: proc() {
     animated_tr := oe.get_component(animated, oe.Transform);
     animated_tr.position = {-2.5, 4, -10};
     animated_tr.scale *= 3;
-    animated_sm := oe.add_component(animated, oe.sm_init(oe.model_clone(swat)));
+    animated_m := oe.model_clone(swat);
+    animated_m.transform = rl.MatrixRotateY(90);
+    animated_sm := oe.add_component(animated, oe.sm_init(animated_m));
     animated_ma := oe.ma_load(animated_sm.tex.(oe.Model).path);
 
     lara_ent := oe.aent_init("lara");
@@ -210,8 +212,18 @@ main :: proc() {
 
         oe.sm_apply_anim(animated_sm, &animated_ma, 0);
 
+        SPEED :: 10
+        @static timer: f32;
+        timer += rl.GetFrameTime();
 
-        sprite_tr.position = oe.position_sequence(sprite_path, 10, f32(rl.GetTime()));
+        if (timer < oe.total_time(sprite_path, SPEED)) {
+            animated_tr.position, animated_tr.rotation = oe.position_sequence(sprite_path, SPEED, timer);
+        } else {
+            if (oe.key_pressed(.ENTER)) {
+                timer = 0;
+                sprite_tr.position = {-5, 3, -10};
+            }
+        }
 
         // render
         oe.w_begin_render();
