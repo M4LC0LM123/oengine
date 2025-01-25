@@ -35,6 +35,12 @@ load_model_pro :: proc(s_path: string, s_data: rl.Model) -> Model {
     };
 }
 
+// models can have animation so you have to clone it for using it with seperate 
+// components if you dont want the animation to affect all of them
+model_clone :: proc(m: Model) -> Model {
+    return load_model(str.clone(m.path));
+}
+
 deinit_model :: proc(Model: Model) {
     rl.UnloadModel(Model.data);
 }
