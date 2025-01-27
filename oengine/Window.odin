@@ -339,3 +339,44 @@ w_reload_target :: proc() {
 w_reload_window :: proc() {
     rl.SetWindowSize(window._width, window._height);
 }
+
+engine_run :: proc(
+    width: i32 = 800, height: i32 = 600,
+    render_width: i32 = 800, render_height: i32 = 600,
+    title: string = "oengine",
+    config_flags: rl.ConfigFlags = {.WINDOW_RESIZABLE, .MSAA_4X_HINT},
+    trace_log_type: TraceLogType = .USE_OENGINE,
+    trace_log_level: rl.TraceLogLevel = .NONE,
+    exit_key: Key = .KEY_NULL,
+    fps: i32 = 60,
+    debug_stats: bool = false,
+    instance_name: string = "Game",
+    init: proc() = nil,
+    update: proc() = nil,
+    render: proc() = proc() { rl.ClearBackground(BLACK); },
+    deinit: proc() = nil,
+) {
+    w_create(instance_name);
+    w_set_size(width, height);
+    w_set_resolution(render_width, render_height);
+    w_set_title(title);
+    w_set_config_flags(config_flags);
+    w_set_trace_log_type(trace_log_type);
+    w_set_trace_log_level(trace_log_level);
+    w_set_exit_key(exit_key);
+    w_set_target_fps(fps);
+    window.debug_stats = debug_stats;
+
+    if (init != nil) { init(); }
+
+    for (w_tick()) {
+        if (update != nil) { update(); }
+
+        w_begin_render();
+        if (render != nil) { render(); }
+        w_end_render();
+    }
+
+    if (deinit != nil) { deinit(); }
+    w_close();
+}
