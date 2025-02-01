@@ -172,7 +172,16 @@ data_id_tool :: proc(ct: CameraTool) {
         reg_tag := oe.str_add("data_id_", tag);
         if (oe.asset_manager.registry[reg_tag] != nil) do reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
 
-        oe.reg_asset(reg_tag, oe.DataID {reg_tag, tag, id, oe.Transform{msc_target_pos(ct), {}, oe.vec3_one()}});
+        oe.reg_asset(
+            reg_tag, 
+            oe.DataID {
+                reg_tag, 
+                tag, 
+                id, 
+                oe.Transform{msc_target_pos(ct), {}, oe.vec3_one()},
+                fa.fixed_array(oe.ComponentMarshall, 16),
+            }
+        );
         oe.dbg_log(oe.str_add({"Added data id of tag: ", tag, " and id: ", oe.str_add("", id)}));
     }
 
@@ -206,7 +215,15 @@ data_id_mod_tool :: proc(ct: CameraTool) {
         editor_data.active_data_id.tag = tag;
         editor_data.active_data_id.reg_tag = reg_tag;
 
-        oe.reg_asset(reg_tag, oe.DataID {reg_tag, tag, id, editor_data.active_data_id.transform});
+        oe.reg_asset(reg_tag, 
+            oe.DataID {
+                reg_tag, 
+                tag, 
+                id, 
+                editor_data.active_data_id.transform,
+                fa.fixed_array(oe.ComponentMarshall, 16),
+            }
+        );
         oe.dbg_log(oe.str_add({"Modified data id of tag: ", tag, " and id: ", oe.str_add("", id)}));
     }
 
@@ -218,6 +235,10 @@ data_id_mod_tool :: proc(ct: CameraTool) {
 
     parsed, ok := sc.parse_int(id_parse);
     if (ok) do id = u32(parsed);
+
+    if (oe.gui_button("Components", 10, 130, BUTTON_WIDTH, 30)) {
+        // TODO:
+    }
 
     oe.gui_end();
 }

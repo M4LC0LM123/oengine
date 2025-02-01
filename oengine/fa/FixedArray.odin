@@ -73,6 +73,10 @@ contains :: proc(arr: $T/FixedArray, elem: $E) -> bool {
     return true;
 }
 
+slice :: proc(arr: ^FixedArray($T, $V)) -> []T {
+    return arr.data[:arr.len];
+}
+
 range :: range_arr
 append :: append_arr
 remove :: remove_arr

@@ -151,13 +151,19 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         tag: string,
         id: u32,
         transform: Transform,
+        components: []ComponentMarshall, 
     };
 
     j := 0;
     dids := get_reg_data_ids();
     for i in 0..<len(dids) {
         data_id := dids[i];
-        mrshl := DataIDMarshall {data_id.tag, data_id.id, data_id.transform};
+        mrshl := DataIDMarshall {
+            data_id.tag, 
+            data_id.id, 
+            data_id.transform,
+            fa.slice(new_clone(data_id.comps)),
+        };
         data, ok := json.marshal(mrshl, {pretty = true});
 
         if (ok != nil) {
@@ -223,7 +229,7 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
     reg_tag := str_add("data_id_", tag);
     if (asset_manager.registry[reg_tag] != nil) do reg_tag = str_add(reg_tag, rl.GetRandomValue(1000, 9999));
 
-    reg_asset(reg_tag, DataID {reg_tag, tag, u32(id), transform});
+    comps_arr := fa.fixed_array(ComponentMarshall, 16);
 
     ent := aent_init(tag);
     ent_tr := get_component(ent, Transform);
@@ -237,9 +243,26 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
       
             loader := asset_manager.component_loaders[type];
             if (loader != nil) { loader(ent, tag); }
+            fa.append(
+                &comps_arr, 
+                ComponentMarshall {
+                    strs.clone(tag), 
+                    strs.clone(type)
+                },
+            );
         }
     }
 
+    reg_asset(
+        reg_tag, 
+        DataID {
+            reg_tag, 
+            tag, 
+            u32(id), 
+            transform,
+            comps_arr,
+        }
+    );
 }
 
 msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {

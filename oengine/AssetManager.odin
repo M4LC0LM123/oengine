@@ -13,11 +13,16 @@ import "fa"
 MAX_DIDS :: 2048
 MAX_TEXTURES :: 2048
 
+ComponentMarshall :: struct {
+    tag, type: string
+}
+
 DataID :: struct {
     reg_tag: string, // tag registerd in registry
     tag: string,
     id: u32,
     transform: Transform,
+    comps: fa.FixedArray(ComponentMarshall, 16),
 }
 
 Asset :: union {
