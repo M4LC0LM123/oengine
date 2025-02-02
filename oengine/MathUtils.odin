@@ -14,6 +14,10 @@ to_degrees :: proc(radians: f32) -> f32 {
     return radians * rl.RAD2DEG;
 }
 
+look_at_vec2 :: proc(pos, target: Vec2) -> f32 {
+    return math.atan2_f32(pos.y - target.y, pos.x - target.x) * Rad2Deg;
+}
+
 rotate_x :: proc(v: Vec3, angle: f32) -> Vec3 {
     s := math.sin(angle);
     c := math.cos(angle);

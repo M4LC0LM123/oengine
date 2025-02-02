@@ -21,7 +21,12 @@ total_time :: proc(fp: FollowPath, speed: f32) -> f32 {
 }
 
 calc_rotation :: proc(pos, next: Vec3) -> Vec3 {
-    return {0, math.atan2(next.z - pos.z, next.x - pos.x), 0} * Rad2Deg;
+    // return {0, math.atan2(next.z - pos.z, next.x - pos.x), 0} * Rad2Deg;
+    return {
+        0,
+        -look_at_vec2(pos.xz, next.xz),
+        0
+    };
 }
 
 position_sequence :: proc(fp: FollowPath, speed, time: f32) -> (Vec3, Vec3) {

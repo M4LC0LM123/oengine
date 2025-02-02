@@ -127,7 +127,7 @@ main :: proc() {
     animated_tr.position = {-2.5, 4, -10};
     animated_tr.scale *= 3;
     animated_m := oe.model_clone(swat);
-    animated_m.transform = rl.MatrixRotateY(90);
+    animated_m.transform = rl.MatrixRotateY(-90 * oe.Deg2Rad);
     animated_sm := oe.add_component(animated, oe.sm_init(animated_m));
     animated_ma := oe.ma_load(animated_sm.tex.(oe.Model).path);
 
@@ -211,8 +211,10 @@ main :: proc() {
 
         oe.sm_apply_anim(animated_sm, &animated_ma, 0);
 
+        lara_tr.rotation.y = -oe.look_at_vec2(lara_tr.position.xz, camera.position.xz) - 90;
+
         SPEED :: 10
-        @static timer: f32;
+        @static timer: f32 = 5;
         timer += rl.GetFrameTime();
 
         if (timer < oe.total_time(sprite_path, SPEED)) {
