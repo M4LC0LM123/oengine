@@ -1,6 +1,7 @@
 
 {
     "dbg_pos": 3,
+	"exe_path": "{windows;linux;mac}",
 	"water": {
 		"path": "../assets/water.png",
 		"type": "Texture"

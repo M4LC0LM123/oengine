@@ -155,11 +155,48 @@ load_registry :: proc(path: string) {
 
     root := json_data.(json.Object);
 
-    // first load components
+    // first load assets
     for tag, asset in root {
         if (tag == "dbg_pos") {
             val := i32(asset.(json.Float));
             window._dbg_stats_pos = val;
+            continue;
+        } else if (tag == "exe_path") {
+            val := asset.(json.String);
+            epath: string;
+            s_id, e_id: i32;
+            semi0, semi1: i32 = -1, -1;
+
+            for i in 0..<len(val) {
+                c := val[i];
+                if (c == '{') {
+                    s_id = auto_cast i;
+                } else if (c == '}') {
+                    e_id = auto_cast i;
+                } else if (c == ';') {
+                    if (semi0 == -1) {
+                        semi0 = auto_cast i;
+                    } else {
+                        semi1 = auto_cast i;
+                    }
+                }
+            }
+
+            epath = val[:s_id];
+            
+            plat: string;
+            if (sys_os() == .Windows) {
+                plat = val[s_id + 1:semi0]; 
+            } else if (sys_os() == .Linux) {
+                plat = val[semi0 + 1:semi1];
+            } else if (sys_os() == .Darwin) {
+                plat = val[semi1 + 1:e_id];
+            }
+            epath = str_add(epath, plat);
+            epath = str_add(epath, val[e_id + 1:]);
+
+            window._exe_path = strs.clone(epath);
+
             continue;
         }
 
@@ -199,7 +236,7 @@ load_registry :: proc(path: string) {
 
     // then load components
     for tag, asset in root {
-        if (tag == "dbg_pos") { continue; }
+        if (tag == "dbg_pos" || tag == "exe_path") { continue; }
 
         asset_json := asset.(json.Object);
         type := asset_json["type"].(json.String);

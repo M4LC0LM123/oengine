@@ -23,6 +23,8 @@ window: struct {
     _target_fps: i32,
     _dbg_stats_pos: i32,
 
+    _exe_path: string,
+
     mouse_position: Vec2, // mouse position relative to screen not world
 
     debug_stats: bool,

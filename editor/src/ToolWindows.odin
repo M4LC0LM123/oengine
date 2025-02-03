@@ -170,7 +170,9 @@ data_id_tool :: proc(ct: CameraTool) {
         if (tag == "") do tag = "default";
 
         reg_tag := oe.str_add("data_id_", tag);
-        if (oe.asset_manager.registry[reg_tag] != nil) do reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
+        if (oe.asset_manager.registry[reg_tag] != nil) {
+            reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
+        }
 
         oe.reg_asset(
             reg_tag, 
@@ -198,7 +200,12 @@ data_id_tool :: proc(ct: CameraTool) {
 }
 
 data_id_mod_tool :: proc(ct: CameraTool) {
-    oe.gui_begin("DataID modifier", x = f32(oe.w_render_width()) - 300, y = 200 + oe.gui_top_bar_height, active = false);
+    oe.gui_begin("DataID modifier", 
+        x = f32(oe.w_render_width()) - 300, 
+        y = 200 + oe.gui_top_bar_height,
+        h = 400,
+        active = false
+    );
 
     @static tag: string;
     @static id: u32;
@@ -206,21 +213,23 @@ data_id_mod_tool :: proc(ct: CameraTool) {
         if (tag == "") do tag = "default";
 
         reg_tag := oe.str_add("data_id_", tag);
-        if (oe.asset_manager.registry[reg_tag] != nil) do reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
+        if (oe.asset_manager.registry[reg_tag] != nil) {
+            reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
+        }
+
+        t := oe.get_asset_var(editor_data.active_data_id, oe.DataID).transform;
 
         // actually just reregistering
-        oe.unreg_asset(editor_data.active_data_id.reg_tag);
+        oe.unreg_asset(editor_data.active_data_id);
 
-        editor_data.active_data_id.id = id;
-        editor_data.active_data_id.tag = tag;
-        editor_data.active_data_id.reg_tag = reg_tag;
+        editor_data.active_data_id = reg_tag;
 
         oe.reg_asset(reg_tag, 
             oe.DataID {
                 reg_tag, 
                 tag, 
                 id, 
-                editor_data.active_data_id.transform,
+                t,
                 fa.fixed_array(oe.ComponentMarshall, 16),
             }
         );
@@ -237,8 +246,30 @@ data_id_mod_tool :: proc(ct: CameraTool) {
     if (ok) do id = u32(parsed);
 
     if (oe.gui_button("Components", 10, 130, BUTTON_WIDTH, 30)) {
-        // TODO:
+        oe.gui.windows["Add components"].active = true;
     }
+
+    if (editor_data.active_data_id != "") {
+        did := oe.get_asset_var(editor_data.active_data_id, oe.DataID);
+        for i in 0..<did.comps.len {
+            t := oe.str_add({
+                did.comps.data[i].tag,
+                ": ",
+                did.comps.data[i].type
+            });
+
+            oe.gui_text(t, 25, 10, 170 + f32(i) * 25);
+        }
+    }
+
+    oe.gui_end();
+}
+
+did_component_tool :: proc(ct: CameraTool) {
+    oe.gui_begin("Add components", 
+        x = f32(oe.w_render_width()) - 300, 
+        y = 600 + oe.gui_top_bar_height * 2, active = false
+    );
 
     oe.gui_end();
 }
