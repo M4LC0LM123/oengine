@@ -5,11 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Run odin engine",
-            "type": "debugpy",
+            // "name": "Python Debugger: Run odin engine",
+            // "type": "debugpy",
+            // "request": "launch",
+            // "program": "run.py",
+            // "console": "externalTerminal"
+            "name": "Launch",
+            "type": "cppvsdbg",
             "request": "launch",
-            "program": "run.py",
-            "console": "externalTerminal"
+            "program": "${workspaceRoot}/windows/main.exe",
+            "args": [],
+            "cwd": "${workspaceRoot}/windows",
+            "console": "integratedTerminal"
         }
     ]
 }
