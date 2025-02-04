@@ -88,6 +88,7 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]oe.D
         if (oe.mouse_pressed(.LEFT) && !oe.gui_mouse_over()) { 
             editor_data.active_data_id = oe.STR_EMPTY; 
             oe.gui.windows["DataID modifier"].active = false;
+            oe.gui.windows["Add components"].active = false;
         }
         return;
     }

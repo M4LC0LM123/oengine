@@ -182,6 +182,50 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
     file_close(file);
 }
 
+load_data_ids :: proc(
+    path: string, 
+    mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE
+) {
+    file := file_handle(path, mode);
+    
+    res: string = "{";
+
+    DataIDMarshall :: struct {
+        tag: string,
+        id: u32,
+        transform: Transform,
+        components: []ComponentMarshall, 
+    };
+
+    j := 0;
+    dids := get_reg_data_ids();
+    for i in 0..<len(dids) {
+        data_id := dids[i];
+        mrshl := DataIDMarshall {
+            data_id.tag, 
+            data_id.id, 
+            data_id.transform,
+            fa.slice(new_clone(data_id.comps)),
+        };
+        data, ok := json.marshal(mrshl, {pretty = true});
+
+        if (ok != nil) {
+            fmt.printfln("An error occured marshalling data: %v", ok);
+            return;
+        }
+        
+        name := str_add({"\"", str_add("data_id", j), "\": {\n"});
+        res = str_add({res, "\n", name, string(data[1:len(data) - 1]), "},\n"});
+        j += 1;
+    }
+    delete(dids);
+
+    res = str_add(res, "\n}");
+    file_write(file, res);
+    file_close(file);
+}
+
+
 msc_from_json :: proc(using self: ^MSCObject, path: string) {
     data, ok := os.read_entire_file_from_filename(path);
     if (!ok) {

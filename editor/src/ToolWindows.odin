@@ -91,6 +91,10 @@ map_proj_tool :: proc(ct: CameraTool) {
             for i in 0..<oe.ecs_world.physics.mscs.len {
                  oe.msc_to_json(oe.ecs_world.physics.mscs.data[i], path);
             }
+
+            if (oe.ecs_world.physics.mscs.len == 0) {
+                oe.load_data_ids(path);
+            }
         }
     }
 
@@ -268,8 +272,38 @@ data_id_mod_tool :: proc(ct: CameraTool) {
 did_component_tool :: proc(ct: CameraTool) {
     oe.gui_begin("Add components", 
         x = f32(oe.w_render_width()) - 300, 
-        y = 600 + oe.gui_top_bar_height * 2, active = false
+        y = 600 + oe.gui_top_bar_height * 2, active = false,
+        h = 400,
     );
+
+    i: i32;
+    for k, v in oe.asset_manager.component_reg {
+        if (oe.gui_button(
+            k.name,
+            x = 10,
+            y = 10 + f32(i) * 40,
+            w = BUTTON_WIDTH,
+            h = 30,
+        )) {
+            tag := editor_data.active_data_id;
+            did := oe.get_asset_var(tag, oe.DataID);
+            fa.append(
+                &did.comps, 
+                oe.ComponentMarshall {k.name, oe.str_add("", k.type)}
+            );
+
+            oe.unreg_asset(did.reg_tag);
+            oe.reg_asset(did.reg_tag, did);
+            oe.dbg_log(
+                oe.str_add({
+                    "Modified data id of tag: ", 
+                    tag, " and id: ", oe.str_add("", did.id)
+                })
+            );
+        }
+
+        i += 1;
+    }
 
     oe.gui_end();
 }

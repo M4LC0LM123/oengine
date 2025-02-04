@@ -257,7 +257,14 @@ render_tri :: proc(using self: ^CameraTool) {
             info := arr[0];
             t := msc.tris[info.id];
             if (!oe.gui_mouse_over()) {
-                rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], GRID_COLOR); 
+                clr := GRID_COLOR;
+                if (t.color.r >= GRID_COLOR.r &&
+                    t.color.g >= GRID_COLOR.g &&
+                    t.color.b >= GRID_COLOR.b) {
+                    clr.rgb = t.color.rgb - GRID_COLOR.rgb;
+                }
+
+                rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], clr);
             }
 
             if (oe.mouse_pressed(.LEFT) && !oe.gui_mouse_over()) {
@@ -279,7 +286,22 @@ render_tri :: proc(using self: ^CameraTool) {
         }
         msc := oe.ecs_world.physics.mscs.data[_active_msc_id];
         t := msc.tris[_active_id];
-        rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], GRID_COLOR);
+
+        clr := GRID_COLOR;
+        if (t.color.r >= GRID_COLOR.r &&
+            t.color.g >= GRID_COLOR.g &&
+            t.color.b >= GRID_COLOR.b) {
+            clr.rgb = t.color.rgb - GRID_COLOR.rgb;
+        }
+
+        rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], clr);
+
+        if (oe.key_pressed(.DELETE)) {
+            ordered_remove(&msc.tris, _active_id);
+            oe.tri_count -= 1;
+            _active_id = ACTIVE_EMPTY;
+            _active_msc_id = ACTIVE_EMPTY;
+        }
     }
 }
 

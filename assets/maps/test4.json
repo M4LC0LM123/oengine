@@ -1,0 +1,66 @@
+
+{
+"data_id0": {
+
+	"tag": "idegas",
+	"id": 123,
+	"transform": {
+		"position": [
+			0.00000000,
+			0.00000000,
+			0.00000000
+		],
+		"rotation": [
+			0.00000000,
+			0.00000000,
+			0.00000000
+		],
+		"scale": [
+			1.00000000,
+			1.00000000,
+			1.00000000
+		]
+	},
+	"components": [
+		{
+			"tag": "mesh_component",
+			"type": "SimpleMesh"
+		},
+		{
+			"tag": "test_component",
+			"type": "RigidBody"
+		},
+		{
+			"tag": "light_1",
+			"type": "Light"
+		}
+	]
+},
+
+"data_id1": {
+
+	"tag": "idegas",
+	"id": 123,
+	"transform": {
+		"position": [
+			0.46949065,
+			1.50000787,
+			-4.67802858
+		],
+		"rotation": [
+			0.00000000,
+			0.00000000,
+			0.00000000
+		],
+		"scale": [
+			1.00000000,
+			1.00000000,
+			1.00000000
+		]
+	},
+	"components": [
+
+	]
+},
+
+}
