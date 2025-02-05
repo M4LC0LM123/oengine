@@ -1,8 +1,8 @@
 package gl
 import "core:c"
-import "core:builtin"
+import "base:builtin"
 import "core:fmt"
-import "core:runtime"
+import "base:runtime"
 
 GL_DEBUG :: #config(GL_DEBUG, ODIN_DEBUG)
 

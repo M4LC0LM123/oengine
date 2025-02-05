@@ -1,10 +1,13 @@
 package oengine
 
 import str "core:strings"
+import "core:strconv"
 import rl "vendor:raylib"
 import "core:math"
 import "core:fmt"
 import "core:math/linalg"
+import "core:math/rand"
+import "core:encoding/json"
 
 STR_EMPTY :: ""
 
@@ -79,7 +82,7 @@ vec3_length :: proc(v: Vec3) -> f32 {
 
 vec3_normalize :: proc(v: Vec3) -> Vec3 {
     length := vec3_length(v);
-    
+
     return Vec3 {
         v.x / length,
         v.y / length,
@@ -95,6 +98,18 @@ vec3_transform :: proc(v: Vec3, m: Mat4) -> Vec3 {
     result.z = v.x * m.m8 + v.y * m.m9 + v.z * m.m10 + m.m11;
 
     return result;
+}
+
+vec3_zerone :: proc(v: Vec3, min, max: f32) -> Vec3 {
+    return (v - min) / (max - min);
+}
+
+vec3_dist :: proc(v1, v2: Vec3) -> f32 {
+    return math.sqrt_f32(
+        math.pow(v1.x - v2.x, 2) +
+        math.pow(v1.y - v2.y, 2) +
+        math.pow(v1.z - v2.z, 2)
+    );
 }
 
 vec3_dot :: proc(v1, v2: Vec3) -> f32 {
@@ -279,50 +294,19 @@ mat4_rotate_XYZ :: proc(x, y, z: f32) -> Mat4 {
     return res;
 }
 
-mat4_to_lmat :: proc(mat: Mat4) -> linalg.Matrix4f32 {
-    using mat;
-    return linalg.Matrix4f32{
-        m0, m4, m8, m12,
-        m1, m5, m9, m13,
-        m2, m6, m10, m14,
-        m3, m7, m11, m15,
-    };
-}
-
-mat4_to_arr :: proc(mat: Mat4) -> [4*4]f32 {
-    using mat;
-    return [4*4]f32 {
-        m0, m4, m8, m12,
-        m1, m5, m9, m13,
-        m2, m6, m10, m14,
-        m3, m7, m11, m15,
-    };
-}
-
-lmat_to_mat4 :: proc(mat: linalg.Matrix4f32) -> Mat4 {
-    return Mat4 {
-        m0  = mat[0, 0],
-        m4  = mat[0, 1],
-        m8  = mat[0, 2],
-        m12 = mat[0, 3],
-        m1  = mat[1, 0],
-        m5  = mat[1, 1],
-        m9  = mat[1, 2],
-        m13 = mat[1, 3],
-        m2  = mat[2, 0],
-        m6  = mat[2, 1],
-        m10 = mat[2, 2],
-        m14 = mat[2, 3],
-        m3  = mat[3, 0],
-        m7  = mat[3, 1],
-        m11 = mat[3, 2],
-        m15 = mat[3, 3],
-    }
-}
-
 mat4_to_rl_mat :: proc(mat: Mat4) -> rl.Matrix {
     using mat;
     return rl.Matrix {
+        m0, m4, m8, m12,
+        m1, m5, m9, m13,
+        m2, m6, m10, m14,
+        m3, m7, m11, m15,
+    };
+}
+
+mat4_to_arr :: proc(mat: Mat4) -> [16]f32 {
+    using mat;
+    return [16]f32 {
         m0, m4, m8, m12,
         m1, m5, m9, m13,
         m2, m6, m10, m14,
@@ -351,10 +335,6 @@ rl_mat_to_mat4 :: proc(mat: rl.Matrix) -> Mat4 {
     }
 }
 
-mat4_scale :: proc(x, y, z: f32) -> Mat4 {
-    return lmat_to_mat4(linalg.matrix4_scale_f32({x, y, z}));
-}
-
 mat4_perspective :: proc(fovY, aspect, nearPlane, farPlane: f32) -> Mat4 {
     result: Mat4;
 
@@ -376,15 +356,91 @@ mat4_perspective :: proc(fovY, aspect, nearPlane, farPlane: f32) -> Mat4 {
     result.m14 = -(f32(farPlane) * f32(nearPlane) * 2.0) / fn;
 
     return result;
-} 
-
-mat4_ortho :: proc(left, right, bottom, top, near, far: f32) -> Mat4 {
-    return lmat_to_mat4(linalg.matrix_ortho3d_f32(left, right, bottom, top, near, far));
 }
 
-random_value :: proc(min, max: i32) -> i32 {
-    return rl.GetRandomValue(min, max);
+json_clr_parse :: proc(color_arr: json.Array) -> Color {
+    return {
+        u8(color_arr[0].(json.Float)), 
+        u8(color_arr[1].(json.Float)), 
+        u8(color_arr[2].(json.Float)), 
+        u8(color_arr[3].(json.Float))
+    };
 }
+
+DIGITS := "0123456789";
+
+is_digit :: proc(s: string) -> bool {
+    for i in 0..<len(s) {
+        if (!str.contains_rune(DIGITS, char(s[i]))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+rand_val :: proc(min, max: f32) -> f32 {
+    return rand.float32_range(min, max);
+}
+
+transform_to_rl_bb :: proc(transform: Transform) -> rl.BoundingBox {
+    return rl.BoundingBox {
+        min = transform.position - transform.scale * 0.5,
+        max = transform.position + transform.scale * 0.5
+    };
+}
+
+is_nil :: proc(data: ..rawptr) -> bool {
+    for obj in data {
+        if (obj == nil) do return true;
+    }
+
+    return false;
+}
+
+contains :: proc(element, array: rawptr, arr_len: int, $T: typeid) -> bool {
+    elem := cast(^T)element;
+    arr := cast([^]T)array;
+    // fmt.println(elem^, arr[0:arr_len]);
+
+    for i in arr[0:arr_len] {
+        if i == elem^ {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+json_contains :: proc(object: json.Object, tag: string) -> bool {
+    return object[tag] != nil;
+}
+
+// bounds included
+range_slice :: proc(#any_int min, max: i32) -> []i32 {
+    res := make([]i32, max - min + 1);
+
+    for i in 0..<(max - min + 1) {
+        res[i] = i + min;
+    }
+
+    return res;
+}
+
+arr_id :: proc(element, array: rawptr, arr_len: int, $T: typeid) -> int {
+    elem := cast(^T)element;
+    arr := cast([^]T)array;
+    // fmt.println(elem^, arr[0:arr_len]);
+
+    for i in 0..<len(arr[0:arr_len]) {
+        if arr[0:arr_len][i] == elem^ {
+            return i;
+        }
+    }
+
+    return 0;
+}
+
 
 OSType :: enum {
     Unknown,
@@ -418,6 +474,25 @@ sys_os :: proc() -> OSType {
     return OSType(ODIN_OS);
 }
 
+str_add :: proc {
+    str_add_strs,
+    str_add_any,
+}
+
+str_add_strs :: proc(bufs: []string) -> string {
+    return str.concatenate(bufs);
+}
+
+str_add_any :: proc(buf: string, elem: $E, _fmt: string = "%.2f") -> string {
+    type := typeid_of(type_of(elem));
+    if (type == f32 || type == f64) {
+        return fmt.aprintf(fmt.aprint("%v", _fmt, sep = ""), buf, elem);
+    }
+
+    return fmt.aprintf("%v%v", buf, elem);
+}
+
+/* not needed anymore but kept just in case
 str_add :: proc {
     str_add_strs,
     str_add_str,
@@ -459,14 +534,7 @@ str_add_f32 :: proc(buf: string, n: f32, fmt: byte = 'f') -> string {
 }
 
 str_add_int :: proc(buf: string, #any_int n: int) -> string {
-    b: ^str.Builder = new(str.Builder);
-    defer free(b);
-    str.builder_init(b);
-
-    str.builder_reset(b);
-    str.write_int(b, n);
-
-    return str.concatenate({buf, str.to_string(b^)});
+    return fmt.aprintf("%v%v", buf, n);
 }
 
 str_add_uint :: proc(buf: string, n: uint) -> string {
@@ -501,3 +569,4 @@ str_add_char :: proc(buf: string, n: char) -> string {
 
     return str.concatenate({buf, str.to_string(b^)});
 }
+*/

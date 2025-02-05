@@ -29,7 +29,7 @@ ent_init_plain :: proc() -> ^Entity {
     using self := new(Entity);
 
     id = u32(len(ecs_world.ents));
-    tag = str_add_u32("Entity", id);
+    tag = str_add("Entity", id);
 
     transform = {
         vec3_zero(),

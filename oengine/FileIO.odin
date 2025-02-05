@@ -77,7 +77,7 @@ file_write :: proc(file: File, text: string) {
 file_close :: proc(file: File) {
     err := os.close(file.handle);
 
-    if (bool(err) != false) {
+    if (err != 0) {
         dbg_log(str_add("Failed to close file: ", err), .WARNING);
     }
 }
