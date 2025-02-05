@@ -1,6 +1,7 @@
 package ecs
 
 import "core:fmt"
+import rl "vendor:raylib"
 import "../fa"
 
 MAX_ENTS :: 2048
@@ -46,6 +47,7 @@ ecs_render :: proc(ctx: ^Context) {
         entity := entities.data[i];
         for j in 0..<fa.range(_render_systems) {
             system := _render_systems.data[j];
+
             system(ctx, entity);
         }
     }

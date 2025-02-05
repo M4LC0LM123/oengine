@@ -1,5 +1,7 @@
 package fa
 
+import "core:fmt"
+
 FixedArray :: struct($T: typeid, $V: i32) {
     data: [V]T,
     len, cap: i32,
@@ -31,6 +33,19 @@ fixed_array_custom :: proc($T: typeid, $V: i32, empty: T) -> FixedArray(T, V) {
 
 append_arr :: proc(arr: ^$T/FixedArray, elem: $E) {
     arr.data[arr.len] = elem;
+
+    if (arr.len == arr.cap) do return;
+
+    arr.len += 1;
+}
+
+insert_arr :: proc(arr: ^$T/FixedArray, index: i32, elem: $E) {
+    for i := arr.len; i > index; i -= 1 {
+        fmt.println(i);
+        arr.data[i] = arr.data[i - 1];
+    }
+
+    arr.data[index] = elem;
 
     if (arr.len == arr.cap) do return;
 
@@ -77,6 +92,7 @@ slice :: proc(arr: ^FixedArray($T, $V)) -> []T {
     return arr.data[:arr.len];
 }
 
+insert :: insert_arr
 range :: range_arr
 append :: append_arr
 remove :: remove_arr
