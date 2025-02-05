@@ -41,6 +41,7 @@ ma_load :: proc(path: string, speed: f32 = 100) -> ModelArmature {
 
 SimpleMesh :: struct {
     transform: Transform,
+    offset: Transform,
     shape: ShapeType,
     
     tex: union {
@@ -70,6 +71,7 @@ sm_init :: proc {
 @(private = "file")
 sm_init_all :: proc(using sm: ^SimpleMesh, s_shape: ShapeType, s_color: Color) {
     transform = transform_default();
+    offset = transform_default();
     shape = s_shape;
 
     if (int(shape) < 10) {
@@ -175,7 +177,7 @@ sm_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
 
     #partial switch v in tex {
         case Model:
-            draw_model(v, target, color, is_lit);
+            draw_model(v, target, color, is_lit, offset);
         case CubeMap:
             draw_cube_map(v, target, color);
         case Slope:

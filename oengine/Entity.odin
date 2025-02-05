@@ -20,7 +20,10 @@ add_component :: proc(ent: AEntity, component: $T) -> ^T {
     c := ecs.add_component(ent, component);
   
     if (type_of(component) == RigidBody) {
-        fa.append(&ecs_world.physics.bodies, cast(^RigidBody)c);
+        rb := cast(^RigidBody)c;
+        tr := get_component(ent, Transform);
+        rb._difference = transform_subtract(tr^, rb.transform);
+        fa.append(&ecs_world.physics.bodies, rb);
     }
 
     return c;

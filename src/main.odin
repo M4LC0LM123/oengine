@@ -82,7 +82,11 @@ main :: proc() {
     player := oe.aent_init("player");
     player_tr := oe.get_component(player, oe.Transform);
     player_tr.position.y = 5;
-    player_rb := oe.add_component(player, oe.rb_init(player_tr^, 1.0, 0.5, false, oe.ShapeType.BOX));
+    player_rb := oe.add_component(
+        player, oe.rb_init(
+            {player_tr.position - {0, 0.5, 0}, player_tr.rotation, {1, 2, 1}}, 
+            1.0, 0.5, false, oe.ShapeType.BOX)
+    );
     player_sm := oe.add_component(player, oe.sm_init(oe.tex_flip_vert(troll)));
     player_sm.is_lit = false;
     player_jump := oe.add_component(player, oe.sa_init(player_tr.position, jump_sfx));
@@ -137,6 +141,7 @@ main :: proc() {
     lara_tr.scale *= 3;
     lara_sm := oe.add_component(lara_ent, oe.sm_init(oe.model_clone(swat)));
     lara_ma := oe.ma_load(lara_sm.tex.(oe.Model).path);
+    lara_sm.offset.scale = {1.5, 0.75, 1.5};
 
     for ent in oe.ew_get_ents("light") {
         if (!oe.has_component(ent, oe.Light)) { continue; }

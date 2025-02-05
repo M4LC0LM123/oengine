@@ -531,7 +531,13 @@ gen_mesh_triangle :: proc(verts: [3]Vec3, #any_int uv_rot: i32 = 0) -> rl.Mesh {
     return mesh;
 }
 
-draw_model :: proc(model: Model, transform: Transform, color: Color, is_lit: bool = false) {
+draw_model :: proc(
+    model: Model, 
+    transform: Transform, 
+    color: Color,
+    is_lit: bool = false,
+    offset: Transform = {{}, {}, {1, 1, 1}},
+) {
     rl.rlPushMatrix();
     rl.rlTranslatef(transform.position.x, transform.position.y, transform.position.z);
     rl.rlRotatef(transform.rotation.x, 1, 0, 0);
@@ -539,8 +545,8 @@ draw_model :: proc(model: Model, transform: Transform, color: Color, is_lit: boo
     rl.rlRotatef(transform.rotation.z, 0, 0, 1);
     rl.rlScalef(transform.scale.x, transform.scale.y, transform.scale.z);
 
-    if(is_lit) do rlg.DrawModel(model, {}, 1, color);
-    else do rl.DrawModel(model, {}, 1, color);
+    if (is_lit) { rlg.DrawModelEx(model, offset.position, {}, 0, offset.scale, color); }
+    else { rl.DrawModelEx(model, offset.position, {}, 0, offset.scale, color); }
 
     rl.rlPopMatrix();
 }

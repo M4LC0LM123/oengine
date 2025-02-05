@@ -39,6 +39,7 @@ RigidBody :: struct {
     id: u32,
     transform: Transform,
     starting: Transform,
+    _difference: Transform,
 
     acceleration, velocity, force: Vec3,
     mass, restitution, friction: f32,
@@ -164,7 +165,7 @@ rb_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     t, rb := ecs.get_components(ent, Transform, RigidBody);
     if (is_nil(t, rb)) do return;
 
-    t^ = rb.transform;
+    t^ = transform_add(rb.transform, rb._difference);
 }
 
 rb_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
