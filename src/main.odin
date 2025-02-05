@@ -189,17 +189,6 @@ main :: proc() {
             player_rb.velocity.xz = {};
         }
 
-        triggers := oe.ew_get_ents("trigger");
-        for i in 0..<len(triggers) {
-            if (oe.has_component(triggers[i], oe.RigidBody)) {
-                rb := oe.get_component(triggers[i], oe.RigidBody);
-                if (oe.key_down(.F5)) {
-                    rb.transform.position = rb.starting.position;
-                    rb.velocity = {};
-                }
-            }
-        }
-
         if (oe.key_down(oe.Key.F2)) {
             ent := oe.aent_init();
             ent_tr := oe.get_component(ent, oe.Transform);
