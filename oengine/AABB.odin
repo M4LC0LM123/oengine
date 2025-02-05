@@ -1,6 +1,7 @@
 package oengine
 
 import "core:math"
+import "core:fmt"
 
 AABB :: struct {
     x, y, z: f32,
@@ -44,7 +45,7 @@ aabb_collision :: proc(cube1, cube2: AABB) -> bool {
 
 tris_to_aabb :: proc(tris: [dynamic]^TriangleCollider) -> AABB {
     min := vec3_one() * math.F32_MAX;
-    max := vec3_one() * math.F32_MIN;
+    max := vec3_one() * -math.F32_MAX;
 
     for t in tris {
         for pt in t.pts {

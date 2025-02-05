@@ -115,6 +115,10 @@ w_set_trace_log_type :: proc(type: TraceLogType) {
     dbg_log(str_add({"Set trace log type to: ", DEBUG_TYPE_NAMES[int(type)]}));
 }
 
+delta_time :: proc() -> f32 {
+    return rl.GetFrameTime();
+}
+
 w_render_width :: proc() -> i32 {
     return window._render_width;
 }

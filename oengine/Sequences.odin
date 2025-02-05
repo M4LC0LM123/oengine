@@ -45,3 +45,13 @@ position_sequence :: proc(fp: FollowPath, speed, time: f32) -> (Vec3, Vec3) {
 
     return fp[len(fp) - 1], {};
 }
+
+play_sequence :: proc(
+    path: FollowPath,
+    timer: ^f32, 
+    speed, tick_speed: f32
+) -> bool {
+    timer^ += tick_speed;
+    
+    return timer^ < total_time(path, speed);
+}

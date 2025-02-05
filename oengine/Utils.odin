@@ -23,6 +23,9 @@ Rad2Deg :: 180.0 / math.PI
 Color :: rl.Color
 char :: rune
 
+F32_MAX :: math.F32_MAX
+F32_MIN :: math.F32_MIN
+
 clr_to_arr :: proc(color: Color, $T: typeid) -> [4]T {
     return [4]T {
         T(color.r), T(color.g),

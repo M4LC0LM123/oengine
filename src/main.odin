@@ -102,6 +102,7 @@ main :: proc() {
     water_tr.position.z = 37.5;
     water_tr.scale = {25, 1, 25};
     water_f := oe.add_component(water, oe.f_init(water_tex));
+    water_f.color.a = 125;
 
     sprite := oe.aent_init("sprite_test");
     sprite_tr := oe.get_component(sprite, oe.Transform);
@@ -119,7 +120,9 @@ main :: proc() {
     oe.msc_from_json(msc, "../assets/maps/test.json");
 
     msc2 := oe.msc_init();
-    oe.msc_from_model(msc2, oe.load_model("../assets/maps/bowl.obj"), oe.vec3_z() * -35);
+    oe.msc_from_model(
+        msc2, oe.load_model("../assets/maps/bowl.obj"), oe.vec3_z() * -35
+    );
 
     light2 := oe.aent_init("light");
     light2_tr := oe.get_component(light2, oe.Transform);
@@ -208,11 +211,11 @@ main :: proc() {
         lara_tr.rotation.y = -oe.look_at_vec2(lara_tr.position.xz, camera.position.xz) - 90;
 
         SPEED :: 10
-        @static timer: f32 = 5;
-        timer += rl.GetFrameTime();
-
-        if (timer < oe.total_time(sprite_path, SPEED)) {
-            animated_tr.position, animated_tr.rotation = oe.position_sequence(sprite_path, SPEED, timer);
+        @static timer: f32 = oe.F32_MAX;
+        if (oe.play_sequence(sprite_path, &timer, SPEED, oe.delta_time())) {
+            animated_tr.position, animated_tr.rotation = oe.position_sequence(
+                sprite_path, SPEED, timer
+            );
         } else {
             if (oe.key_pressed(.ENTER)) {
                 timer = 0;
