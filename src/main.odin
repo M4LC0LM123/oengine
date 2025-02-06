@@ -129,7 +129,7 @@ main :: proc() {
     light2_tr.position = {0, 5, -35};
     light2_lc := oe.add_component(light2, oe.lc_init());
 
-    animated := oe.aent_init("anim");
+    animated := oe.aent_init("anim", false);
     animated_tr := oe.get_component(animated, oe.Transform);
     animated_tr.position = {-2.5, 4, -10};
     animated_tr.scale *= 3;
@@ -138,7 +138,7 @@ main :: proc() {
     animated_sm := oe.add_component(animated, oe.sm_init(animated_m));
     animated_ma := oe.ma_load(animated_sm.tex.(oe.Model).path);
 
-    lara_ent := oe.aent_init("lara");
+    lara_ent := oe.aent_init("lara", false);
     lara_tr := oe.get_component(lara_ent, oe.Transform);
     lara_tr.position = {2.5, 4, -10};
     lara_tr.scale *= 3;

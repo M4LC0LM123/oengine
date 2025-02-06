@@ -7,8 +7,8 @@ import "fa"
 
 AEntity :: ^ecs.Entity
 
-aent_init :: proc(tag: string = "Entity") -> AEntity {
-    res := ecs.entity_init(&ecs_world.ecs_ctx);
+aent_init :: proc(tag: string = "Entity", transparent := true) -> AEntity {
+    res := ecs.entity_init(&ecs_world.ecs_ctx, transparent);
     res.tag = tag;
 
     add_component(res, transform_default());

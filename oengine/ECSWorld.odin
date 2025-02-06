@@ -147,6 +147,11 @@ ew_fixed_update :: proc() {
 ew_render :: proc() {
     using ecs_world;
 
+    rl.rlDisableBackfaceCulling();
+    for i in 0..<fa.range(physics.mscs) {
+        msc_render(physics.mscs.data[i]);
+    }
+
     rl.rlEnableBackfaceCulling();
 
     ecs.ecs_render(&ecs_ctx);
@@ -170,11 +175,6 @@ ew_render :: proc() {
         for i in 0..<len(dids) { draw_data_id(dids[i]); }
         delete(dids);
         draw_debug_axis();
-    }
-
-    rl.rlDisableBackfaceCulling();
-    for i in 0..<fa.range(physics.mscs) {
-        msc_render(physics.mscs.data[i]);
     }
 }
 

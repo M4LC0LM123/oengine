@@ -15,12 +15,18 @@ Entity :: struct {
     components: fa.FixedMap(typeid, rawptr, MAX_CMPNTS),
 }
 
-entity_init :: proc(ctx: ^Context) -> ^Entity {
+entity_init :: proc(ctx: ^Context, transparent := true) -> ^Entity {
     res := new(Entity);
     res.id = u32(ctx.entities.len);
     res.components = fa.fixed_map(typeid, rawptr, MAX_CMPNTS);
     res.tag = "Entity";
-    fa.append_arr(&ctx.entities, res);
+    
+    if (transparent) {
+        fa.append_arr(&ctx.entities, res);
+        return res;
+    }
+
+    fa.insert(&ctx.entities, 0, res);
     return res;
 }
 
