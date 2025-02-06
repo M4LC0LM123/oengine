@@ -72,9 +72,13 @@ msc_tool :: proc(ct: CameraTool) {
 }
 
 map_proj_tool :: proc(ct: CameraTool) {
-    oe.gui_begin("Map project", x = 0, y = 360 + oe.gui_top_bar_height * 2, can_exit = false);
+    oe.gui_begin(
+        "Map project", 
+        x = 0, y = 360 + oe.gui_top_bar_height * 2, can_exit = false);
+    wr := oe.gui_rect(oe.gui_window("Map project"));
 
-    if (oe.gui_button("Load map", 10, 10, BUTTON_WIDTH, 30)) {
+    grid := oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Load msc", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_file();
         if (filepath.ext(path) == ".json") {
             msc := oe.msc_init();
@@ -85,12 +89,11 @@ map_proj_tool :: proc(ct: CameraTool) {
         }
     }
 
-    if (oe.gui_button("Save map", 10, 50, BUTTON_WIDTH, 30)) {
+    grid = oe.gui_grid(1, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Save msc", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_file();
         if (path != oe.STR_EMPTY) {
-            for i in 0..<oe.ecs_world.physics.mscs.len {
-                 oe.msc_to_json(oe.ecs_world.physics.mscs.data[i], path);
-            }
+            oe.msc_to_json(oe.ecs_world.physics.mscs.data[0], path);
 
             if (oe.ecs_world.physics.mscs.len == 0) {
                 oe.load_data_ids(path);
@@ -98,8 +101,27 @@ map_proj_tool :: proc(ct: CameraTool) {
         }
     }
 
-    if (oe.gui_button("Clear", 10, 90, BUTTON_WIDTH, 30)) {
+    grid = oe.gui_grid(2, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Clear", grid.x, grid.y, grid.width, grid.height)) {
         fa.clear(&oe.ecs_world.physics.mscs);
+    }
+
+    grid = oe.gui_grid(3, 1, 40, wr.width * 0.5, 10);
+    @static map_name: string;
+    map_name = oe.gui_text_box(
+        "map_name_input", 
+        grid.x, grid.y, grid.width, grid.height);
+
+    grid = oe.gui_grid(3, 0, 40, wr.width * 0.5, 10);
+    if (oe.gui_button("Save map", grid.x, grid.y, grid.width, grid.height)) {
+        path := oe.nfd_folder();
+        oe.save_map(map_name, path);
+    }
+
+    grid = oe.gui_grid(4, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Load map", grid.x, grid.y, grid.width, grid.height)) {
+        path := oe.nfd_folder();
+        oe.load_map(path);
     }
 
     oe.gui_end();

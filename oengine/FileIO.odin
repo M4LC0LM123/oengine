@@ -7,6 +7,7 @@ import "core:unicode/tools"
 import "core:unicode/utf8"
 import "core:unicode/utf16"
 import strs "core:strings"
+import rl "vendor:raylib"
 
 /* simple example
 
@@ -64,6 +65,25 @@ file_handle :: proc(path: string, mode: FileMode = .READ_AND_WRITE | .APPEND | .
         handle = handle,
         size = u32(len(file_to_string_arr(path))),
     };
+}
+
+create_dir :: proc(path: string) {
+    os.make_directory(path);
+}
+
+file_name :: proc(path: string) -> string {
+    return strs.clone_from_cstring(rl.GetFileName(strs.clone_to_cstring(path)));
+}
+
+get_files :: proc(path: string) -> [dynamic]string {
+    list := rl.LoadDirectoryFiles(strs.clone_to_cstring(path));
+    
+    res := make([dynamic]string);
+    for i in 0..<int(list.count) {
+        append(&res, strs.clone_from_cstring(list.paths[i]));
+    }
+
+    return res;
 }
 
 file_write :: proc(file: File, text: string) {

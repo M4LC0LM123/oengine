@@ -111,7 +111,11 @@ msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}) {
     }
 }
 
-msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
+msc_to_json :: proc(
+    using self: ^MSCObject, 
+    path: string,
+    save_dids: bool = true,
+    mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
     file := file_handle(path, mode);
     
     res: string = "{";
@@ -154,28 +158,30 @@ msc_to_json :: proc(using self: ^MSCObject, path: string, mode: FileMode = FileM
         components: []ComponentMarshall, 
     };
 
-    j := 0;
-    dids := get_reg_data_ids();
-    for i in 0..<len(dids) {
-        data_id := dids[i];
-        mrshl := DataIDMarshall {
-            data_id.tag, 
-            data_id.id, 
-            data_id.transform,
-            fa.slice(new_clone(data_id.comps)),
-        };
-        data, ok := json.marshal(mrshl, {pretty = true});
+    if (save_dids) {
+        j := 0;
+        dids := get_reg_data_ids();
+        for i in 0..<len(dids) {
+            data_id := dids[i];
+            mrshl := DataIDMarshall {
+                data_id.tag, 
+                data_id.id, 
+                data_id.transform,
+                fa.slice(new_clone(data_id.comps)),
+            };
+            data, ok := json.marshal(mrshl, {pretty = true});
 
-        if (ok != nil) {
-            fmt.printfln("An error occured marshalling data: %v", ok);
-            return;
+            if (ok != nil) {
+                fmt.printfln("An error occured marshalling data: %v", ok);
+                return;
+            }
+            
+            name := str_add({"\"", str_add("data_id", j), "\": {\n"});
+            res = str_add({res, "\n", name, string(data[1:len(data) - 1]), "},\n"});
+            j += 1;
         }
-        
-        name := str_add({"\"", str_add("data_id", j), "\": {\n"});
-        res = str_add({res, "\n", name, string(data[1:len(data) - 1]), "},\n"});
-        j += 1;
+        delete(dids);
     }
-    delete(dids);
 
     res = str_add(res, "\n}");
     file_write(file, res);
@@ -225,7 +231,6 @@ load_data_ids :: proc(
     file_close(file);
 }
 
-
 msc_from_json :: proc(using self: ^MSCObject, path: string) {
     data, ok := os.read_entire_file_from_filename(path);
     if (!ok) {
@@ -247,6 +252,74 @@ msc_from_json :: proc(using self: ^MSCObject, path: string) {
     for tag, obj in msc {
         if (strs.contains(tag, "triangle")) { msc_load_tri(self, obj); }
         else { msc_load_data_id(strs.clone(obj.(json.Object)["tag"].(json.String)), obj); }
+    }
+}
+
+save_data_ids :: proc(
+    path: string,
+    mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
+    file := file_handle(path, mode);
+    
+    res: string = "{";
+
+    DataIDMarshall :: struct {
+        tag: string,
+        id: u32,
+        transform: Transform,
+        components: []ComponentMarshall, 
+    };
+
+    j := 0;
+    dids := get_reg_data_ids();
+    for i in 0..<len(dids) {
+        data_id := dids[i];
+        mrshl := DataIDMarshall {
+            data_id.tag, 
+            data_id.id, 
+            data_id.transform,
+            fa.slice(new_clone(data_id.comps)),
+        };
+        data, ok := json.marshal(mrshl, {pretty = true});
+
+        if (ok != nil) {
+            fmt.printfln("An error occured marshalling data: %v", ok);
+            return;
+        }
+        
+        name := str_add({"\"", str_add("data_id", j), "\": {\n"});
+        res = str_add({res, "\n", name, string(data[1:len(data) - 1]), "},\n"});
+        j += 1;
+    }
+    delete(dids);
+
+    res = str_add(res, "\n}");
+    file_write(file, res);
+    file_close(file);
+}
+
+save_map :: proc(
+    name, path: string, mode: FileMode = .WRITE_RONLY | .CREATE) {
+    dir := str_add({path, "/", name})
+    create_dir(dir);
+
+    for i in 0..<ecs_world.physics.mscs.len {
+        name := str_add("msc", i);
+        res_path := str_add({dir, "/", name, ".json"});
+        msc_to_json(ecs_world.physics.mscs.data[i], res_path, save_dids = false);
+    }
+
+    save_data_ids(str_add(dir, "/data_ids.json"));
+}
+
+load_map :: proc(path: string) {
+    list := get_files(path);
+
+    for dir in list {
+        if (file_name(dir) == "data_ids") {
+            load_data_ids(dir);
+        }
+
+        msc_from_json(msc_init(), dir);
     }
 }
 
