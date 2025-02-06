@@ -41,7 +41,6 @@ append_arr :: proc(arr: ^$T/FixedArray, elem: $E) {
 
 insert_arr :: proc(arr: ^$T/FixedArray, index: i32, elem: $E) {
     for i := arr.len; i > index; i -= 1 {
-        fmt.println(i);
         arr.data[i] = arr.data[i - 1];
     }
 

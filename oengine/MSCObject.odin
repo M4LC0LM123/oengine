@@ -348,25 +348,27 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
 
     comps_arr := fa.fixed_array(ComponentMarshall, 16);
 
-    ent := aent_init(tag);
-    ent_tr := get_component(ent, Transform);
-    ent_tr^ = transform;
+    if (window.instance_name != EDITOR_INSTANCE) {
+        ent := aent_init(tag);
+        ent_tr := get_component(ent, Transform);
+        ent_tr^ = transform;
 
-    if (obj.(json.Object)["components"] != nil) {
-        comps_handle := obj.(json.Object)["components"].(json.Array);
-        for i in comps_handle {
-            tag := i.(json.Object)["tag"].(json.String);
-            type := i.(json.Object)["type"].(json.String);
-      
-            loader := asset_manager.component_loaders[type];
-            if (loader != nil) { loader(ent, tag); }
-            fa.append(
-                &comps_arr, 
-                ComponentMarshall {
-                    strs.clone(tag), 
-                    strs.clone(type)
-                },
-            );
+        if (obj.(json.Object)["components"] != nil) {
+            comps_handle := obj.(json.Object)["components"].(json.Array);
+            for i in comps_handle {
+                tag := i.(json.Object)["tag"].(json.String);
+                type := i.(json.Object)["type"].(json.String);
+          
+                loader := asset_manager.component_loaders[type];
+                if (loader != nil) { loader(ent, tag); }
+                fa.append(
+                    &comps_arr, 
+                    ComponentMarshall {
+                        strs.clone(tag), 
+                        strs.clone(type)
+                    },
+                );
+            }
         }
     }
 
