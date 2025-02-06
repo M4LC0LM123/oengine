@@ -156,17 +156,6 @@ main :: proc() {
         }
     }
 
-    tester := fa.fixed_array(int, 16);
-    for i in  0..<5 {
-        fa.append(&tester, i);
-    }
-
-    fmt.println(tester);
-
-    fa.insert(&tester, 2, 69);
-
-    fmt.println(tester);
-
     // reset_track_allocator(&track_allocator);
     for (oe.w_tick()) {
         oe.ew_update();

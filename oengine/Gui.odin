@@ -3,6 +3,36 @@ package oengine
 import rl "vendor:raylib"
 import strs "core:strings"
 
+/*
+gui example
+
+oe.gui_begin("test window");
+rect := oe.gui_rect(oe.gui_window("test window"));
+
+tr := oe.gui_grid(0, 0, 30, rect.width * 0.5);
+oe.gui_text("Hello world!", 20, tr.x, tr.y);
+
+tir := oe.gui_grid(1, 0, 30, rect.width * 0.5);
+@static tick: bool;
+tick = oe.gui_tick(tick, tir.x, tir.y, 20, 20, text = "Demo");
+
+tir2 := oe.gui_grid(2, 0, 30, rect.width * 0.5);
+@static tick2: bool;
+tick2 = oe.gui_tick(tick2, tir2.x, tir2.y, 20, 20, text = "Another demo");
+
+br := oe.gui_grid(3, 0, 30, rect.width * 0.5);
+@static counter: i32;
+if (oe.gui_button("Button", br.x, br.y, br.width, br.height)) {
+    counter += 1;
+}
+
+tr2 := oe.gui_grid(3, 1, 30, rect.width * 0.5);
+oe.gui_text(oe.str_add("counter = ", counter), 20, tr2.x, tr2.y);
+
+oe.gui_end();
+
+*/
+
 gui_main_color := Color {99, 141, 160, 255};
 gui_accent_color := Color {63, 105, 135, 255};
 gui_darker_color := Color {41, 59, 68, 255};
@@ -27,6 +57,21 @@ gui: struct {
     _active_window_id: u32,
 }
 
+GuiRect :: Rect
+
+gui_grid :: proc(
+    row, column: i32,
+    row_height: f32 = 30, column_width: f32 = 150,
+    padding: f32 = 5
+) -> GuiRect {
+    return {
+        x = f32(column) * column_width + padding,
+        y = f32(row) * row_height + padding,
+        width = column_width - padding,
+        height = row_height - padding,
+    };
+}
+
 gui_window_exists :: proc(title: string) -> bool {
     return gui.windows[title] != nil;
 }
@@ -41,6 +86,12 @@ gui_active :: proc() -> ^GuiWindow {
 
 gui_window :: proc(title: string) -> ^GuiWindow {
     return gui.windows[title];
+}
+
+gui_rect :: proc(w: ^GuiWindow) -> GuiRect {
+    return {
+        w.x, w.y, w.width, w.height
+    };
 }
 
 gui_set_window_active :: proc(title: string) {
@@ -245,6 +296,7 @@ GuiIcon :: enum {
     EXIT,
     FILE,
     RESIZE,
+    TICK,
 }
 
 GuiIconRenders := [?]proc(x, y, w, h: i32) {
@@ -252,6 +304,7 @@ GuiIconRenders := [?]proc(x, y, w, h: i32) {
     exit_icon,
     file_icon,
     resize_icon,
+    tick_icon,
 }
 
 @(private = "file")
@@ -274,11 +327,38 @@ resize_icon :: proc(x, y, w, h: i32) {
     rl.DrawLine(x + w/2, y + h, x + w, y + h/2, rl.WHITE);
 }
 
+@(private = "file")
+tick_icon :: proc(x, y, w, h: i32) {
+    fx := f32(x);
+    fy := f32(y);
+    fw := f32(w);
+    fh := f32(h);
+
+    rl.DrawLineEx(
+        {fx, fy + fh * 0.5},
+        {fx + fw * 0.3, fy + fh},
+        3,
+        WHITE
+    );
+
+    rl.DrawLineEx(
+        {fx + fw * 0.3, fy + fh},
+        {fx + fw, fy},
+        3,
+        WHITE
+    );
+}
+
 gui_icon :: proc(icon: GuiIcon, x, y, w, h: i32) {
     GuiIconRenders[i32(icon)](x, y, w, h);
 }
 
-gui_tick :: proc(tick: bool, x, y, w, h: f32, standalone: bool = false) -> bool {
+gui_tick :: proc(
+    tick: bool, 
+    x, y, w, h: f32,
+    text: string = STR_EMPTY,
+    text_size: f32 = 20,
+    standalone: bool = false) -> bool {
     active := gui_active();
     if (!active.active && !standalone) do return false;
 
@@ -301,7 +381,9 @@ gui_tick :: proc(tick: bool, x, y, w, h: f32, standalone: bool = false) -> bool 
         res = !res;
     }
 
-    if (tick) do gui_icon(.EXIT, i32(rp.x), i32(rp.y), i32(w), i32(h));
+    if (tick) do gui_icon(.TICK, i32(rp.x), i32(rp.y), i32(w), i32(h));
+
+    gui_text(text, text_size, rp.x + w + 10, rp.y, standalone = true);
 
     return res;
 }

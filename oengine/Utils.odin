@@ -33,6 +33,10 @@ clr_to_arr :: proc(color: Color, $T: typeid) -> [4]T {
     };
 }
 
+Rect :: struct {
+    x, y, width, height: f32
+}
+
 Mat4 :: struct {
     m0, m4, m8, m12:  f32, // Matrix first row (4 components)
 	m1, m5, m9, m13:  f32, // Matrix second row (4 components)

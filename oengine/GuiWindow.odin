@@ -81,15 +81,24 @@ gw_render :: proc(using self: ^GuiWindow) {
 
     top_bar.width = width;
 
+    // title
     rl.DrawTextEx(
         gui_default_font, 
         strs.clone_to_cstring(title), 
         Vec2 {top_bar.x + 5, top_bar.y}, 
-        gui_font_size, gui_text_spacing, rl.WHITE
+        24, gui_text_spacing, rl.WHITE
+    );
+
+    rl.BeginScissorMode(
+        i32(x), i32(y), i32(width), i32(height)
     );
 }
 
-gui_begin :: proc(title: string, x: f32 = 10, y: f32 = 10, w: f32 = 300, h: f32 = 200, can_exit: bool = true, active: bool = true) {
+gui_begin :: proc(
+    title: string, 
+    x: f32 = 10, y: f32 = 10, w: f32 = 300, h: f32 = 200, 
+    can_exit: bool = true, active: bool = true
+) {
     if (!gui_window_exists(title)) {
         instance := new(GuiWindow);
         instance.id = u32(len(gui.windows)) + 1;
@@ -120,5 +129,6 @@ gui_begin :: proc(title: string, x: f32 = 10, y: f32 = 10, w: f32 = 300, h: f32 
 }
 
 gui_end :: proc() {
+    rl.EndScissorMode();
     gui._active = "";
 }
