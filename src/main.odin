@@ -89,6 +89,7 @@ main :: proc() {
     );
     player_sm := oe.add_component(player, oe.sm_init(oe.tex_flip_vert(troll)));
     player_sm.is_lit = false;
+    player_sm.user_call = true;
     player_jump := oe.add_component(player, oe.sa_init(player_tr.position, jump_sfx));
     player_rb.collision_mask = oe.coll_mask(1);
 
@@ -103,6 +104,7 @@ main :: proc() {
     water_tr.scale = {25, 1, 25};
     water_f := oe.add_component(water, oe.f_init(water_tex));
     water_f.color.a = 125;
+    water_f.user_call = true;
 
     sprite := oe.aent_init("sprite_test");
     sprite_tr := oe.get_component(sprite, oe.Transform);
@@ -241,6 +243,9 @@ main :: proc() {
                 oe.new_decal(info.point, info.normal, oe.vec2_one(), "troll");
             }
         }
+
+        oe.sm_custom_render(player_tr, player_sm);
+        oe.f_custom_render(water_tr, water_f);
 
         rl.EndMode3D();
         oe.w_end_render();

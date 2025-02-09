@@ -20,6 +20,7 @@ Fluid :: struct {
     speed_y: f32,
 
     set: proc(self: ^Fluid, name: string, val: f32),
+    user_call: bool, // allows the user to specify when to render it using the render func
 }
 
 @(private = "file")
@@ -68,6 +69,10 @@ f_init :: proc(s_texture: Texture) -> Fluid {
 f_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     f, t := ecs.get_components(ent, Fluid, Transform);
     if (is_nil(f, t)) do return;
+    if (!f.user_call) { f_custom_render(t, f); }
+}
+
+f_custom_render :: proc(t: ^Transform, f: ^Fluid) {
     using f;
 
     transform = t^;

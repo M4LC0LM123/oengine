@@ -57,6 +57,7 @@ SimpleMesh :: struct {
     color: Color,
     starting_color: Color,
     shader: Shader,
+    user_call: bool, // allows the user to specify when to render it using the render func
 }
 
 sm_init :: proc {
@@ -155,6 +156,10 @@ sm_apply_anim :: proc(using self: ^SimpleMesh, ma: ^ModelArmature, id: i32) {
 sm_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     t, sm:= ecs.get_components(ent, Transform, SimpleMesh);
     if (is_nil(t, sm)) do return;
+    if (!sm.user_call) { sm_custom_render(t, sm); }
+}
+
+sm_custom_render :: proc(t: ^Transform, sm: ^SimpleMesh) {
     using sm;
 
     transform = t^;
