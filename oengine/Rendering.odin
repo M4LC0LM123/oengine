@@ -488,6 +488,7 @@ allocate_mesh :: proc(mesh: ^rl.Mesh) {
     mesh.vertices = raw_data(make([]f32, mesh.vertexCount * 3));
     mesh.texcoords = raw_data(make([]f32, mesh.vertexCount * 2));
     mesh.normals = raw_data(make([]f32, mesh.vertexCount * 3));
+    mesh.colors = raw_data(make([]u8, mesh.vertexCount * 4));
 }
 
 gen_mesh_triangle :: proc(verts: [3]Vec3, #any_int uv_rot: i32 = 0) -> rl.Mesh {

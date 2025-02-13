@@ -310,6 +310,7 @@ gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i3
 
     v_offset := index * 9;
     uv_offset := index * 6;
+    clr_offset := index * 12;
 
     mesh.vertices[v_offset + 0] = verts[0].x;
     mesh.vertices[v_offset + 1] = verts[0].y;
@@ -319,6 +320,10 @@ gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i3
     mesh.normals[v_offset + 2] = 0;
     mesh.texcoords[uv_offset + 0] = uv1.x;
     mesh.texcoords[uv_offset + 1] = uv1.y;
+    mesh.colors[clr_offset + 0] = t.color.r;
+    mesh.colors[clr_offset + 1] = t.color.g;
+    mesh.colors[clr_offset + 2] = t.color.b;
+    mesh.colors[clr_offset + 3] = t.color.a;
 
     mesh.vertices[v_offset + 3] = verts[1].x;
     mesh.vertices[v_offset + 4] = verts[1].y;
@@ -328,6 +333,10 @@ gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i3
     mesh.normals[v_offset + 5] = 0;
     mesh.texcoords[uv_offset + 2] = uv2.x;
     mesh.texcoords[uv_offset + 3] = uv2.y;
+    mesh.colors[clr_offset + 4] = t.color.r;
+    mesh.colors[clr_offset + 5] = t.color.g;
+    mesh.colors[clr_offset + 6] = t.color.b;
+    mesh.colors[clr_offset + 7] = t.color.a;
 
     mesh.vertices[v_offset + 6] = verts[2].x;
     mesh.vertices[v_offset + 7] = verts[2].y;
@@ -337,6 +346,10 @@ gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i3
     mesh.normals[v_offset + 8] = 0;
     mesh.texcoords[uv_offset + 4] = uv3.x;
     mesh.texcoords[uv_offset + 5] = uv3.y;
+    mesh.colors[clr_offset + 8] = t.color.r;
+    mesh.colors[clr_offset + 9] = t.color.g;
+    mesh.colors[clr_offset + 10] = t.color.b;
+    mesh.colors[clr_offset + 11] = t.color.a;
 }
 
 // supports only .obj wavefront and tested with trenchbroom models
