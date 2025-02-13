@@ -579,10 +579,6 @@ load_map :: proc(path: string, atlas: Atlas) {
     list := get_files(path);
 
     for dir in list {
-        if (file_name(dir) == "data_ids") {
-            load_data_ids(dir);
-        }
-
         msc := msc_init();
         msc_from_json(msc, dir);
         msc.atlas = atlas;
