@@ -575,7 +575,7 @@ save_map :: proc(
     save_data_ids(str_add(dir, "/data_ids.json"));
 }
 
-load_map :: proc(path: string) {
+load_map :: proc(path: string, atlas: Atlas) {
     list := get_files(path);
 
     for dir in list {
@@ -583,9 +583,13 @@ load_map :: proc(path: string) {
             load_data_ids(dir);
         }
 
-        msc_from_json(msc_init(), dir);
+        msc := msc_init();
+        msc_from_json(msc, dir);
+        msc.atlas = atlas;
+        msc_gen_mesh(msc);
     }
 }
+
 
 json_vec3_to_vec3 :: proc(v: json.Array) -> Vec3 {
     return Vec3 {
