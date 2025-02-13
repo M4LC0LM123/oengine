@@ -23,13 +23,193 @@ oe.msc_append_quad(msc, {0, 0, 0}, {10, 0, 0}, {0, 0, 10}, {10, 0, 10}, {10, 10,
 oe.msc_to_json(msc, "../assets/maps/test.json");
 oe.msc_from_json(msc, "../assets/maps/test.json");
 
+oe.msc_init_atlas(msc, "../assets/atlas.png");
+oe.atlas_texture(&msc.atlas, {0, 0, 256, 256}, "albedo");
+oe.atlas_texture(&msc.atlas, {256, 0, 256, 256}, "water");
+oe.atlas_texture(&msc.atlas, {256 * 2, 0, 256, 256}, "tile");
 */
 
 tri_count: i32;
 
+AtlasTexture :: struct {
+    tag: string,
+    uvs: [4]Vec2,
+}
+
+Atlas :: struct {
+    using texture: Texture,
+    subtextures: [dynamic]AtlasTexture, 
+}
+
+init_atlas :: proc() -> Atlas {
+    return {
+        subtextures = make([dynamic]AtlasTexture),
+    };
+}
+
+load_atlas :: proc(path: string) -> Atlas {
+    res := init_atlas();
+    
+    img_path := str_add(path, "/atlas.png");
+    res.texture = load_texture(img_path);
+
+    data_path := str_add(path, "/atlas.json");
+    data, ok := os.read_entire_file_from_filename(data_path);
+    if (!ok) {
+        dbg_log("Failed to open file ", DebugType.WARNING);
+        return {};
+    }
+    defer delete(data);
+
+    json_data, err := json.parse(data);
+    if (err != json.Error.None) {
+		dbg_log("Failed to parse the json file", DebugType.WARNING);
+		dbg_log(str_add("Error: ", err), DebugType.WARNING);
+		return {};
+	}
+	defer json.destroy_value(json_data);
+
+    json_obj := json_data.(json.Object);
+
+    for k, v in json_obj {
+        if (k == "path") { continue; }
+
+        if (k[:len(k) - 1] == "texture") {
+            tex_data := v.(json.Object);
+            texture_tag := tex_data["tag"].(json.String);
+            texture_uvs := tex_data["uvs"].(json.Array);
+            uv0 := Vec2{
+                f32(texture_uvs[0].(json.Array)[0].(json.Float)),
+                f32(texture_uvs[0].(json.Array)[1].(json.Float)),
+            };
+            uv1 := Vec2{
+                f32(texture_uvs[1].(json.Array)[0].(json.Float)),
+                f32(texture_uvs[1].(json.Array)[1].(json.Float)),
+            };
+            uv2 := Vec2{
+                f32(texture_uvs[2].(json.Array)[0].(json.Float)),
+                f32(texture_uvs[2].(json.Array)[1].(json.Float)),
+            };
+            uv3 := Vec2{
+                f32(texture_uvs[3].(json.Array)[0].(json.Float)),
+                f32(texture_uvs[3].(json.Array)[1].(json.Float)),
+            };
+
+            uvs := [4]Vec2 {
+                uv0, uv1, uv2, uv3
+            };
+
+            at := AtlasTexture {
+                tag = strs.clone(texture_tag),
+                uvs = uvs,
+            };
+
+            append(&res.subtextures, at);
+        } 
+    }
+
+    return res;
+}
+
+atlas_texture :: proc(atlas: ^Atlas, rec: Rect, tag: string, flipped := false) {
+    dims := Vec2{f32(atlas.width), f32(atlas.height)};
+    uvs: [4]Vec2;
+    uvs[0] = {rec.x, rec.y} / dims;
+    uvs[1] = {rec.x + rec.width, rec.y} / dims;
+    uvs[2] = {rec.x + rec.width, rec.y + rec.height} / dims;
+    uvs[3] = {rec.x, rec.y + rec.height} / dims;
+
+    if (flipped) {
+        uvs[0] = {rec.x + rec.width, rec.y + rec.height} / dims;
+        uvs[1] = {rec.x, rec.y + rec.height} / dims;
+        uvs[2] = {rec.x, rec.y} / dims;
+        uvs[3] = {rec.x + rec.width, rec.y} / dims;
+    } else {
+        uvs[0] = {rec.x, rec.y} / dims;
+        uvs[1] = {rec.x + rec.width, rec.y} / dims;
+        uvs[2] = {rec.x + rec.width, rec.y + rec.height} / dims;
+        uvs[3] = {rec.x, rec.y + rec.height} / dims;
+    }
+
+    at := AtlasTexture {
+        tag = tag,
+        uvs = uvs,
+    };
+
+    append(&atlas.subtextures, at);
+}
+
+atlas_texture_rec :: proc(atlas: Atlas, at: AtlasTexture, flipped := false) -> Rect {
+    dims := Vec2{ f32(atlas.width), f32(atlas.height) };
+    if (!flipped) {
+        x := at.uvs[0].x * dims.x;
+        y := at.uvs[0].y * dims.y;
+        return {
+            x = x, y = y,
+            width = (at.uvs[2].x - x) * dims.x,
+            height = (at.uvs[2].y - y) * dims.y,
+        };
+    }
+
+    x := at.uvs[2].x * dims.x;
+    y := at.uvs[2].y * dims.y;
+    return {
+        x = x, y = y,
+        width = (at.uvs[0].x - x) * dims.x,
+        height = (at.uvs[0].y - y) * dims.y,
+    };
+}
+
+save_atlas :: proc(atlas: Atlas, path: string) {
+    file := file_handle(path, FileMode.WRITE_RONLY | FileMode.CREATE);
+    res := "{";
+
+    PathMarshall :: struct {path: string}
+    path := PathMarshall{atlas.path};
+    data, ok := json.marshal(path, {pretty = true});
+    
+    if (ok != nil) {
+        fmt.printfln("An error occured marshalling data: %v", ok);
+        return;
+    }
+
+    res = str_add({res, string(data[1:len(data) - 2]), ","});
+
+    for i in 0..<len(atlas.subtextures) {
+        _data, _ok := json.marshal(atlas.subtextures[i], {pretty = true});
+        
+        if (_ok != nil) {
+            fmt.printfln("An error occured marshalling data: %v", ok);
+            return;
+        }
+
+        res = str_add({res, str_add("\n\"texture", i), "\": {\n"});
+        res = str_add({res, string(_data[1:len(_data) - 2]), "},\n"});
+    }
+
+    res = str_add(res, "\n}");
+    file_write(file, res);
+    file_close(file);
+}
+
+pack_atlas :: proc(atlas: Atlas, path: string) {
+    create_dir(path);
+
+    img := rl.LoadImageFromTexture(atlas.texture);
+    img_path := str_add({path, "/atlas.png"});
+    rl.ExportImage(img, strs.clone_to_cstring(img_path));
+
+    data_path := str_add({path, "/atlas.json"});
+    res := atlas;
+    res.path = img_path;
+    save_atlas(res, data_path);
+}
+
 MSCObject :: struct {
     tris: [dynamic]^TriangleCollider,
-    _aabb: AABB
+    _aabb: AABB,
+    mesh: rl.Mesh,
+    atlas: Atlas,
 }
 
 msc_init :: proc() -> ^MSCObject {
@@ -42,7 +222,19 @@ msc_init :: proc() -> ^MSCObject {
     return self;
 }
 
-msc_append_tri :: proc(using self: ^MSCObject, a, b, c: Vec3, offs: Vec3 = {}, color: Color = WHITE, texture_tag: string = "", is_lit: bool = true, use_fog: bool = OE_FAE, rot: i32 = 0) {
+msc_init_atlas :: proc(using self: ^MSCObject, path: string) {
+    atlas = init_atlas();
+    atlas.texture = load_texture(path);
+}
+
+msc_append_tri :: proc(
+    using self: ^MSCObject, 
+        a, b, c: Vec3, 
+        offs: Vec3 = {}, 
+        color: Color = WHITE, 
+        texture_tag: string = "", 
+        is_lit: bool = true, 
+        use_fog: bool = OE_FAE, rot: i32 = 0) {
     t := new(TriangleCollider);
     t.pts = {a + offs, b + offs, c + offs};
     t.color = color;
@@ -86,6 +278,65 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {
 tri_recalc_uvs :: proc(t: ^TriangleCollider, #any_int uv_rot: i32 = 0) {
     t.rot = uv_rot;
     t.mesh = gen_mesh_triangle(t.pts, t.rot);
+}
+
+msc_gen_mesh :: proc(using self: ^MSCObject) {
+    mesh.triangleCount = i32(len(tris));
+    mesh.vertexCount = mesh.triangleCount * 3;
+    allocate_mesh(&mesh);
+
+    for i in 0..<len(tris) {
+        gen_tri(self, tris[i], i);
+    }
+
+    rl.UploadMesh(&mesh, false);
+}
+
+gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i32) {
+    verts := t.pts;
+
+    at: AtlasTexture;
+    for st in atlas.subtextures {
+        if (st.tag == t.texture_tag) {
+            at = st;
+        }
+    }
+
+    uv1, uv2, uv3 := atlas_triangle_uvs(
+        verts[0], verts[1], verts[2],
+        at.uvs,
+        0
+    );
+
+    v_offset := index * 9;
+    uv_offset := index * 6;
+
+    mesh.vertices[v_offset + 0] = verts[0].x;
+    mesh.vertices[v_offset + 1] = verts[0].y;
+    mesh.vertices[v_offset + 2] = verts[0].z;
+    mesh.normals[v_offset + 0] = 0;
+    mesh.normals[v_offset + 1] = 1;
+    mesh.normals[v_offset + 2] = 0;
+    mesh.texcoords[uv_offset + 0] = uv1.x;
+    mesh.texcoords[uv_offset + 1] = uv1.y;
+
+    mesh.vertices[v_offset + 3] = verts[1].x;
+    mesh.vertices[v_offset + 4] = verts[1].y;
+    mesh.vertices[v_offset + 5] = verts[1].z;
+    mesh.normals[v_offset + 3] = 0;
+    mesh.normals[v_offset + 4] = 1;
+    mesh.normals[v_offset + 5] = 0;
+    mesh.texcoords[uv_offset + 2] = uv2.x;
+    mesh.texcoords[uv_offset + 3] = uv2.y;
+
+    mesh.vertices[v_offset + 6] = verts[2].x;
+    mesh.vertices[v_offset + 7] = verts[2].y;
+    mesh.vertices[v_offset + 8] = verts[2].z;
+    mesh.normals[v_offset + 6] = 0;
+    mesh.normals[v_offset + 7] = 1;
+    mesh.normals[v_offset + 8] = 0;
+    mesh.texcoords[uv_offset + 4] = uv3.x;
+    mesh.texcoords[uv_offset + 5] = uv3.y;
 }
 
 // supports only .obj wavefront and tested with trenchbroom models
@@ -467,15 +718,22 @@ msc_render :: proc(using self: ^MSCObject) {
 
             rl.rlSetTexture(0);
         } else {
-            material := DEFAULT_MATERIAL;
-            material.maps[rl.MaterialMapIndex.ALBEDO].color = color;
-            if (asset_exists(tri.texture_tag)) {
-                tex := get_asset_var(tri.texture_tag, Texture);
-                material.maps[rl.MaterialMapIndex.ALBEDO].texture = tex;
-            }
-
-            if (tri.is_lit) do rlg.DrawMesh(tri.mesh, material, rl.Matrix(1));
-            else do rl.DrawMesh(tri.mesh, material, rl.Matrix(1));
+            // material := DEFAULT_MATERIAL;
+            // material.maps[rl.MaterialMapIndex.ALBEDO].color = color;
+            // if (asset_exists(tri.texture_tag)) {
+            //     tex := get_asset_var(tri.texture_tag, Texture);
+            //     material.maps[rl.MaterialMapIndex.ALBEDO].texture = tex;
+            // }
+            //
+            // if (tri.is_lit) do rlg.DrawMesh(tri.mesh, material, rl.Matrix(1));
+            // else do rl.DrawMesh(tri.mesh, material, rl.Matrix(1));
+            //
+            // for i in 0..<3 {
+            //     pos := tri.pts[i];
+            //     normal_data := tri.mesh.normals[i:i + 3];
+            //     normal := pos + {normal_data[0], normal_data[1], normal_data[2]};
+            //     rl.DrawLine3D(pos, normal, YELLOW);
+            // }
         }
 
         if (!PHYS_DEBUG) do continue;
@@ -484,6 +742,10 @@ msc_render :: proc(using self: ^MSCObject) {
         rl.DrawLine3D(t[0], t[2], rl.YELLOW);
         rl.DrawLine3D(t[1], t[2], rl.YELLOW);
     }
+
+    m := rl.LoadMaterialDefault();
+    m.maps[rl.MaterialMapIndex.ALBEDO].texture = atlas;
+    rlg.DrawMesh(mesh, m, rl.Matrix(1));
 
     if (PHYS_DEBUG) {
         draw_cube_wireframe(

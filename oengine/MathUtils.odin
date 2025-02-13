@@ -94,6 +94,79 @@ closest_point_on_triangle :: proc(p, a, b, c: Vec3) -> Vec3 {
     return a + ab * v + ac * w // = u*a + v*b + w*c, u = va * denom = 1.0-v-w
 }
 
+next_power_of_2 :: proc(v: i32) -> i32 {
+    x := v;
+    x -= 1;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return x + 1;
+}
+
+find_best_fit_rect :: proc(
+    free_rects: ^[dynamic]Rect, width: i32, height: i32) -> Rect {
+    best_rect: Rect = {0, 0, 0, 0};
+    best_short_side: f32 = 99999;
+
+    for rect in free_rects {
+        short_side_fit := abs(rect.width - f32(width));
+        if (rect.width >= f32(width) && 
+            rect.height >= f32(height) && 
+            short_side_fit < best_short_side) {
+            best_rect = rect;
+            best_short_side = short_side_fit;
+        }
+    }
+
+    return best_rect;
+}
+
+split_free_space :: proc(free_rects: ^[dynamic]Rect, used_rect: Rect) {
+    new_rects: [dynamic]Rect;
+
+    for rect in free_rects {
+        if (!rect_intersects(rect, used_rect)) {
+            append(&new_rects, rect);
+            continue;
+        }
+
+        // Generate new free spaces
+        if (used_rect.x > rect.x) {
+            append(&new_rects, Rect{rect.x, rect.y, used_rect.x - rect.x, rect.height});
+        }
+        if (used_rect.y > rect.y) {
+            append(&new_rects, Rect{
+                rect.x, rect.y, rect.width, used_rect.y - rect.y});
+        }
+        if (used_rect.x + used_rect.width < rect.x + rect.width) {
+            append(&new_rects, Rect{
+                used_rect.x + used_rect.width, 
+                rect.y, 
+                rect.x + rect.width - (used_rect.x + used_rect.width), 
+                rect.height
+            });
+        }
+        if (used_rect.y + used_rect.height < rect.y + rect.height) {
+            append(&new_rects, Rect{
+                rect.x, used_rect.y + used_rect.height, 
+                rect.width, 
+                rect.y + rect.height - (used_rect.y + used_rect.height)
+            });
+        }
+    }
+
+    free_rects^ = new_rects;
+}
+
+rect_intersects :: proc(a: Rect, b: Rect) -> bool {
+    return !(b.x >= a.x + a.width || 
+            b.x + b.width <= a.x || 
+            b.y >= a.y + a.height || 
+            b.y + b.height <= a.y);
+}
+
 triangle_uvs :: proc(v1, v2, v3: Vec3, #any_int rotation_steps: i32 = 0) -> (Vec2, Vec2, Vec2) {
     edge1 := v2 - v1;
     edge2 := v3 - v1;
@@ -164,6 +237,104 @@ triangle_uvs :: proc(v1, v2, v3: Vec3, #any_int rotation_steps: i32 = 0) -> (Vec
     uv1 = rotate_uv(uv1, rotation_steps);
     uv2 = rotate_uv(uv2, rotation_steps);
     uv3 = rotate_uv(uv3, rotation_steps);
+
+    return uv1, uv2, uv3;
+}
+
+atlas_triangle_uvs :: proc(
+    v1, v2, v3: Vec3, 
+    region_uvs: [4]Vec2, 
+    #any_int rotation_steps: i32 = 0) -> (Vec2, Vec2, Vec2) {
+    edge1 := v2 - v1;
+    edge2 := v3 - v1;
+    normal := vec3_cross(edge1, edge2);
+
+    abs_normal := Vec3 {
+        math.abs(normal.x),
+        math.abs(normal.y),
+        math.abs(normal.z)
+    };
+
+    cp1, cp2, cp3: Vec2;
+
+    if (abs_normal.z >= abs_normal.x && abs_normal.z >= abs_normal.y) {
+        // XY projection
+        cp1 = v1.xy;
+        cp2 = v2.xy;
+        cp3 = v3.xy;
+    } else if (abs_normal.x >= abs_normal.y && abs_normal.x >= abs_normal.z) {
+        // YZ projection
+        cp1 = v1.zy;
+        cp2 = v2.zy;
+        cp3 = v3.zy;
+    } else {
+        // XZ projection
+        cp1 = v1.xz;
+        cp2 = v2.xz;
+        cp3 = v3.xz;
+    }
+
+    // Compute triangle UVs (normalized between 0 and 1)
+    min_x := math.min(cp1.x, math.min(cp2.x, cp3.x));
+    max_x := math.max(cp1.x, math.max(cp2.x, cp3.x));
+    min_y := math.min(cp1.y, math.min(cp2.y, cp3.y));
+    max_y := math.max(cp1.y, math.max(cp2.y, cp3.y));
+
+    delta_x := max_x - min_x;
+    delta_y := max_y - min_y;
+
+    if (delta_x == 0) do delta_x = 1; 
+    if (delta_y == 0) do delta_y = 1;
+
+    local_uv1 := Vec2 {
+        (cp1.x - min_x) / delta_x,
+        (cp1.y - min_y) / delta_y
+    };
+
+    local_uv2 := Vec2 {
+        (cp2.x - min_x) / delta_x,
+        (cp2.y - min_y) / delta_y
+    };
+
+    local_uv3 := Vec2 {
+        (cp3.x - min_x) / delta_x,
+        (cp3.y - min_y) / delta_y
+    };
+
+    rotate_uv := proc(uv: Vec2, #any_int steps: i32) -> Vec2 {
+        if (steps == 1) {
+            return Vec2{ uv.y, -uv.x };
+        } else if (steps == 2) {
+            return Vec2{ -uv.x, -uv.y };
+        } else if (steps == 3) {
+            return Vec2{ -uv.y, uv.x };
+        }
+        return uv;
+    };
+
+    // Rotate UVs if needed
+    local_uv1 = rotate_uv(local_uv1, rotation_steps);
+    local_uv2 = rotate_uv(local_uv2, rotation_steps);
+    local_uv3 = rotate_uv(local_uv3, rotation_steps);
+
+    // **Interpolate UVs using the 4 provided region UVs**
+    interpolate_uv := proc(local_uv: Vec2, region_uvs: [4]Vec2) -> Vec2 {
+        return Vec2 {
+            (1 - local_uv.x) * (1 - local_uv.y) * region_uvs[0].x +
+            (local_uv.x) * (1 - local_uv.y) * region_uvs[1].x +
+            (local_uv.x) * (local_uv.y) * region_uvs[2].x +
+            (1 - local_uv.x) * (local_uv.y) * region_uvs[3].x,
+
+            (1 - local_uv.x) * (1 - local_uv.y) * region_uvs[0].y +
+            (local_uv.x) * (1 - local_uv.y) * region_uvs[1].y +
+            (local_uv.x) * (local_uv.y) * region_uvs[2].y +
+            (1 - local_uv.x) * (local_uv.y) * region_uvs[3].y
+        };
+    };
+
+    uv1 := interpolate_uv(local_uv1, region_uvs);
+    uv2 := interpolate_uv(local_uv2, region_uvs);
+    uv3 := interpolate_uv(local_uv3, region_uvs);
 
     return uv1, uv2, uv3;
 }

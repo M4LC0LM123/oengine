@@ -6,6 +6,7 @@ SystemFunc :: #type proc(ctx: ^Context, entity: ^Entity)
 
 ECS_UPDATE :: 0
 ECS_RENDER :: 1
+ECS_FIXED :: 2
 
 MAX_CMPNTS :: 64
 

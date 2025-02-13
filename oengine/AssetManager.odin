@@ -273,6 +273,55 @@ reload_assets :: proc() {
     }
 }
 
+am_texture_atlas :: proc() -> Atlas {
+    res := init_atlas();
+    textures := get_reg_textures_arr();
+
+    width: i32;
+    height: i32;
+
+    for i in 0..<len(textures) {
+        tex := textures[i];
+        width += tex.width;
+        height += tex.height;
+    }
+
+    res.width = width;
+    res.height = height;
+
+    target := rl.LoadRenderTexture(width, height);
+    rl.BeginTextureMode(target);
+    rl.ClearBackground(BLANK);
+
+    free_rects := make([dynamic]Rect);
+    append(&free_rects, Rect{0, 0, f32(width), f32(height)});
+
+    for i in 0..<len(textures) {
+        tex := textures[i];
+
+        best_rect := find_best_fit_rect(&free_rects, tex.width, tex.height);
+        if (best_rect.width == 0 || best_rect.height == 0) {
+            break; // No space left
+        }
+
+        rect := Rect{best_rect.x, best_rect.y, f32(tex.width), f32(tex.height)};
+        atlas_texture(&res, rect, tex.tag, true);
+
+        rl.DrawTexturePro(
+            tex,
+            {0, 0, f32(tex.width), f32(tex.height)},
+            {rect.x, rect.y, rect.width, rect.height},
+            {}, 0, WHITE
+        );
+
+        split_free_space(&free_rects, rect);
+    }
+
+    rl.EndTextureMode();
+    res.texture = tex_flip_vert(load_texture(target.texture));
+    return res;
+}
+
 @(private)
 asset_has_path :: proc(asset: Asset) -> bool {
     if (!asset_is(asset, DataID)) {
@@ -355,6 +404,25 @@ get_reg_textures :: proc() -> fa.FixedMap(string, Texture, MAX_TEXTURES) {
     for tag, asset in registry {
         if (asset_is(asset, Texture)) {
             fa.map_set(&res, tag, asset_variant(asset, Texture));
+        }
+    }
+
+    return res;
+}
+
+TextureTag :: struct {
+    using handle: Texture,
+    tag: string,
+}
+
+get_reg_textures_arr :: proc() -> [dynamic]TextureTag {
+    using asset_manager;
+
+    res := make([dynamic]TextureTag);
+
+    for tag, asset in registry {
+        if (asset_is(asset, Texture)) {
+            append(&res, TextureTag{asset_variant(asset, Texture), tag});
         }
     }
 

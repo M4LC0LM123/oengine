@@ -54,7 +54,7 @@ FileMode :: enum {
     CLOEXEC         = 0x80000,
 }
 
-file_handle :: proc(path: string, mode: FileMode = .READ_AND_WRITE | .APPEND | .CREATE) -> File {
+file_handle :: proc(path: string, mode: FileMode = .READ_AND_WRITE | .CREATE) -> File {
     handle, ok := os.open(path, int(mode));
     if (ok != 0) {
         dbg_log(str_add({"Failed to open file ", path}), .WARNING);

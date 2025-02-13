@@ -120,11 +120,16 @@ main :: proc() {
 
     msc := oe.msc_init();
     oe.msc_from_json(msc, "../assets/maps/test.json");
+    msc.atlas = oe.load_atlas("../assets/atlas");
+    // msc.atlas = oe.am_texture_atlas();
+    // oe.pack_atlas(msc.atlas, "../assets/atlas");
+    oe.msc_gen_mesh(msc);
 
     msc2 := oe.msc_init();
     oe.msc_from_model(
         msc2, oe.load_model("../assets/maps/bowl.obj"), oe.vec3_z() * -35
     );
+    oe.msc_gen_mesh(msc2);
 
     light2 := oe.aent_init("light");
     light2_tr := oe.get_component(light2, oe.Transform);

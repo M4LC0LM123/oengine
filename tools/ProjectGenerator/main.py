@@ -113,11 +113,12 @@ def get_dir():
 
 def copy_module(path, name, type):
     res = path + "/" + name
+    mod_path = os.getcwd() + "/" + name
 
     if (type == FileType.FOLDER):
-        shutil.copytree(name, res)
+        shutil.copytree(mod_path, res)
     elif (type == FileType.FILE):
-        shutil.copy(name, res)
+        shutil.copy(mod_path, res)
 
 def create_proj():
     global path
