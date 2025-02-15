@@ -99,6 +99,26 @@ exit_cmd :: proc(args: []string) {
     os.exit(0); 
 }
 
+toggle_debug :: proc(args: []string) {
+    using dev_console;
+    if (len(args) < 1) {
+        console_print("Incorrect usage!");
+        return;
+    }
+
+    val, _ := sc.parse_int(args[0]);
+
+    if (val == 0) {
+        OE_DEBUG = false;
+        PHYS_DEBUG = false;
+    } else {
+        OE_DEBUG = true;
+        PHYS_DEBUG = true;
+    }
+
+    console_print(str_add("Set debug color to: ", val));
+}
+
 ent_eval :: proc(args: []string) {
     using dev_console;
     if (len(args) < 1) {

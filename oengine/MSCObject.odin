@@ -586,7 +586,6 @@ load_map :: proc(path: string, atlas: Atlas) {
     }
 }
 
-
 json_vec3_to_vec3 :: proc(v: json.Array) -> Vec3 {
     return Vec3 {
         f32(v[0].(json.Float)),
