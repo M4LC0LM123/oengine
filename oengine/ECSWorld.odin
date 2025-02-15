@@ -21,6 +21,7 @@ ecs_world: struct {
     FAE: bool, // fog affects everything
 
     accumulator: f32,
+    physics_thread: ^thread.Thread,
 }
 
 ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
@@ -73,6 +74,8 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     if (PHYS_DEBUG) {
         ecs.register_system(&ecs_ctx, transform_render, ecs.ECS_RENDER);
     }
+
+    physics_thread = thread.create_and_start(ew_fixed_update);
 }
 
 ew_get_ent :: proc {
@@ -121,7 +124,8 @@ ew_get_ents :: proc(tag: string) -> []AEntity {
 
 ew_update :: proc() {
     using ecs_world;
-    t := thread.create_and_start(ew_fixed_update, self_cleanup = true);
+    // t := thread.create_and_start(ew_fixed_update, self_cleanup = true);
+    ew_fixed_update();
 
     fog_update(camera.position);
     rlg.SetViewPositionV(camera.position);
