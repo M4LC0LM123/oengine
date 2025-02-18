@@ -1,6 +1,7 @@
 package oengine
 
 import "core:math"
+import "core:math/linalg"
 import "core:fmt"
 import rl "vendor:raylib"
 import ecs "ecs"
@@ -164,6 +165,13 @@ rb_fixed_update :: proc(using self: ^RigidBody, dt: f32) {
 rb_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     t, rb := ecs.get_components(ent, Transform, RigidBody);
     if (is_nil(t, rb)) do return;
+
+    alpha := ecs_world.accumulator / FIXED_TIME_STEP;
+
+    // diff := transform_add(rb.transform, rb._difference);
+    // t.position = linalg.lerp(t.position, diff.position, alpha);
+    // t.rotation = diff.rotation;
+    // t.scale = diff.scale;
 
     t^ = transform_add(rb.transform, rb._difference);
 }
