@@ -75,7 +75,7 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
         ecs.register_system(&ecs_ctx, transform_render, ecs.ECS_RENDER);
     }
 
-    physics_thread = thread.create_and_start(ew_fixed_thread);
+    physics_thread = thread.create_and_start(ew_fixed_update);
 }
 
 ew_get_ent :: proc {
@@ -124,7 +124,8 @@ ew_get_ents :: proc(tag: string) -> []AEntity {
 
 ew_update :: proc() {
     using ecs_world;
-    // ew_fixed_update();
+    // t := thread.create_and_start(ew_fixed_update, self_cleanup = true);
+    ew_fixed_update();
 
     fog_update(camera.position);
     rlg.SetViewPositionV(camera.position);
@@ -145,27 +146,6 @@ ew_fixed_update :: proc() {
             ecs.ecs_fixed_update(&ecs_ctx);
         }
         accumulator -= FIXED_TIME_STEP;
-    }
-}
-
-@(private = "file")
-ew_fixed_thread :: proc() {
-    using ecs_world;
-    last_time := rl.GetTime();
-    
-    for (!rl.WindowShouldClose()) {
-        current_time := rl.GetTime();
-        delta_time := current_time - last_time;
-
-        if (delta_time >= FIXED_TIME_STEP) {
-            if (!w_transform_changed() && window.instance_name != "oengine-editor") {
-                pw_update(&physics, FIXED_TIME_STEP);
-                ecs.ecs_fixed_update(&ecs_ctx);
-            }
-            last_time = current_time;
-        } else {
-            thread.yield();
-        }
     }
 }
 
