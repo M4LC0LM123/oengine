@@ -755,7 +755,7 @@ msc_render :: proc(using self: ^MSCObject) {
         rl.DrawLine3D(t[1], t[2], rl.YELLOW);
     }
 
-    m := rl.LoadMaterialDefault();
+    m := DEFAULT_MATERIAL;
     m.maps[rl.MaterialMapIndex.ALBEDO].texture = atlas;
     rlg.DrawMesh(mesh, m, rl.Matrix(1));
 

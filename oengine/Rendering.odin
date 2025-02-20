@@ -13,7 +13,7 @@ DEF_SLICES :: 16
 SkyBox :: [6]Texture;
 CubeMap :: [6]Texture;
 
-DEFAULT_MATERIAL := rl.LoadMaterialDefault();
+DEFAULT_MATERIAL: rl.Material;
 
 CubeMapSide :: enum {
     FRONT,

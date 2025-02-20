@@ -34,7 +34,7 @@ main :: proc() {
 
     oe.w_create();
     oe.w_set_title("gejm");
-    oe.w_set_target_fps(60);
+    oe.w_set_target_fps(10_000);
     oe.window.debug_stats = true;
 
     oe.ew_init(oe.vec3_y() * 50);
@@ -209,9 +209,9 @@ main :: proc() {
 
         if (oe.key_pressed(.F3)) do oe.lc_toggle(light_lc);
 
-        prtcl := oe.particle_init(oe.circle_spawn(1, true), slf = 10, color = oe.RED);
-        oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 200));
-        oe.ps_add_particle(ps_ps, prtcl, 0.1);
+        // prtcl := oe.particle_init(oe.circle_spawn(1, true), slf = 10, color = oe.RED);
+        // oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 200));
+        // oe.ps_add_particle(ps_ps, prtcl, 0.1);
 
         oe.sm_apply_anim(animated_sm, &animated_ma, 0);
 

@@ -90,6 +90,9 @@ w_create :: proc(name: string = "Game") {
 
     rl.SetWindowIcon(rl.LoadImageFromTexture(get_tex_from_data(LOGO_WIDTH, LOGO_HEIGHT, raw_data(hex_to_rgb_img(logo[:])))));
     dbg_log("Set window icon");
+
+    DEFAULT_MATERIAL = rl.LoadMaterialDefault();
+    dbg_log("Loaded default material");
 }
 
 w_set_instance_name :: proc(name: string) {
@@ -283,15 +286,15 @@ w_end_render :: proc() {
 
         top_left := dbg_stat_pos[_dbg_stats_pos];
 
-        rl.DrawText(str.clone_to_cstring(str_add("fps: ", rl.GetFPS())), top_left.x, top_left.y, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("dt: ", rl.GetFrameTime(), "%.5f")), top_left.x, top_left.y + OFFSET, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("time: ", rl.GetTime(), "%.5f")), top_left.x, top_left.y + OFFSET * 2, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("ents: ", ecs_world.ecs_ctx.entities.len)), top_left.x, top_left.y + OFFSET * 3, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("sys_updts: ", ecs_world.ecs_ctx._update_systems.len)), top_left.x, top_left.y + OFFSET * 4, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("sys_rndrs: ", ecs_world.ecs_ctx._render_systems.len)), top_left.x, top_left.y + OFFSET * 5, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("rbs: ", ecs_world.physics.bodies.len)), top_left.x, top_left.y + OFFSET * 6, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), top_left.x, top_left.y + OFFSET * 7, 16, rl.YELLOW);
-        rl.DrawText(str.clone_to_cstring(str_add("decals: ", len(ecs_world.decals))), top_left.x, top_left.y + OFFSET * 8, 16, rl.YELLOW);
+        // rl.DrawText(str.clone_to_cstring(str_add("fps: ", rl.GetFPS())), top_left.x, top_left.y, 16, rl.YELLOW);
+        // rl.DrawText(str.clone_to_cstring(str_add("dt: ", rl.GetFrameTime(), "%.5f")), top_left.x, top_left.y + OFFSET, 16, rl.YELLOW);
+        // rl.DrawText(str.clone_to_cstring(str_add("time: ", rl.GetTime(), "%.5f")), top_left.x, top_left.y + OFFSET * 2, 16, rl.YELLOW);
+        // rl.DrawText(str.clone_to_cstring(str_add("ents: ", ecs_world.ecs_ctx.entities.len)), top_left.x, top_left.y + OFFSET * 3, 16, rl.YELLOW);
+        // rl.DrawText(str.clone_to_cstring(str_add("sys_updts: ", ecs_world.ecs_ctx._update_systems.len)), top_left.x, top_left.y + OFFSET * 4, 16, rl.YELLOW);
+        // rl.DrawText(str.clone_to_cstring(str_add("sys_rndrs: ", ecs_world.ecs_ctx._render_systems.len)), top_left.x, top_left.y + OFFSET * 5, 16, rl.YELLOW);
+        // rl.DrawText(str.clone_to_cstring(str_add("rbs: ", ecs_world.physics.bodies.len)), top_left.x, top_left.y + OFFSET * 6, 16, rl.YELLOW);
+        // rl.DrawText(str.clone_to_cstring(str_add("tris: ", tri_count)), top_left.x, top_left.y + OFFSET * 7, 16, rl.YELLOW);
+        // rl.DrawText(str.clone_to_cstring(str_add("decals: ", len(ecs_world.decals))), top_left.x, top_left.y + OFFSET * 8, 16, rl.YELLOW);
     }
 
     rl.EndTextureMode();
