@@ -113,7 +113,7 @@ ps_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
 
             delete(pr.behaviours);
             free(pr);
-            ordered_remove(&particles, p); 
+            ordered_remove(&particles, p);
         }
         p = -1;
     }

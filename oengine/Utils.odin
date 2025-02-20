@@ -523,13 +523,44 @@ str_add_strs :: proc(bufs: []string) -> string {
     return str.concatenate(bufs);
 }
 
-str_add_any :: proc(buf: string, elem: $E, _fmt: string = "%.2f") -> string {
+str_add_any :: proc(buf: string, elem: $E, _fmt: string = "%v%.2f") -> string {
     type := typeid_of(type_of(elem));
     if (type == f32 || type == f64) {
-        return fmt.aprintf(fmt.aprint("%v", _fmt, sep = ""), buf, elem);
+        // return fmt.aprintf(fmt.aprint("%v", _fmt, sep = ""), buf, elem);
+        return str_printf(_fmt, buf, elem);
     }
 
-    return fmt.aprintf("%v%v", buf, elem);
+    // return fmt.aprintf("%v%v", buf, elem);
+    return str_printf("%v%v", buf, elem);
+}
+
+str_printf :: proc(
+    frmt: string, 
+    args: ..any, 
+    allocator := context.allocator, 
+    newline := false) -> string {
+	strb: str.Builder;
+	str.builder_init(&strb, allocator);
+
+    res := str.clone(fmt.sbprintf(&strb, frmt, ..args, newline=newline));
+
+    str.builder_destroy(&strb);
+
+    return res;
+}
+
+str_print :: proc(
+    args: ..any, 
+    sep := " ", 
+    allocator := context.allocator) -> string {
+	strb: str.Builder;
+	str.builder_init(&strb, allocator);
+
+	res := str.clone(fmt.sbprint(&strb, ..args, sep=sep));
+
+    str.builder_destroy(&strb);
+
+    return res;
 }
 
 /* not needed anymore but kept just in case

@@ -286,6 +286,28 @@ w_end_render :: proc() {
 
         top_left := dbg_stat_pos[_dbg_stats_pos];
 
+        text_info := [?]string {
+            str_add("fps: ", rl.GetFPS()),
+            str_add("dt: ", rl.GetFrameTime(), "%v%.5f"),
+            str_add("time: ", rl.GetTime(), "%v%.5f"),
+            str_add("ents: ", ecs_world.ecs_ctx.entities.len),
+            str_add("sys_updts: ", ecs_world.ecs_ctx._update_systems.len),
+            str_add("sys_rndrs: ", ecs_world.ecs_ctx._render_systems.len),
+            str_add("rbs: ", ecs_world.physics.bodies.len),
+            str_add("tris: ", tri_count),
+            str_add("decals: ", len(ecs_world.decals)),
+        };
+
+        for i in 0..<len(text_info) {
+            c_str := str.clone_to_cstring(text_info[i]);
+            rl.DrawText(
+                c_str, top_left.x, top_left.y + OFFSET * i32(i), 16, YELLOW
+            );
+
+            delete(c_str);
+            delete(text_info[i]);
+        }
+
         // rl.DrawText(str.clone_to_cstring(str_add("fps: ", rl.GetFPS())), top_left.x, top_left.y, 16, rl.YELLOW);
         // rl.DrawText(str.clone_to_cstring(str_add("dt: ", rl.GetFrameTime(), "%.5f")), top_left.x, top_left.y + OFFSET, 16, rl.YELLOW);
         // rl.DrawText(str.clone_to_cstring(str_add("time: ", rl.GetTime(), "%.5f")), top_left.x, top_left.y + OFFSET * 2, 16, rl.YELLOW);
