@@ -534,19 +534,29 @@ str_add_any :: proc(buf: string, elem: $E, _fmt: string = "%v%.2f") -> string {
     return str_printf("%v%v", buf, elem);
 }
 
+to_cstr :: proc(
+    s: string,
+    allocator := context.allocator,
+    loc := #caller_location) -> cstring {
+	c := make([]byte, len(s) + 1, allocator, loc);
+    defer delete(c);
+	copy(c, s);
+	c[len(s)] = 0;
+	return cstring(&c[0]);
+}
+
 str_printf :: proc(
     frmt: string, 
     args: ..any, 
     allocator := context.allocator, 
     newline := false) -> string {
 	strb: str.Builder;
+    defer str.builder_destroy(&strb);
 	str.builder_init(&strb, allocator);
 
-    res := str.clone(fmt.sbprintf(&strb, frmt, ..args, newline=newline));
+    fmt.sbprintf(&strb, frmt, ..args, newline=newline);
 
-    str.builder_destroy(&strb);
-
-    return res;
+    return str.clone(str.to_string(strb));
 }
 
 str_print :: proc(

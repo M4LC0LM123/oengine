@@ -136,7 +136,7 @@ gui_text :: proc(text: string, size: f32, x: f32 = 10, y: f32 = 10, standalone: 
 
     rl.DrawTextEx(
         gui_default_font, 
-        strs.clone_to_cstring(text), 
+        to_cstr(text), 
         Vec2 {rx + x, ry + y}, 
         size, gui_text_spacing, rl.WHITE
     );
@@ -155,7 +155,7 @@ text_pos_renders := [?]proc(string, rl.Rectangle) {
 };
 
 text_center_pos :: proc(text: string, rec: rl.Rectangle) {
-    ctext := strs.clone_to_cstring(text);
+    ctext := to_cstr(text);
     text_scale := (rec.width - gui_bezel_size * 2) / f32(rl.MeasureText(ctext, i32(gui_font_size)));
 
     if (text_scale * gui_font_size > rec.height - gui_bezel_size * 2) {
@@ -174,7 +174,7 @@ text_center_pos :: proc(text: string, rec: rl.Rectangle) {
 }
 
 text_left_pos :: proc(text: string, rec: rl.Rectangle) {
-    ctext := strs.clone_to_cstring(text);
+    ctext := to_cstr(text);
     text_scale := (rec.height - gui_bezel_size * 2) / gui_font_size;
 
     if (text_scale * gui_font_size > rec.width - gui_bezel_size * 2.0) {
@@ -193,7 +193,7 @@ text_left_pos :: proc(text: string, rec: rl.Rectangle) {
 }
 
 text_right_pos :: proc(text: string, rec: rl.Rectangle) {
-    ctext := strs.clone_to_cstring(text);
+    ctext := to_cstr(text);
     text_scale := (rec.height - gui_bezel_size * 2) / gui_font_size;
 
     if (text_scale * gui_font_size > rec.width - gui_bezel_size * 2.0) {

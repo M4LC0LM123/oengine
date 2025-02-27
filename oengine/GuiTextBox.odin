@@ -54,14 +54,14 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
     if (len(text) > 0) {
         text_len := rl.MeasureTextEx(
             gui_default_font, 
-            strs.clone_to_cstring(text),
+            to_cstr(text),
             gui_font_size * text_scale, 2
         ).x;
 
         symbol := []u8{text[(len(text) - 1) % len(text)]};
 
         char_len := rl.MeasureTextEx(
-            gui_default_font, strs.clone_to_cstring(string(symbol)),
+            gui_default_font, to_cstr(string(symbol)),
             gui_font_size, 2
         ).x;
 
@@ -72,7 +72,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
 
     rl.DrawTextEx(
         gui_default_font, 
-        strs.clone_to_cstring(text), 
+        to_cstr(text), 
         {text_x, text_y}, 
         gui_font_size * text_scale, gui_text_spacing, WHITE
     );
@@ -82,7 +82,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
             char_len: f32;
             text_len := rl.MeasureTextEx(
                 gui_default_font, 
-                strs.clone_to_cstring(text),
+                to_cstr(text),
                 gui_font_size * text_scale, 2
             ).x;
 
@@ -90,7 +90,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
                 symbol := []u8{text[(len(text) - pos - 1) % len(text)]};
 
                 char_len = rl.MeasureTextEx(
-                    gui_default_font, strs.clone_to_cstring(string(symbol)),
+                    gui_default_font, to_cstr(string(symbol)),
                     gui_font_size, 2
                 ).x;
 
@@ -99,7 +99,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
                 if (i32(gui_cursor_timer) % 2 == 0) {
                     rl.DrawTextEx(
                         gui_default_font, 
-                        strs.clone_to_cstring(gui_cursor), 
+                        to_cstr(gui_cursor), 
                         {cur_x, text_y}, 
                         gui_font_size * text_scale, gui_text_spacing, WHITE
                     );
@@ -109,7 +109,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
             if (i32(gui_cursor_timer) % 2 == 0) {
                 rl.DrawTextEx(
                     gui_default_font, 
-                    strs.clone_to_cstring(gui_cursor), 
+                    to_cstr(gui_cursor), 
                     {text_x, text_y}, 
                     gui_font_size * text_scale, gui_text_spacing, WHITE
                 );
@@ -125,7 +125,7 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
                 text = str_add(text, string(rl.GetClipboardText())); 
             }
             if (key_pressed(.C)) {
-                rl.SetClipboardText(strs.clone_to_cstring(text))
+                rl.SetClipboardText(to_cstr(text));
             }
         }
 

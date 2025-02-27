@@ -299,12 +299,12 @@ w_end_render :: proc() {
         };
 
         for i in 0..<len(text_info) {
-            c_str := str.clone_to_cstring(text_info[i]);
+            c_str := to_cstr(text_info[i]);
             rl.DrawText(
                 c_str, top_left.x, top_left.y + OFFSET * i32(i), 16, YELLOW
             );
 
-            delete(c_str);
+            // delete(c_str);
             delete(text_info[i]);
         }
 

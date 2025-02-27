@@ -253,6 +253,9 @@ main :: proc() {
         oe.f_custom_render(water_tr, water_f);
 
         rl.EndMode3D();
+
+        oe.gui_text("idegas123", 20, standalone = true);
+        
         oe.w_end_render();
         if (oe.key_pressed(.F4)) do reset_track_allocator(&track_allocator);
     }
