@@ -5,6 +5,10 @@ import str "core:strings"
 import rl "vendor:raylib"
 import oe "../../oengine"
 
+globals: struct {
+    registry_atlas: oe.Atlas,
+};
+
 main :: proc() {
     monitor := rl.GetCurrentMonitor();
     oe.w_create(oe.EDITOR_INSTANCE);
@@ -55,6 +59,7 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]oe.D
     clear(collided_dids);
     editor_data.hovered_data_id = "";
     dids := oe.get_reg_data_ids();
+    defer delete(dids);
     for i in 0..<len(dids) {
         data_id := oe.get_asset_var(dids[i].reg_tag, oe.DataID);
         mouse_ray := rl.GetMouseRay(oe.window.mouse_position, oe.ecs_world.camera.rl_matrix);

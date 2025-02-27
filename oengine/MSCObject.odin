@@ -703,15 +703,15 @@ msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {
 }
 
 msc_render :: proc(using self: ^MSCObject) {
-    for tri in tris {
-        t := tri.pts;
+    if (window.instance_name == EDITOR_INSTANCE) {
+        for tri in tris {
+            t := tri.pts;
 
-        v1 := t[0];
-        v2 := t[1];
-        v3 := t[2];
-        color := tri.color;
+            v1 := t[0];
+            v2 := t[1];
+            v3 := t[2];
+            color := tri.color;
 
-        if (window.instance_name == EDITOR_INSTANCE) {
             uv1, uv2, uv3 := triangle_uvs(v1, v2, v3, tri.rot);
 
             rl.rlColor4ub(color.r, color.g, color.b, color.a);
@@ -729,30 +729,13 @@ msc_render :: proc(using self: ^MSCObject) {
             rl.rlEnd();
 
             rl.rlSetTexture(0);
-        } else {
-            // material := DEFAULT_MATERIAL;
-            // material.maps[rl.MaterialMapIndex.ALBEDO].color = color;
-            // if (asset_exists(tri.texture_tag)) {
-            //     tex := get_asset_var(tri.texture_tag, Texture);
-            //     material.maps[rl.MaterialMapIndex.ALBEDO].texture = tex;
-            // }
-            //
-            // if (tri.is_lit) do rlg.DrawMesh(tri.mesh, material, rl.Matrix(1));
-            // else do rl.DrawMesh(tri.mesh, material, rl.Matrix(1));
-            //
-            // for i in 0..<3 {
-            //     pos := tri.pts[i];
-            //     normal_data := tri.mesh.normals[i:i + 3];
-            //     normal := pos + {normal_data[0], normal_data[1], normal_data[2]};
-            //     rl.DrawLine3D(pos, normal, YELLOW);
-            // }
+
+            if (!PHYS_DEBUG) do continue;
+
+            rl.DrawLine3D(t[0], t[1], rl.YELLOW);
+            rl.DrawLine3D(t[0], t[2], rl.YELLOW);
+            rl.DrawLine3D(t[1], t[2], rl.YELLOW);
         }
-
-        if (!PHYS_DEBUG) do continue;
-
-        rl.DrawLine3D(t[0], t[1], rl.YELLOW);
-        rl.DrawLine3D(t[0], t[2], rl.YELLOW);
-        rl.DrawLine3D(t[1], t[2], rl.YELLOW);
     }
 
     m := DEFAULT_MATERIAL;

@@ -28,8 +28,9 @@ registry_tool :: proc(ct: CameraTool) {
         path := oe.nfd_file();
         if (filepath.ext(path) == ".json") {
             oe.load_registry(path);
+            globals.registry_atlas = oe.am_texture_atlas();
         }
-        rl.ChangeDirectory(strs.clone_to_cstring(root));
+        rl.ChangeDirectory(oe.to_cstr(root));
     }
 
     oe.gui_end();
@@ -121,7 +122,7 @@ map_proj_tool :: proc(ct: CameraTool) {
     grid = oe.gui_grid(4, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Load map", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_folder();
-        oe.load_map(path);
+        oe.load_map(path, globals.registry_atlas);
     }
 
     oe.gui_end();
