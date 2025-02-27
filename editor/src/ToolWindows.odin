@@ -105,6 +105,12 @@ map_proj_tool :: proc(ct: CameraTool) {
     grid = oe.gui_grid(2, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Clear", grid.x, grid.y, grid.width, grid.height)) {
         fa.clear(&oe.ecs_world.physics.mscs);
+
+        dids := oe.get_reg_data_ids();
+        defer delete(dids);
+        for did in dids {
+            oe.unreg_asset(did.reg_tag);
+        }
     }
 
     grid = oe.gui_grid(3, 1, 40, wr.width * 0.5, 10);
