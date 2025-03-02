@@ -22,15 +22,20 @@ registry_tool :: proc(ct: CameraTool) {
         rl.ChangeDirectory(strs.clone_to_cstring(dir));
     }
 
-    oe.gui_text(dir, 20, 10, 50);
+    oe.gui_text(dir, 10, 10, 50);
 
-    if (oe.gui_button("Load registry", 10, 100, BUTTON_WIDTH, 30)) {
+    if (oe.gui_button("Load registry", 10, 50, BUTTON_WIDTH, 30)) {
         path := oe.nfd_file();
         if (filepath.ext(path) == ".json") {
             oe.load_registry(path);
             globals.registry_atlas = oe.am_texture_atlas();
         }
         rl.ChangeDirectory(oe.to_cstr(root));
+    }
+
+    if (oe.gui_button("Load atlas", 10, 90, BUTTON_WIDTH, 30)) {
+        path := oe.nfd_folder();
+        globals.registry_atlas = oe.load_atlas(path);
     }
 
     oe.gui_end();

@@ -633,6 +633,22 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
                 );
             }
         }
+    } else {
+        if (obj.(json.Object)["components"] != nil) {
+            comps_handle := obj.(json.Object)["components"].(json.Array);
+            for i in comps_handle {
+                tag := i.(json.Object)["tag"].(json.String);
+                type := i.(json.Object)["type"].(json.String);
+          
+                fa.append(
+                    &comps_arr, 
+                    ComponentMarshall {
+                        strs.clone(tag), 
+                        strs.clone(type)
+                    },
+                );
+            }
+        }
     }
 
     reg_asset(
@@ -703,51 +719,58 @@ msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {
 }
 
 msc_render :: proc(using self: ^MSCObject) {
+    m := DEFAULT_MATERIAL;
+    m.maps[rl.MaterialMapIndex.ALBEDO].texture = atlas;
+
     if (window.instance_name == EDITOR_INSTANCE) {
+        msc_old_render(self);
+    } else {
+        rlg.DrawMesh(mesh, m, rl.Matrix(1));
+    }
+
+    if (PHYS_DEBUG) {
         for tri in tris {
             t := tri.pts;
-
-            v1 := t[0];
-            v2 := t[1];
-            v3 := t[2];
-            color := tri.color;
-
-            uv1, uv2, uv3 := triangle_uvs(v1, v2, v3, tri.rot);
-
-            rl.rlColor4ub(color.r, color.g, color.b, color.a);
-            rl.rlBegin(rl.RL_TRIANGLES);
-
-            if (asset_exists(tri.texture_tag)) {
-                tex := get_asset_var(tri.texture_tag, Texture);
-                rl.rlSetTexture(tex.id);
-            }
-
-            rl.rlTexCoord2f(uv1.x, uv1.y); rl.rlVertex3f(v1.x, v1.y, v1.z);
-            rl.rlTexCoord2f(uv2.x, uv2.y); rl.rlVertex3f(v2.x, v2.y, v2.z);
-            rl.rlTexCoord2f(uv3.x, uv3.y); rl.rlVertex3f(v3.x, v3.y, v3.z);
-
-            rl.rlEnd();
-
-            rl.rlSetTexture(0);
-
-            if (!PHYS_DEBUG) do continue;
 
             rl.DrawLine3D(t[0], t[1], rl.YELLOW);
             rl.DrawLine3D(t[0], t[2], rl.YELLOW);
             rl.DrawLine3D(t[1], t[2], rl.YELLOW);
         }
-    }
 
-    m := DEFAULT_MATERIAL;
-    m.maps[rl.MaterialMapIndex.ALBEDO].texture = atlas;
-    rlg.DrawMesh(mesh, m, rl.Matrix(1));
-
-    if (PHYS_DEBUG) {
         draw_cube_wireframe(
             {_aabb.x, _aabb.y, _aabb.z}, {}, 
             {_aabb.width, _aabb.height, _aabb.depth},
             PHYS_DEBUG_COLOR
         ); 
+    }
+}
+
+msc_old_render :: proc(using self: ^MSCObject) {
+    for tri in tris {
+        t := tri.pts;
+
+        v1 := t[0];
+        v2 := t[1];
+        v3 := t[2];
+        color := tri.color;
+
+        uv1, uv2, uv3 := triangle_uvs(v1, v2, v3, tri.rot);
+
+        rl.rlColor4ub(color.r, color.g, color.b, color.a);
+        rl.rlBegin(rl.RL_TRIANGLES);
+
+        if (asset_exists(tri.texture_tag)) {
+            tex := get_asset_var(tri.texture_tag, Texture);
+            rl.rlSetTexture(tex.id);
+        }
+
+        rl.rlTexCoord2f(uv1.x, uv1.y); rl.rlVertex3f(v1.x, v1.y, v1.z);
+        rl.rlTexCoord2f(uv2.x, uv2.y); rl.rlVertex3f(v2.x, v2.y, v2.z);
+        rl.rlTexCoord2f(uv3.x, uv3.y); rl.rlVertex3f(v3.x, v3.y, v3.z);
+
+        rl.rlEnd();
+
+        rl.rlSetTexture(0);
     }
 }
 

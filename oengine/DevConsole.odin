@@ -33,7 +33,7 @@ console_init :: proc() {
     console_register(new_command("print", "Print text to console", print_command));
     console_register(new_command("dbg_info", "Shows debug information", debug_info));
     console_register(new_command("dbg_pos", "Sets debug info position", dbg_info_pos));
-    console_register(new_command("dbg_clr", "Sets debug info position", toggle_debug));
+    console_register(new_command("dbg_clr", "Toggles debug colors", toggle_debug));
     console_register(new_command("set_fps", "Sets the target fps", set_fps));
     console_register(new_command("exit", "Exits the app", exit_cmd));
     console_register(new_command("clear", "Clears the console", clear_cmd));

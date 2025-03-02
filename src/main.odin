@@ -34,7 +34,7 @@ main :: proc() {
 
     oe.w_create();
     oe.w_set_title("gejm");
-    oe.w_set_target_fps(10_000);
+    oe.w_set_target_fps(60);
     oe.window.debug_stats = true;
 
     oe.ew_init(oe.vec3_y() * 50);
@@ -253,9 +253,6 @@ main :: proc() {
         oe.f_custom_render(water_tr, water_f);
 
         rl.EndMode3D();
-
-        oe.gui_text("idegas123", 20, standalone = true);
-        
         oe.w_end_render();
         if (oe.key_pressed(.F4)) do reset_track_allocator(&track_allocator);
     }
