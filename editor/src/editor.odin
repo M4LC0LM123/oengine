@@ -117,6 +117,10 @@ update :: proc() {
             editor_data.active_data_id = oe.STR_EMPTY;
         }
     }
+
+    for i in 0..<oe.ecs_world.physics.mscs.len {
+        oe.ecs_world.physics.mscs.data[i].atlas = globals.registry_atlas;
+    }
 }
 
 render :: proc() {

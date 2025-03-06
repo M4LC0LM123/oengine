@@ -250,10 +250,14 @@ ortho_tri_to_msc_tri :: proc(pts: [3]oe.Vec2, pts_3d: [3]oe.Vec3, mode: CameraMo
 render_tri :: proc(using self: ^CameraTool) {
     ray := oe.get_mouse_rc(camera_perspective);
 
+    collision: bool;
     for msc_id in 0..<oe.ecs_world.physics.mscs.len {
         msc := oe.ecs_world.physics.mscs.data[msc_id];
+        if (collision) { continue; }
+
         coll, arr := oe.rc_colliding_tris(ray, msc);
-        if (coll) {
+        collision = coll;
+        if (collision) {
             info := arr[0];
             t := msc.tris[info.id];
             if (!oe.gui_mouse_over()) {

@@ -567,6 +567,8 @@ save_map :: proc(
     create_dir(dir);
 
     for i in 0..<ecs_world.physics.mscs.len {
+        msc := ecs_world.physics.mscs.data[i];
+        if (len(msc.tris) == 0) { continue; }
         name := str_add("msc", i);
         res_path := str_add({dir, "/", name, ".json"});
         msc_to_json(ecs_world.physics.mscs.data[i], res_path, save_dids = false);
@@ -754,15 +756,32 @@ msc_old_render :: proc(using self: ^MSCObject) {
         v3 := t[2];
         color := tri.color;
 
-        uv1, uv2, uv3 := triangle_uvs(v1, v2, v3, tri.rot);
+        // uv1, uv2, uv3 := triangle_uvs(v1, v2, v3, tri.rot);
+
+        at: AtlasTexture;
+        for st in atlas.subtextures {
+            if (st.tag == tri.texture_tag) {
+                at = st;
+            }
+        }
+
+        verts := tri.pts;
+        uv1, uv2, uv3 := atlas_triangle_uvs(
+            verts[0], verts[1], verts[2],
+            at.uvs,
+            0
+        );
+        
+        // fmt.println(uv1, uv2, uv3, tri.texture_tag, at);
 
         rl.rlColor4ub(color.r, color.g, color.b, color.a);
         rl.rlBegin(rl.RL_TRIANGLES);
 
-        if (asset_exists(tri.texture_tag)) {
-            tex := get_asset_var(tri.texture_tag, Texture);
-            rl.rlSetTexture(tex.id);
-        }
+        // if (asset_exists(tri.texture_tag)) {
+        //     tex := get_asset_var(tri.texture_tag, Texture);
+        //     rl.rlSetTexture(tex.id);
+        // }
+        rl.rlSetTexture(atlas.texture.id);
 
         rl.rlTexCoord2f(uv1.x, uv1.y); rl.rlVertex3f(v1.x, v1.y, v1.z);
         rl.rlTexCoord2f(uv2.x, uv2.y); rl.rlVertex3f(v2.x, v2.y, v2.z);
