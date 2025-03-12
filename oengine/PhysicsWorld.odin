@@ -22,7 +22,6 @@ TriangleCollider :: struct {
     using pts: [3]Vec3,
     color: Color,
     texture_tag: string,
-    mesh: rl.Mesh,
     rot: i32,
     is_lit: bool,
     use_fog: bool,

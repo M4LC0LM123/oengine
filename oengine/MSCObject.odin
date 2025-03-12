@@ -240,10 +240,19 @@ msc_append_tri :: proc(
     t.color = color;
     t.texture_tag = texture_tag;
     t.rot = rot;
-    t.mesh = gen_mesh_triangle(t.pts, t.rot);
     t.is_lit = is_lit;
     t.use_fog = use_fog;
-    append(&tris, t);
+
+    add := true;
+    for i in 0..<len(tris) {
+        _t := tris[i];
+        if (_t.pts == t.pts) {
+            add = false;
+            break;
+        }
+    }
+
+    if (add) { append(&tris, t); }
     tri_count += 1;
 
     _aabb = tris_to_aabb(tris);
@@ -255,20 +264,38 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {
     t.color = color;
     t.texture_tag = texture_tag;
     t.rot = rot;
-    t.mesh = gen_mesh_triangle(t.pts, t.rot);
     t.is_lit = is_lit;
     t.use_fog = use_fog;
-    append(&tris, t);
+
+    add := true;
+    for i in 0..<len(tris) {
+        _t := tris[i];
+        if (_t.pts == t.pts) {
+            add = false;
+            break;
+        }
+    }
+
+    if (add) { append(&tris, t); }
 
     t2 := new(TriangleCollider);
     t2.pts = {b + offs, c + offs, d + offs};
     t2.color = color;
     t2.texture_tag = texture_tag;
     t2.rot = rot;
-    t2.mesh = gen_mesh_triangle(t2.pts, t2.rot);
     t2.is_lit = is_lit;
     t2.use_fog = use_fog;
-    append(&tris, t2);
+
+    add2 := true;
+    for i in 0..<len(tris) {
+        _t := tris[i];
+        if (_t.pts == t2.pts) {
+            add2 = false;
+            break;
+        }
+    }
+
+    if (add2) { append(&tris, t2); }
 
     tri_count += 2;
 
@@ -277,7 +304,6 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {
 
 tri_recalc_uvs :: proc(t: ^TriangleCollider, #any_int uv_rot: i32 = 0) {
     t.rot = uv_rot;
-    t.mesh = gen_mesh_triangle(t.pts, t.rot);
 }
 
 msc_gen_mesh :: proc(using self: ^MSCObject) {
