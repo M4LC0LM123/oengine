@@ -11,20 +11,26 @@ import sc "core:strconv"
 import strs "core:strings"
 
 BUTTON_WIDTH :: 180
+WINDOW_HEIGHT :: 250
 
 registry_tool :: proc(ct: CameraTool) {
-    oe.gui_begin("Registry", x = 0, y = 0, h = 150, can_exit = false);
+    oe.gui_begin("Registry", x = 0, y = 0, h = WINDOW_HEIGHT, can_exit = false);
+    wr := oe.gui_rect(oe.gui_window("Registry"));
+
+    grid := oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
 
     root := strs.clone_from_cstring(rl.GetWorkingDirectory());
     @static dir: string;
-    if (oe.gui_button("Set exe dir", 10, 10, BUTTON_WIDTH, 30)) {
+    if (oe.gui_button("Set exe dir", grid.x, grid.y, grid.width, grid.height)) {
         dir = oe.nfd_folder();
         rl.ChangeDirectory(strs.clone_to_cstring(dir));
     }
 
-    oe.gui_text(dir, 10, 10, 50);
+    grid = oe.gui_grid(1, 0, 40, wr.width * 0.75, 10);
+    oe.gui_text(dir, 20, grid.x, grid.y);
 
-    if (oe.gui_button("Load registry", 10, 50, BUTTON_WIDTH, 30)) {
+    grid = oe.gui_grid(2, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Load registry", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_file();
         if (filepath.ext(path) == ".json") {
             oe.load_registry(path);
@@ -33,16 +39,39 @@ registry_tool :: proc(ct: CameraTool) {
         rl.ChangeDirectory(oe.to_cstr(root));
     }
 
-    if (oe.gui_button("Load atlas", 10, 90, BUTTON_WIDTH, 30)) {
+    grid = oe.gui_grid(3, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Load atlas", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_folder();
         globals.registry_atlas = oe.load_atlas(path);
+    }
+
+    grid = oe.gui_grid(4, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Load config", grid.x, grid.y, grid.width, grid.height)) {
+        path := oe.nfd_file();
+        if (filepath.ext(path) == ".oecfg") {
+            paths := load_config(path);
+
+            if (paths[0] != oe.STR_EMPTY) {
+                rl.ChangeDirectory(strs.clone_to_cstring(paths[0]));
+            }
+            if (paths[1] != oe.STR_EMPTY) {
+                if (filepath.ext(paths[1]) == ".json") {
+                    oe.load_registry(paths[1]);
+                    globals.registry_atlas = oe.am_texture_atlas();
+                }
+                rl.ChangeDirectory(oe.to_cstr(root));
+            }
+            if (paths[2] != oe.STR_EMPTY) {
+                globals.registry_atlas = oe.load_atlas(paths[2]);
+            }
+        }
     }
 
     oe.gui_end();
 }
 
 msc_tool :: proc(ct: CameraTool) {
-    oe.gui_begin("MSC tool", x = 0, y = 150 + oe.gui_top_bar_height, h = 210, can_exit = false);
+    oe.gui_begin("MSC tool", x = 0, y = WINDOW_HEIGHT + oe.gui_top_bar_height, h = WINDOW_HEIGHT, can_exit = false);
 
     @static new_instance: bool = false;
     // new_instance = oe.gui_tick(new_instance, 10, 10, 30, 30);
@@ -80,7 +109,8 @@ msc_tool :: proc(ct: CameraTool) {
 map_proj_tool :: proc(ct: CameraTool) {
     oe.gui_begin(
         "Map project", 
-        x = 0, y = 360 + oe.gui_top_bar_height * 2, can_exit = false);
+        x = 0, y = WINDOW_HEIGHT * 2 + oe.gui_top_bar_height * 2, 
+        h = WINDOW_HEIGHT, can_exit = false);
     wr := oe.gui_rect(oe.gui_window("Map project"));
 
     grid := oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
@@ -142,7 +172,9 @@ map_proj_tool :: proc(ct: CameraTool) {
 texture_tool :: proc(ct: CameraTool) {
     if (ct._active_msc_id == ACTIVE_EMPTY || ct._active_id == ACTIVE_EMPTY) do return;
 
-    oe.gui_begin("Texture tool", x = 0, y = 560 + oe.gui_top_bar_height * 3, active = false);
+    oe.gui_begin("Texture tool", 
+        x = 0, y = WINDOW_HEIGHT * 3 + 10 + oe.gui_top_bar_height * 3, 
+        h = WINDOW_HEIGHT, active = false);
 
     texs := oe.get_reg_textures_tags();
 
@@ -365,6 +397,32 @@ msc_target_pos :: proc(ct: CameraTool) -> oe.Vec3 {
     }
 
     return {};
+}
+
+@(private = "file")
+load_config :: proc(path: string) -> [3]string {
+    content := oe.file_to_string_arr(path);
+    res: [3]string;
+
+    for i in 0..<len(content) {
+        s, _ := strs.remove_all(content[i], " ");
+        sides, _ := strs.split(s, "=");
+        left := sides[0];
+        right := sides[1];
+        absolute, _ := filepath.abs(right);
+        absolute, _ = strs.replace_all(absolute, "\\", "/");
+
+        switch left {
+            case "exe_path":
+                res[0] = absolute;
+            case "reg_path":
+                res[1] = absolute;
+            case "atlas_path":
+                res[2] = absolute;
+        }
+    }
+
+    return res;
 }
 
 @(private = "file")
