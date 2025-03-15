@@ -105,6 +105,28 @@ next_power_of_2 :: proc(v: i32) -> i32 {
     return x + 1;
 }
 
+surface_normal :: proc(tri: [3]Vec3) -> Vec3 {
+    u := tri[1] - tri[0];
+    v := tri[2] - tri[0];
+
+    if (tri[0].z == tri[1].z && tri[1].z == tri[2].z) {
+        return vec3_z();
+    }
+
+    if (tri[0].x == tri[1].x && tri[1].x == tri[2].x) {
+        return vec3_x();
+    }
+
+    if (tri[0].y == tri[1].y && tri[1].y == tri[2].y) {
+        return vec3_y();
+    }
+
+    normal := vec3_cross(u, v);
+    normal = vec3_normalize(normal);
+
+    return normal;
+}
+
 find_best_fit_rect :: proc(
     free_rects: ^[dynamic]Rect, width: i32, height: i32) -> Rect {
     best_rect: Rect = {0, 0, 0, 0};

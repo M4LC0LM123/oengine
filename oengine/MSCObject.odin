@@ -307,7 +307,7 @@ tri_recalc_uvs :: proc(t: ^TriangleCollider, #any_int uv_rot: i32 = 0) {
 }
 
 msc_gen_mesh :: proc(using self: ^MSCObject) {
-    mesh.triangleCount = i32(len(tris));
+    mesh.triangleCount = i32(len(tris)) * 2;
     mesh.vertexCount = mesh.triangleCount * 3;
     allocate_mesh(&mesh);
 
@@ -338,12 +338,15 @@ gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i3
     uv_offset := index * 6;
     clr_offset := index * 12;
 
+    normal := surface_normal(t);
+    flipped_normal := -normal;
+
     mesh.vertices[v_offset + 0] = verts[0].x;
     mesh.vertices[v_offset + 1] = verts[0].y;
     mesh.vertices[v_offset + 2] = verts[0].z;
-    mesh.normals[v_offset + 0] = 0;
-    mesh.normals[v_offset + 1] = 1;
-    mesh.normals[v_offset + 2] = 0;
+    mesh.normals[v_offset + 0] = normal.x;
+    mesh.normals[v_offset + 1] = normal.y;
+    mesh.normals[v_offset + 2] = normal.z;
     mesh.texcoords[uv_offset + 0] = uv1.x;
     mesh.texcoords[uv_offset + 1] = uv1.y;
     mesh.colors[clr_offset + 0] = t.color.r;
@@ -354,9 +357,9 @@ gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i3
     mesh.vertices[v_offset + 3] = verts[1].x;
     mesh.vertices[v_offset + 4] = verts[1].y;
     mesh.vertices[v_offset + 5] = verts[1].z;
-    mesh.normals[v_offset + 3] = 0;
-    mesh.normals[v_offset + 4] = 1;
-    mesh.normals[v_offset + 5] = 0;
+    mesh.normals[v_offset + 3] = normal.x;
+    mesh.normals[v_offset + 4] = normal.y;
+    mesh.normals[v_offset + 5] = normal.z;
     mesh.texcoords[uv_offset + 2] = uv2.x;
     mesh.texcoords[uv_offset + 3] = uv2.y;
     mesh.colors[clr_offset + 4] = t.color.r;
@@ -367,9 +370,9 @@ gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i3
     mesh.vertices[v_offset + 6] = verts[2].x;
     mesh.vertices[v_offset + 7] = verts[2].y;
     mesh.vertices[v_offset + 8] = verts[2].z;
-    mesh.normals[v_offset + 6] = 0;
-    mesh.normals[v_offset + 7] = 1;
-    mesh.normals[v_offset + 8] = 0;
+    mesh.normals[v_offset + 6] = normal.x;
+    mesh.normals[v_offset + 7] = normal.y;
+    mesh.normals[v_offset + 8] = normal.z;
     mesh.texcoords[uv_offset + 4] = uv3.x;
     mesh.texcoords[uv_offset + 5] = uv3.y;
     mesh.colors[clr_offset + 8] = t.color.r;
@@ -763,6 +766,11 @@ msc_render :: proc(using self: ^MSCObject) {
             rl.DrawLine3D(t[0], t[1], rl.YELLOW);
             rl.DrawLine3D(t[0], t[2], rl.YELLOW);
             rl.DrawLine3D(t[1], t[2], rl.YELLOW);
+
+            normal := surface_normal(t);
+            rl.DrawLine3D(t[0], t[0] + normal, rl.RED);
+            rl.DrawLine3D(t[1], t[1] + normal, rl.RED);
+            rl.DrawLine3D(t[2], t[2] + normal, rl.RED);
         }
 
         draw_cube_wireframe(
