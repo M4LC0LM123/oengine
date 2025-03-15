@@ -307,7 +307,7 @@ tri_recalc_uvs :: proc(t: ^TriangleCollider, #any_int uv_rot: i32 = 0) {
 }
 
 msc_gen_mesh :: proc(using self: ^MSCObject) {
-    mesh.triangleCount = i32(len(tris)) * 2;
+    mesh.triangleCount = i32(len(tris));
     mesh.vertexCount = mesh.triangleCount * 3;
     allocate_mesh(&mesh);
 
