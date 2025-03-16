@@ -89,7 +89,6 @@ Mouse :: enum u32 {
 }
 
 // mouse
-
 mouse_pressed :: proc(button: Mouse) -> bool {
     @static m_state: u32;
     m_state = sdl.GetMouseState(nil, nil);
@@ -140,4 +139,22 @@ mouse_pos :: proc() -> Vec2 {
     x, y: i32;
     sdl.GetMouseState(&x, &y);
     return Vec2 {f32(x), f32(y)};
+}
+
+mouse_global_pos :: proc() -> Vec2 {
+    x, y: i32;
+    sdl.GetGlobalMouseState(&x, &y);
+    return Vec2 {f32(x), f32(y)};
+}
+
+set_mouse_pos :: proc(v: Vec2) {
+    sdl.WarpMouseInWindow(window._handle, i32(v.x), i32(v.y));
+}
+
+show_cursor :: proc() -> i32{
+    return sdl.ShowCursor(sdl.ENABLE);
+}
+
+hide_cursor :: proc() -> i32 {
+    return sdl.ShowCursor(sdl.DISABLE);
 }

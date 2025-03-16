@@ -5,11 +5,6 @@ import oe "../oengine"
 import "../oengine/gl"
 import "core:math"
 
-// Camera variables
-camera_pos: [3]f32 = {0, 0, 3}; // Camera position
-camera_target: [3]f32 = {0, 0, 0}; // Looking at origin
-camera_up: [3]f32 = {0, 1, 0}; // Up direction
-
 main :: proc() {
     oe.w_create();
     oe.w_set_title("gejm");
@@ -22,59 +17,29 @@ main :: proc() {
     gl.Enable(gl.CULL_FACE);
     gl.CullFace(gl.BACK);
 
-    // Set up the projection matrix
-    gl.MatrixMode(gl.PROJECTION);
-    gl.LoadIdentity();
-
-    // Define perspective manually using glFrustum
-    near: f64 = 0.001;
-    far: f64 = 100.0;
-    fov: f64 = 60.0;
-    aspect: f64 = f64(oe.w_render_width()) / f64(oe.w_render_height());
-    top: f64 = near * math.tan(fov * 0.5 * oe.Deg2Rad);
-    bottom: f64 = -top;
-    right: f64 = top * aspect;
-    left: f64 = -right;
-
-    gl.Frustum(left, right, bottom, top, near, far);
-
-    gl.MatrixMode(gl.MODELVIEW);
-    gl.LoadIdentity();
+    camera := oe.cm_init({0, 0, 3});
+    mouse_locked := false;
 
     for (oe.w_tick()) {
-        // Camera movement
-        move_speed: f32 = 5;
-        if oe.key_down(.W) {
-            camera_pos[2] -= move_speed * oe.w_delta_time(); // Move forward
+        if (oe.key_pressed(.ESCAPE)) {
+            mouse_locked = !mouse_locked;
         }
-        if oe.key_down(.S) {
-            camera_pos[2] += move_speed * oe.w_delta_time(); // Move backward
-        }
-        if oe.key_down(.A) {
-            camera_pos[0] -= move_speed * oe.w_delta_time(); // Move left
-        }
-        if oe.key_down(.D) {
-            camera_pos[0] += move_speed * oe.w_delta_time(); // Move right
-        }
+
+        oe.cm_update(&camera);
+        oe.cm_set_fps(&camera, 0.1, mouse_locked);
+        oe.cm_set_fps_controls(&camera, 10, mouse_locked, true);
+        oe.cm_default_fps_matrix(&camera);
 
         // Update rotation
         @static rotation: f32;
-        rotation += 10 * oe.w_delta_time();
+        // rotation += 10 * oe.w_delta_time();
 
         // Render
         oe.w_begin_render();
         gl.ClearColor(0.1, 0.1, 0.1, 1);
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        gl.MatrixMode(gl.PROJECTION);
-        gl.LoadIdentity();
-        gl.Frustum(left, right, bottom, top, near, far);
-
-        gl.MatrixMode(gl.MODELVIEW);
-        gl.LoadIdentity();
-        mat := oe.mat4_to_arr(oe.mat4_look_at(camera_pos, camera_target, camera_up));
-        gl.MultMatrixf(&mat[0]);
-        gl.Translatef(-camera_pos.x, -camera_pos.y, -camera_pos.z);
+        oe.cm_begin(camera);
 
         gl.Enable(gl.LIGHTING);
         gl.Enable(gl.LIGHT0);
@@ -138,7 +103,7 @@ main :: proc() {
 
         gl.End();
 
-        gl.PopMatrix();
+        oe.cm_end();
 
         gl.Disable(gl.LIGHTING);
         oe.w_end_render();

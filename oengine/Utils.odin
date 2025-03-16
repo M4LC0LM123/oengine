@@ -294,6 +294,32 @@ mat4_rotate_XYZ :: proc(x, y, z: f32) -> Mat4 {
     return res;
 }
 
+mat4_multiply :: proc(a, b: Mat4) -> Mat4 {
+    result: Mat4;
+
+    result.m0  = a.m0 * b.m0 + a.m4 * b.m1 + a.m8  * b.m2 + a.m12 * b.m3;
+    result.m1  = a.m1 * b.m0 + a.m5 * b.m1 + a.m9  * b.m2 + a.m13 * b.m3;
+    result.m2  = a.m2 * b.m0 + a.m6 * b.m1 + a.m10 * b.m2 + a.m14 * b.m3;
+    result.m3  = a.m3 * b.m0 + a.m7 * b.m1 + a.m11 * b.m2 + a.m15 * b.m3;
+
+    result.m4  = a.m0 * b.m4 + a.m4 * b.m5 + a.m8  * b.m6 + a.m12 * b.m7;
+    result.m5  = a.m1 * b.m4 + a.m5 * b.m5 + a.m9  * b.m6 + a.m13 * b.m7;
+    result.m6  = a.m2 * b.m4 + a.m6 * b.m5 + a.m10 * b.m6 + a.m14 * b.m7;
+    result.m7  = a.m3 * b.m4 + a.m7 * b.m5 + a.m11 * b.m6 + a.m15 * b.m7;
+
+    result.m8  = a.m0 * b.m8 + a.m4 * b.m9 + a.m8  * b.m10 + a.m12 * b.m11;
+    result.m9  = a.m1 * b.m8 + a.m5 * b.m9 + a.m9  * b.m10 + a.m13 * b.m11;
+    result.m10 = a.m2 * b.m8 + a.m6 * b.m9 + a.m10 * b.m10 + a.m14 * b.m11;
+    result.m11 = a.m3 * b.m8 + a.m7 * b.m9 + a.m11 * b.m10 + a.m15 * b.m11;
+
+    result.m12 = a.m0 * b.m12 + a.m4 * b.m13 + a.m8  * b.m14 + a.m12 * b.m15;
+    result.m13 = a.m1 * b.m12 + a.m5 * b.m13 + a.m9  * b.m14 + a.m13 * b.m15;
+    result.m14 = a.m2 * b.m12 + a.m6 * b.m13 + a.m10 * b.m14 + a.m14 * b.m15;
+    result.m15 = a.m3 * b.m12 + a.m7 * b.m13 + a.m11 * b.m14 + a.m15 * b.m15;
+
+    return result;
+}
+
 mat4_to_rl_mat :: proc(mat: Mat4) -> rl.Matrix {
     using mat;
     return rl.Matrix {
