@@ -20,6 +20,7 @@ WORLD_SECTOR_SIZE :: WORLD_SIZE / SECTOR_SIZE
 
 TriangleCollider :: struct {
     using pts: [3]Vec3,
+    normal: Vec3,
     color: Color,
     texture_tag: string,
     rot: i32,

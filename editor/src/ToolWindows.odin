@@ -81,7 +81,7 @@ msc_tool :: proc(ct: CameraTool) {
     if (oe.gui_button("Triangle plane", 10, 10, BUTTON_WIDTH, 30)) {
         msc := msc_check(new_instance);
 
-        oe.msc_append_tri(msc, {}, {1, 0, 0}, {0, 1, 0}, msc_target_pos(ct));
+        oe.msc_append_tri(msc, {}, {1, 0, 0}, {0, 1, 0}, msc_target_pos(ct), oe.surface_normal({{}, {1, 0, 0}, {0, 1, 0}}));
     }
 
     if (oe.gui_button("Plane", 10, 50, BUTTON_WIDTH, 30)) {

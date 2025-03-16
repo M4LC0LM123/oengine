@@ -234,9 +234,10 @@ msc_append_tri :: proc(
         color: Color = WHITE, 
         texture_tag: string = "", 
         is_lit: bool = true, 
-        use_fog: bool = OE_FAE, rot: i32 = 0) {
+        use_fog: bool = OE_FAE, rot: i32 = 0, normal: Vec3 = {}) {
     t := new(TriangleCollider);
     t.pts = {a + offs, b + offs, c + offs};
+    t.normal = normal;
     t.color = color;
     t.texture_tag = texture_tag;
     t.rot = rot;
@@ -258,9 +259,15 @@ msc_append_tri :: proc(
     _aabb = tris_to_aabb(tris);
 }
 
-msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {}, color : Color = WHITE, texture_tag: string = "", is_lit: bool = true, use_fog: bool = OE_FAE, rot: i32 = 0) {
+msc_append_quad :: proc(
+    using self: ^MSCObject, 
+    a, b, c, d: Vec3, 
+    offs: Vec3 = {}, color: Color = WHITE, 
+    texture_tag: string = "", is_lit: bool = true, 
+    use_fog: bool = OE_FAE, rot: i32 = 0) {
     t := new(TriangleCollider);
     t.pts = {b + offs, a + offs, c + offs};
+    t.normal = surface_normal(t.pts);
     t.color = color;
     t.texture_tag = texture_tag;
     t.rot = rot;
@@ -280,6 +287,7 @@ msc_append_quad :: proc(using self: ^MSCObject, a, b, c, d: Vec3, offs: Vec3 = {
 
     t2 := new(TriangleCollider);
     t2.pts = {b + offs, c + offs, d + offs};
+    t2.normal = surface_normal(t2.pts);
     t2.color = color;
     t2.texture_tag = texture_tag;
     t2.rot = rot;
@@ -338,8 +346,7 @@ gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i3
     uv_offset := index * 6;
     clr_offset := index * 12;
 
-    normal := surface_normal(t);
-    flipped_normal := -normal;
+    normal := t.normal;
 
     mesh.vertices[v_offset + 0] = verts[0].x;
     mesh.vertices[v_offset + 1] = verts[0].y;
@@ -399,7 +406,13 @@ msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}) {
             v1 := Vec3 { vertices[(j + 1) * 3], vertices[(j + 1) * 3 + 1], vertices[(j + 1) * 3 + 2] };
             v2 := Vec3 { vertices[(j + 2) * 3], vertices[(j + 2) * 3 + 1], vertices[(j + 2) * 3 + 2] };
 
-            msc_append_tri(self, v0, v1, v2, offs, texture_tag = tag);
+            normal := Vec3 { 
+                mesh.normals[j * 3], 
+                mesh.normals[j * 3 + 1], 
+                mesh.normals[j * 3 + 2]
+            };
+
+            msc_append_tri(self, v0, v1, v2, offs, texture_tag = tag, normal = normal);
         } 
     }
 }
@@ -746,7 +759,7 @@ msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {
         rot = i32(obj.(json.Object)["rot"].(json.Float));
     }
 
-    msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag), is_lit = is_lit, use_fog = use_fog, rot = rot);
+    msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag), is_lit = is_lit, use_fog = use_fog, rot = rot, normal = surface_normal(tri));
 }
 
 msc_render :: proc(using self: ^MSCObject) {
@@ -767,7 +780,7 @@ msc_render :: proc(using self: ^MSCObject) {
             rl.DrawLine3D(t[0], t[2], rl.YELLOW);
             rl.DrawLine3D(t[1], t[2], rl.YELLOW);
 
-            normal := surface_normal(t);
+            normal := tri.normal;
             rl.DrawLine3D(t[0], t[0] + normal, rl.RED);
             rl.DrawLine3D(t[1], t[1] + normal, rl.RED);
             rl.DrawLine3D(t[2], t[2] + normal, rl.RED);
