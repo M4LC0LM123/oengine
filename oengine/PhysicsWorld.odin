@@ -26,6 +26,7 @@ TriangleCollider :: struct {
     rot: i32,
     is_lit: bool,
     use_fog: bool,
+    flipped: bool,
 }
 
 PhysicsWorld :: struct {

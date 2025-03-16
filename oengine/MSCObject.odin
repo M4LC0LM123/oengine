@@ -234,7 +234,8 @@ msc_append_tri :: proc(
         color: Color = WHITE, 
         texture_tag: string = "", 
         is_lit: bool = true, 
-        use_fog: bool = OE_FAE, rot: i32 = 0, normal: Vec3 = {}) {
+        use_fog: bool = OE_FAE, rot: i32 = 0, normal: Vec3 = {},
+        flipped := false) {
     t := new(TriangleCollider);
     t.pts = {a + offs, b + offs, c + offs};
     t.normal = normal;
@@ -243,6 +244,11 @@ msc_append_tri :: proc(
     t.rot = rot;
     t.is_lit = is_lit;
     t.use_fog = use_fog;
+    t.flipped = flipped;
+
+    if (flipped) {
+        t.normal = -t.normal;
+    }
 
     add := true;
     for i in 0..<len(tris) {
@@ -264,7 +270,8 @@ msc_append_quad :: proc(
     a, b, c, d: Vec3, 
     offs: Vec3 = {}, color: Color = WHITE, 
     texture_tag: string = "", is_lit: bool = true, 
-    use_fog: bool = OE_FAE, rot: i32 = 0) {
+    use_fog: bool = OE_FAE, rot: i32 = 0,
+    flipped: bool = false) {
     t := new(TriangleCollider);
     t.pts = {b + offs, a + offs, c + offs};
     t.normal = surface_normal(t.pts);
@@ -273,6 +280,11 @@ msc_append_quad :: proc(
     t.rot = rot;
     t.is_lit = is_lit;
     t.use_fog = use_fog;
+    t.flipped = flipped;
+
+    if (flipped) {
+        t.normal = -t.normal;
+    }
 
     add := true;
     for i in 0..<len(tris) {
@@ -293,6 +305,11 @@ msc_append_quad :: proc(
     t2.rot = rot;
     t2.is_lit = is_lit;
     t2.use_fog = use_fog;
+    t2.flipped = flipped;
+
+    if (flipped) {
+        t2.normal = -t2.normal;
+    }
 
     add2 := true;
     for i in 0..<len(tris) {
@@ -433,6 +450,7 @@ msc_to_json :: proc(
         is_lit: bool,
         use_fog: bool,
         rot: i32,
+        flipped: bool,
     }
 
     i := 0;
@@ -444,6 +462,7 @@ msc_to_json :: proc(
             is_lit = t.is_lit,
             use_fog = t.use_fog,
             rot = t.rot,
+            flipped = t.flipped,
         };
         data, ok := json.marshal(tm, {pretty = true});
 
@@ -759,7 +778,16 @@ msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {
         rot = i32(obj.(json.Object)["rot"].(json.Float));
     }
 
-    msc_append_tri(self, tri[0], tri[1], tri[2], color = color, texture_tag = strs.clone(tex_tag), is_lit = is_lit, use_fog = use_fog, rot = rot, normal = surface_normal(tri));
+    flipped: bool;
+    if (obj.(json.Object)["flipped"] != nil) {
+        flipped = obj.(json.Object)["flipped"].(json.Boolean);
+    }
+
+    msc_append_tri(
+        self, tri[0], tri[1], tri[2], 
+        color = color, texture_tag = strs.clone(tex_tag), 
+        is_lit = is_lit, use_fog = use_fog, 
+        rot = rot, normal = surface_normal(tri), flipped = flipped);
 }
 
 msc_render :: proc(using self: ^MSCObject) {
@@ -784,6 +812,9 @@ msc_render :: proc(using self: ^MSCObject) {
             rl.DrawLine3D(t[0], t[0] + normal, rl.RED);
             rl.DrawLine3D(t[1], t[1] + normal, rl.RED);
             rl.DrawLine3D(t[2], t[2] + normal, rl.RED);
+
+            centroid := (t[0] + t[1] + t[2]) / 3;
+            rl.DrawLine3D(centroid, centroid + normal, RED);
         }
 
         draw_cube_wireframe(

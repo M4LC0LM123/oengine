@@ -206,6 +206,12 @@ texture_tool :: proc(ct: CameraTool) {
         oe.gui.text_boxes["TilingTextBox"].text = "";
     }
 
+    if (oe.gui_button("FLIP", oe.gui_window("Texture tool").width - 40, 130, 30, 30)) {
+        active := oe.ecs_world.physics.mscs.data[ct._active_msc_id].tris[ct._active_id];
+        active.flipped = !active.flipped;
+        active.normal = -active.normal;
+    }
+
     COLS :: 6
     rows := i32(math.ceil(f32(texs.len) / f32(COLS)));
     w: f32 = 30;
