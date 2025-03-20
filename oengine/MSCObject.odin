@@ -451,6 +451,7 @@ msc_to_json :: proc(
         use_fog: bool,
         rot: i32,
         flipped: bool,
+        normal: Vec3,
     }
 
     i := 0;
@@ -463,6 +464,7 @@ msc_to_json :: proc(
             use_fog = t.use_fog,
             rot = t.rot,
             flipped = t.flipped,
+            normal = t.normal,
         };
         data, ok := json.marshal(tm, {pretty = true});
 
@@ -783,11 +785,30 @@ msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {
         flipped = obj.(json.Object)["flipped"].(json.Boolean);
     }
 
-    msc_append_tri(
-        self, tri[0], tri[1], tri[2], 
-        color = color, texture_tag = strs.clone(tex_tag), 
-        is_lit = is_lit, use_fog = use_fog, 
-        rot = rot, normal = surface_normal(tri), flipped = flipped);
+    normal: Vec3;
+    set_normal := false;
+    if (obj.(json.Object)["normal"] != nil) {
+        normal = json_vec3_to_vec3(obj.(json.Object)["normal"].(json.Array));
+        set_normal = true;
+    }
+
+    if (set_normal) {
+        msc_append_tri(
+            self, tri[0], tri[1], tri[2], 
+            color = color, texture_tag = strs.clone(tex_tag), 
+            is_lit = is_lit, use_fog = use_fog, 
+            rot = rot, normal = normal, 
+            flipped = flipped
+        );
+    } else {
+        msc_append_tri(
+            self, tri[0], tri[1], tri[2], 
+            color = color, texture_tag = strs.clone(tex_tag), 
+            is_lit = is_lit, use_fog = use_fog, 
+            rot = rot, normal = surface_normal(tri), 
+            flipped = flipped
+        );
+    }
 }
 
 msc_render :: proc(using self: ^MSCObject) {
