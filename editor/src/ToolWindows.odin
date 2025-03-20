@@ -72,13 +72,15 @@ registry_tool :: proc(ct: CameraTool) {
 
 msc_tool :: proc(ct: CameraTool) {
     oe.gui_begin("MSC tool", x = 0, y = WINDOW_HEIGHT + oe.gui_top_bar_height, h = WINDOW_HEIGHT, can_exit = false);
+    wr := oe.gui_rect(oe.gui_window("MSC tool"));
 
     @static new_instance: bool = false;
     // new_instance = oe.gui_tick(new_instance, 10, 10, 30, 30);
     //
     // oe.gui_text("New instance", 20, 50, 10);
 
-    if (oe.gui_button("Triangle plane", 10, 10, BUTTON_WIDTH, 30)) {
+    grid := oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Triangle plane", grid.x, grid.y, grid.width, grid.height)) {
         msc := msc_check(new_instance);
 
         oe.msc_append_tri(
@@ -87,23 +89,31 @@ msc_tool :: proc(ct: CameraTool) {
             normal = oe.surface_normal({{}, {1, 0, 0}, {0, 1, 0}}));
     }
 
-    if (oe.gui_button("Plane", 10, 50, BUTTON_WIDTH, 30)) {
+    grid = oe.gui_grid(1, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Plane", grid.x, grid.y, grid.width, grid.height)) {
         msc := msc_check(new_instance);
 
         oe.msc_append_quad(msc, {}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0}, msc_target_pos(ct));
     }
 
-    if (oe.gui_button("Cuboid", 10, 90, BUTTON_WIDTH, 30)) {
+    grid = oe.gui_grid(2, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Cuboid", grid.x, grid.y, grid.width, grid.height)) {
         msc := msc_check(new_instance);
        
         msc_cuboid(msc, msc_target_pos(ct));
     }
 
-    if (oe.gui_button("Recalc aabbs", 10, 130, BUTTON_WIDTH, 30)) {
+    grid = oe.gui_grid(3, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Recalc aabbs", grid.x, grid.y, grid.width, grid.height)) {
         for i in 0..<oe.ecs_world.physics.mscs.len {
             msc := oe.ecs_world.physics.mscs.data[i];
             msc._aabb = oe.tris_to_aabb(msc.tris);
         }
+    }
+
+    grid = oe.gui_grid(4, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Clear", grid.x, grid.y, grid.width, grid.height)) {
+        fa.clear(&oe.ecs_world.physics.mscs);
     }
 
     oe.gui_end();
@@ -242,10 +252,12 @@ texture_tool :: proc(ct: CameraTool) {
 
 data_id_tool :: proc(ct: CameraTool) {
     oe.gui_begin("DataID tool", x = f32(oe.w_render_width()) - 300, y = 0, can_exit = false);
+    wr := oe.gui_rect(oe.gui_window("DataID tool"));
 
     @static tag: string;
     @static id: u32;
-    if (oe.gui_button("Add dataID", 10, 10, BUTTON_WIDTH, 30)) {
+    grid := oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Add dataID", grid.x, grid.y, grid.width, grid.height)) {
         if (tag == "") do tag = "default";
 
         reg_tag := oe.str_add("data_id_", tag);
@@ -266,11 +278,24 @@ data_id_tool :: proc(ct: CameraTool) {
         oe.dbg_log(oe.str_add({"Added data id of tag: ", tag, " and id: ", oe.str_add("", id)}));
     }
 
-    tag = oe.gui_text_box("TagTextBox", 10, 50, BUTTON_WIDTH, 30);
-    oe.gui_text("Tag", 25, BUTTON_WIDTH + 20, 50);
+    grid = oe.gui_grid(1, 0, 40, wr.width * 0.75, 10);
+    tag = oe.gui_text_box("TagTextBox", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(1, 1, 40, wr.width * 0.75, 10);
+    oe.gui_text("Tag", 25, grid.x, grid.y);
 
-    id_parse := oe.gui_text_box("IDTextBox", 10, 90, BUTTON_WIDTH, 30);
-    oe.gui_text("ID", 25, BUTTON_WIDTH + 20, 90);
+    grid = oe.gui_grid(2, 0, 40, wr.width * 0.75, 10);
+    id_parse := oe.gui_text_box("IDTextBox", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(2, 1, 40, wr.width * 0.75, 10);
+    oe.gui_text("ID", 25, grid.x, grid.y);
+
+    grid = oe.gui_grid(3, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Clear", grid.x, grid.y, grid.width, grid.height)) {
+        dids := oe.get_reg_data_ids();
+        defer delete(dids);
+        for did in dids {
+            oe.unreg_asset(did.reg_tag);
+        }
+    }
 
     parsed, ok := sc.parse_int(id_parse);
     if (ok) do id = u32(parsed);
