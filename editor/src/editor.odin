@@ -136,4 +136,16 @@ render :: proc() {
         oe.draw_cube_wireframe(t.position, t.rotation, t.scale, oe.BLUE); 
     }
 
+    dids := oe.get_reg_data_ids();
+    defer delete(dids);
+    for &did in dids {
+        for i in 0..<did.comps.len {
+            comp := did.comps.data[i];
+            if (comp.type == "SimpleMesh") {
+                sm := oe.get_component_data(comp.tag, oe.SimpleMesh);
+                oe.sm_custom_render(&did.transform, sm);
+            }
+        }
+    }
+
 }
