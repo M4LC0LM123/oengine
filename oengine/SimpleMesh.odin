@@ -311,7 +311,7 @@ sm_parse :: proc(asset_json: json.Object) -> rawptr {
 
     if (shape == .MODEL) {
         model_tag := asset_json["model"].(json.String);
-        model := get_asset_var(model_tag, Model);
+        model := model_clone(get_asset_var(model_tag, Model));
 
         sm := sm_init(model, color);
         sm.is_lit = is_lit;

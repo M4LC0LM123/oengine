@@ -47,7 +47,7 @@ has_component :: proc(ent: ^Entity, $T: typeid) -> bool {
 }
 
 remove_component :: proc(ent: ^Entity, $T: typeid) {
-    fa.map_set(&ent.components, T, nil);
+    fa.map_remove(&ent.components, typeid_of(T));
 }
 
 add_components_2 :: proc(entity: ^Entity, a:$A, b:$B) -> (^A, ^B) {

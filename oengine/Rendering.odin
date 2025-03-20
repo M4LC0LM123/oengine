@@ -539,17 +539,27 @@ draw_model :: proc(
     is_lit: bool = false,
     offset: Transform = {{}, {}, {1, 1, 1}},
 ) {
-    rl.rlPushMatrix();
-    rl.rlTranslatef(transform.position.x, transform.position.y, transform.position.z);
-    rl.rlRotatef(transform.rotation.x, 1, 0, 0);
-    rl.rlRotatef(transform.rotation.y, 0, 1, 0);
-    rl.rlRotatef(transform.rotation.z, 0, 0, 1);
-    rl.rlScalef(transform.scale.x, transform.scale.y, transform.scale.z);
+    rotation := transform.rotation + offset.rotation;
+    rotation_axis: Vec3;
+    angle: f32;
+    if (rotation.x != 0) { 
+        angle = rotation.x;
+        rotation_axis.x = 1;
+    }
+    if (rotation.y != 0) { 
+        angle = rotation.y;
+        rotation_axis.y = 1;
+    }
+    if (rotation.z != 0) { 
+        angle = rotation.z;
+        rotation_axis.z = 1;
+    }
+    if (rotation_axis.x + rotation_axis.y + rotation_axis.z > 1) {
+        rotation_axis = {};
+    } 
 
-    if (is_lit) { rlg.DrawModelEx(model, offset.position, {}, 0, offset.scale, color); }
-    else { rl.DrawModelEx(model, offset.position, {}, 0, offset.scale, color); }
-
-    rl.rlPopMatrix();
+    if (is_lit) { rlg.DrawModelEx(model, transform.position + offset.position, rotation_axis, angle, transform.scale * offset.scale, color); }
+    else { rl.DrawModelEx(model, transform.position + offset.position, rotation_axis, angle, transform.scale * offset.scale, color); }
 }
 
 shape_transform_renders := [?]proc(Texture, Transform, Color) {
