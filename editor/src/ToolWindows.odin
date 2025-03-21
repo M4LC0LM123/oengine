@@ -310,10 +310,14 @@ data_id_mod_tool :: proc(ct: CameraTool) {
         h = 400,
         active = false
     );
+    wr := oe.gui_rect(oe.gui_window("DataID modifier"));
 
     @static tag: string;
     @static id: u32;
-    if (oe.gui_button("Modify", 10, 10, BUTTON_WIDTH, 30)) {
+    @static position: oe.Vec3;
+
+    grid := oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Modify", grid.x, grid.y, grid.width, grid.height)) {
         if (tag == "") do tag = "default";
 
         reg_tag := oe.str_add("data_id_", tag);
@@ -322,6 +326,9 @@ data_id_mod_tool :: proc(ct: CameraTool) {
         }
 
         t := oe.get_asset_var(editor_data.active_data_id, oe.DataID).transform;
+        t.position = position;
+
+        comps := oe.get_asset_var(editor_data.active_data_id, oe.DataID).comps;
 
         // actually just reregistering
         oe.unreg_asset(editor_data.active_data_id);
@@ -334,22 +341,63 @@ data_id_mod_tool :: proc(ct: CameraTool) {
                 tag, 
                 id, 
                 t,
-                fa.fixed_array(oe.ComponentMarshall, 16),
+                comps,
             }
         );
         oe.dbg_log(oe.str_add({"Modified data id of tag: ", tag, " and id: ", oe.str_add("", id)}));
     }
 
-    tag = oe.gui_text_box("ModTagTextBox", 10, 50, BUTTON_WIDTH, 30);
-    oe.gui_text("Tag", 25, BUTTON_WIDTH + 20, 50);
+    grid = oe.gui_grid(1, 0, 40, wr.width * 0.75, 10);
+    tag = oe.gui_text_box("ModTagTextBox", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(1, 1, 40, wr.width * 0.75, 10);
+    oe.gui_text("Tag", 25, grid.x, grid.y);
 
-    id_parse := oe.gui_text_box("ModIDTextBox", 10, 90, BUTTON_WIDTH, 30);
-    oe.gui_text("ID", 25, BUTTON_WIDTH + 20, 90);
+    grid = oe.gui_grid(2, 0, 40, wr.width * 0.75, 10);
+    id_parse := oe.gui_text_box("ModIDTextBox", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(2, 1, 40, wr.width * 0.75, 10);
+    oe.gui_text("ID", 25, grid.x, grid.y);
 
     parsed, ok := sc.parse_int(id_parse);
     if (ok) do id = u32(parsed);
 
-    if (oe.gui_button("Components", 10, 130, BUTTON_WIDTH, 30)) {
+    POS_FACTOR :: 0.25
+    grid = oe.gui_grid(3, 0, 40, wr.width * POS_FACTOR, 10);
+    x_parse := oe.gui_text_box("ModIDPosX", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(3, 1, 40, wr.width * POS_FACTOR, 10);
+    y_parse := oe.gui_text_box("ModIDPosY", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(3, 2, 40, wr.width * POS_FACTOR, 10);
+    z_parse := oe.gui_text_box("ModIDPosZ", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(3, 3, 40, wr.width * POS_FACTOR, 10);
+    oe.gui_text("Pos", 25, grid.x, grid.y);
+
+    _x, x_ok := sc.parse_f32(x_parse);
+    if (x_ok) { position.x = _x; }
+    _y, y_ok := sc.parse_f32(y_parse);
+    if (y_ok) { position.y = _y; }
+    _z, z_ok := sc.parse_f32(z_parse);
+    if (z_ok) { position.z = _z; }
+
+    grid = oe.gui_grid(4, 0, 40, wr.width * POS_FACTOR, 10);
+    if (oe.gui_button("CX", grid.x, grid.y, grid.width, grid.height)) {
+        oe.gui.text_boxes["ModIDPosX"].text = oe.str_add(
+            "", oe.ecs_world.camera.position.x
+        );
+    }
+    grid = oe.gui_grid(4, 1, 40, wr.width * POS_FACTOR, 10);
+    if (oe.gui_button("CY", grid.x, grid.y, grid.width, grid.height)) {
+        oe.gui.text_boxes["ModIDPosY"].text = oe.str_add(
+            "", oe.ecs_world.camera.position.y
+        );
+    }
+    grid = oe.gui_grid(4, 2, 40, wr.width * POS_FACTOR, 10);
+    if (oe.gui_button("CZ", grid.x, grid.y, grid.width, grid.height)) {
+        oe.gui.text_boxes["ModIDPosZ"].text = oe.str_add(
+            "", oe.ecs_world.camera.position.z
+        );
+    }
+
+    grid = oe.gui_grid(5, 0, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Components", grid.x, grid.y, grid.width, grid.height)) {
         oe.gui.windows["Add components"].active = true;
     }
 
@@ -362,7 +410,9 @@ data_id_mod_tool :: proc(ct: CameraTool) {
                 did.comps.data[i].type
             });
 
-            oe.gui_text(t, 25, 10, 170 + f32(i) * 25);
+
+            grid = oe.gui_grid(i + 6, 0, 40, wr.width * 0.75, 10);
+            oe.gui_text(t, 25, grid.x, grid.y);
         }
     }
 

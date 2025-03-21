@@ -91,7 +91,7 @@ ct_render_ortho :: proc(using self: ^CameraTool) {
 
     dids := oe.get_reg_data_ids();
     for i in 0..<len(dids) {
-        did_render_ortho(self, &dids[i]); 
+        did_render_ortho(self, &dids[i]);
     }
 
     for msc_id in 0..<oe.ecs_world.physics.mscs.len {

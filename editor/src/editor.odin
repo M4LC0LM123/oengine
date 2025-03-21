@@ -107,6 +107,9 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]oe.D
         oe.gui.windows["DataID modifier"].active = true;
         oe.gui.text_boxes["ModTagTextBox"].text = did.tag;
         oe.gui.text_boxes["ModIDTextBox"].text = oe.str_add("", did.id);
+        oe.gui.text_boxes["ModIDPosX"].text = oe.str_add("", did.transform.position.x);
+        oe.gui.text_boxes["ModIDPosY"].text = oe.str_add("", did.transform.position.y);
+        oe.gui.text_boxes["ModIDPosZ"].text = oe.str_add("", did.transform.position.z);
     }
 }
 
@@ -115,6 +118,36 @@ update :: proc() {
         if (oe.key_pressed(.DELETE)) {
             oe.unreg_asset(editor_data.active_data_id);
             editor_data.active_data_id = oe.STR_EMPTY;
+        }
+
+        if (oe.key_down(.LEFT_ALT) && oe.key_pressed(.D)) {
+            did := oe.get_asset_var(editor_data.active_data_id, oe.DataID);
+            reg_tag := did.reg_tag;
+            if (oe.asset_manager.registry[reg_tag] != nil) {
+                reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
+            }
+
+            tag := str.clone(did.tag);
+
+            t := did.transform;
+            t.position.x += 1.5;
+
+            comps := did.comps;
+
+            oe.reg_asset(
+                reg_tag, 
+                oe.DataID {
+                    reg_tag, 
+                    tag, 
+                    did.id,
+                    t,
+                    comps,
+                }
+            );
+            oe.dbg_log(oe.str_add({
+                "Added data id of tag: ", tag, " and id: ", oe.str_add("", did.id)}
+            ));
+
         }
     }
 
