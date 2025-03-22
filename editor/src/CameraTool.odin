@@ -67,7 +67,7 @@ ct_render :: proc(using self: ^CameraTool) {
         rl.BeginMode3D(camera_perspective.rl_matrix);
         oe.draw_debug_axis(3);
         oe.ew_render();
-        render();
+        render(self^);
         render_tri(self);
         rl.EndMode3D();
     } else {

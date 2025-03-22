@@ -159,34 +159,36 @@ update :: proc(camera_tool: CameraTool) {
                 msc := oe.ecs_world.physics.mscs.data[camera_tool._active_msc_id];
                 coll, arr := oe.rc_colliding_tris(mouse_ray, msc);
 
-                pos := arr[0].point;
+                if (len(arr) > 0) {
+                    pos := arr[0].point;
 
-                did := oe.get_asset_var(editor_data.active_data_id, oe.DataID);
-                reg_tag := did.reg_tag;
-                if (oe.asset_manager.registry[reg_tag] != nil) {
-                    reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
-                }
-
-                tag := str.clone(did.tag);
-
-                t := did.transform;
-                t.position = pos;
-
-                comps := did.comps;
-
-                oe.reg_asset(
-                    reg_tag, 
-                    oe.DataID {
-                        reg_tag, 
-                        tag, 
-                        did.id,
-                        t,
-                        comps,
+                    did := oe.get_asset_var(editor_data.active_data_id, oe.DataID);
+                    reg_tag := did.reg_tag;
+                    if (oe.asset_manager.registry[reg_tag] != nil) {
+                        reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
                     }
-                );
-                oe.dbg_log(oe.str_add({
-                    "Added data id of tag: ", tag, " and id: ", oe.str_add("", did.id)}
-                ));
+
+                    tag := str.clone(did.tag);
+
+                    t := did.transform;
+                    t.position = pos;
+
+                    comps := did.comps;
+
+                    oe.reg_asset(
+                        reg_tag, 
+                        oe.DataID {
+                            reg_tag, 
+                            tag, 
+                            did.id,
+                            t,
+                            comps,
+                        }
+                    );
+                    oe.dbg_log(oe.str_add({
+                        "Added data id of tag: ", tag, " and id: ", oe.str_add("", did.id)}
+                    ));
+                }
             }
         }
     }
@@ -196,7 +198,7 @@ update :: proc(camera_tool: CameraTool) {
     }
 }
 
-render :: proc() {
+render :: proc(camera_tool: CameraTool) {
     if (editor_data.hovered_data_id != oe.STR_EMPTY) { 
         did := oe.get_asset_var(editor_data.hovered_data_id, oe.DataID);
         t := did.transform;
@@ -207,6 +209,39 @@ render :: proc() {
         did := oe.get_asset_var(editor_data.active_data_id, oe.DataID);
         t := did.transform;
         oe.draw_cube_wireframe(t.position, t.rotation, t.scale, oe.BLUE); 
+
+        if (oe.key_down(.LEFT_ALT)) {
+            mouse_ray := oe.get_mouse_rc(camera_tool.camera_perspective);
+
+            if (camera_tool._active_id != ACTIVE_EMPTY && 
+                camera_tool._active_msc_id != ACTIVE_EMPTY) {
+                msc := oe.ecs_world.physics.mscs.data[camera_tool._active_msc_id];
+                coll, arr := oe.rc_colliding_tris(mouse_ray, msc);
+
+                if (len(arr) > 0) {
+                    pos := arr[0].point;
+
+                    did := oe.get_asset_var(editor_data.active_data_id, oe.DataID);
+                    reg_tag := did.reg_tag;
+                    if (oe.asset_manager.registry[reg_tag] != nil) {
+                        reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
+                    }
+
+                    t := did.transform;
+                    t.position = pos;
+
+                    oe.draw_cube_wireframe(t.position, t.rotation, t.scale, oe.YELLOW);
+                    for i in 0..<did.comps.len {
+                        comp := did.comps.data[i];
+                        if (comp.type == "SimpleMesh") {
+                            sm := oe.get_component_data(comp.tag, oe.SimpleMesh);
+                            oe.sm_custom_render(&t, sm);
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     dids := oe.get_reg_data_ids();
