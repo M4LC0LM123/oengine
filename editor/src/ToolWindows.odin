@@ -126,15 +126,35 @@ map_proj_tool :: proc(ct: CameraTool) {
         h = WINDOW_HEIGHT, can_exit = false);
     wr := oe.gui_rect(oe.gui_window("Map project"));
 
-    grid := oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
+    @static merge := false;
+    grid := oe.gui_grid(0, 1, 40, wr.width * 0.75, 10);
+    merge = oe.gui_tick(merge, grid.x, grid.y, 30, 30);
+
+    grid = oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Load msc", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_file();
-        if (filepath.ext(path) == ".json") {
-            msc := oe.msc_init();
-            oe.msc_from_json(msc, path);
-        } else if (filepath.ext(path) == ".obj") {
-            msc := oe.msc_init();
-            oe.msc_from_model(msc, oe.load_model(path));
+        if (merge) {
+            if (filepath.ext(path) == ".json") {
+                msc := oe.msc_init();
+                oe.msc_from_json(msc, path, false);
+
+                oe.update_msc(oe.ecs_world.physics.mscs.data[0], msc);
+                oe.remove_msc(msc);
+            } else if (filepath.ext(path) == ".obj") {
+                msc := oe.msc_init();
+                oe.msc_from_model(msc, oe.load_model(path));
+
+                oe.update_msc(oe.ecs_world.physics.mscs.data[0], msc);
+                oe.remove_msc(msc);
+            }
+        } else {
+            if (filepath.ext(path) == ".json") {
+                msc := oe.msc_init();
+                oe.msc_from_json(msc, path);
+            } else if (filepath.ext(path) == ".obj") {
+                msc := oe.msc_init();
+                oe.msc_from_model(msc, oe.load_model(path));
+            }
         }
     }
 

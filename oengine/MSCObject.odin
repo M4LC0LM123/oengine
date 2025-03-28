@@ -227,6 +227,11 @@ msc_init_atlas :: proc(using self: ^MSCObject, path: string) {
     atlas.texture = load_texture(path);
 }
 
+remove_msc :: proc(using self: ^MSCObject) {
+    fa.remove(&ecs_world.physics.mscs, fa.get_id(ecs_world.physics.mscs, self));
+    tri_count -= i32(len(tris));
+}
+
 msc_append_tri :: proc(
     using self: ^MSCObject, 
         a, b, c: Vec3, 
@@ -558,7 +563,7 @@ load_data_ids :: proc(
     file_close(file);
 }
 
-msc_from_json :: proc(using self: ^MSCObject, path: string) {
+msc_from_json :: proc(using self: ^MSCObject, path: string, load_dids := true) {
     data, ok := os.read_entire_file_from_filename(path);
     if (!ok) {
         dbg_log("Failed to open file ", DebugType.WARNING);
@@ -578,7 +583,11 @@ msc_from_json :: proc(using self: ^MSCObject, path: string) {
 
     for tag, obj in msc {
         if (strs.contains(tag, "triangle")) { msc_load_tri(self, obj); }
-        else { msc_load_data_id(strs.clone(obj.(json.Object)["tag"].(json.String)), obj); }
+        else { 
+            if (load_dids) {
+                msc_load_data_id(strs.clone(obj.(json.Object)["tag"].(json.String)), obj); 
+            }
+        }
     }
 }
 
@@ -649,6 +658,36 @@ load_map :: proc(path: string, atlas: Atlas) {
         msc.atlas = atlas;
         msc_gen_mesh(msc);
     }
+}
+
+update_msc :: proc(old, new: ^MSCObject) {
+    res := make([dynamic]^TriangleCollider);
+    tri_count -= i32(len(old.tris));
+
+    for i in 0..<len(old.tris) {
+        tri_i := old.tris[i];
+        append(&res, new_clone(tri_i^));
+        tri_count += 1;
+    }
+
+    for i in 0..<len(new.tris) {
+        tri_i := new.tris[i];
+        add := true;
+        for j in 0..<len(res) {
+            tri_j := res[j];
+            if (tri_i.pts == tri_j.pts) {
+                add = false;
+            }
+        }
+
+        if (add) {
+            append(&res, new_clone(tri_i^));
+            tri_count += 1;
+        }
+    }
+
+    old.tris = res;
+    old._aabb = tris_to_aabb(old.tris);
 }
 
 json_vec3_to_vec3 :: proc(v: json.Array) -> Vec3 {

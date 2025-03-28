@@ -131,6 +131,15 @@ main :: proc() {
     );
     oe.msc_gen_mesh(msc2);
 
+    updated := oe.msc_init();
+    oe.msc_from_json(updated, "../assets/maps/test.json");
+    updated.atlas = msc.atlas;
+    oe.update_msc(updated, msc2);
+    oe.msc_gen_mesh(updated);
+
+    oe.remove_msc(msc);
+    oe.remove_msc(msc2);
+
     light2 := oe.aent_init("light");
     light2_tr := oe.get_component(light2, oe.Transform);
     light2_tr.position = {0, 5, -35};
