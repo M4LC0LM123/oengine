@@ -43,6 +43,19 @@ aabb_collision :: proc(cube1, cube2: AABB) -> bool {
     return false;
 }
 
+point_in_aabb :: proc(point: Vec3, box: AABB) -> bool {
+    boxMinX: f32 = box.x - box.width / 2;
+    boxMaxX: f32 = box.x + box.width / 2;
+    boxMinY: f32 = box.y - box.height / 2;
+    boxMaxY: f32 = box.y + box.height / 2;
+    boxMinZ: f32 = box.z - box.depth / 2;
+    boxMaxZ: f32 = box.z + box.depth / 2;
+
+    return (point.x >= boxMinX && point.x <= boxMaxX &&
+            point.y >= boxMinY && point.y <= boxMaxY &&
+            point.z >= boxMinZ && point.z <= boxMaxZ);
+}
+
 tris_to_aabb :: proc(tris: [dynamic]^TriangleCollider) -> AABB {
     min := vec3_one() * math.F32_MAX;
     max := vec3_one() * -math.F32_MAX;
