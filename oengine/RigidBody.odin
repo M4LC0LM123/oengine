@@ -380,7 +380,7 @@ rb_loader :: proc(ent: AEntity, tag: string) {
 
     comp := get_component_data(tag, RigidBody);
     comp.id = u32(ecs_world.physics.bodies.len);
-    comp.starting = ent_tr^;
-    comp.transform = ent_tr^;
+    comp.starting = transform_add(comp.starting, ent_tr^);
+    comp.transform = comp.starting;
     add_component(ent, comp^);
 }

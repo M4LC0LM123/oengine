@@ -112,6 +112,9 @@ handle_mouse_ray :: proc(distances: ^[dynamic]f32, collided_dids: ^[dynamic]oe.D
         oe.gui.text_boxes["ModIDPosX"].text = oe.str_add("", did.transform.position.x);
         oe.gui.text_boxes["ModIDPosY"].text = oe.str_add("", did.transform.position.y);
         oe.gui.text_boxes["ModIDPosZ"].text = oe.str_add("", did.transform.position.z);
+        oe.gui.text_boxes["ModIDScaleX"].text = oe.str_add("", did.transform.scale.x);
+        oe.gui.text_boxes["ModIDScaleY"].text = oe.str_add("", did.transform.scale.y);
+        oe.gui.text_boxes["ModIDScaleZ"].text = oe.str_add("", did.transform.scale.z);
     }
 }
 

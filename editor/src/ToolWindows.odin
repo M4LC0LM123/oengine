@@ -346,7 +346,7 @@ data_id_mod_tool :: proc(ct: CameraTool) {
 
     @static tag: string;
     @static id: u32;
-    @static position: oe.Vec3;
+    @static position, scale: oe.Vec3;
 
     grid := oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Modify", grid.x, grid.y, grid.width, grid.height)) {
@@ -359,6 +359,7 @@ data_id_mod_tool :: proc(ct: CameraTool) {
 
         t := oe.get_asset_var(editor_data.active_data_id, oe.DataID).transform;
         t.position = position;
+        t.scale = scale;
 
         comps := oe.get_asset_var(editor_data.active_data_id, oe.DataID).comps;
 
@@ -428,7 +429,24 @@ data_id_mod_tool :: proc(ct: CameraTool) {
         );
     }
 
-    grid = oe.gui_grid(5, 0, 40, wr.width * 0.75, 10);
+    SCALE_FACTOR :: 0.25
+    grid = oe.gui_grid(5, 0, 40, wr.width * SCALE_FACTOR, 10);
+    sx_parse := oe.gui_text_box("ModIDScaleX", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(5, 1, 40, wr.width * SCALE_FACTOR, 10);
+    sy_parse := oe.gui_text_box("ModIDScaleY", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(5, 2, 40, wr.width * SCALE_FACTOR, 10);
+    sz_parse := oe.gui_text_box("ModIDScaleZ", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(5, 3, 40, wr.width * SCALE_FACTOR, 10);
+    oe.gui_text("Scale", 25, grid.x, grid.y);
+
+    _sx, sx_ok := sc.parse_f32(sx_parse);
+    if (sx_ok) { scale.x = _sx; }
+    _sy, sy_ok := sc.parse_f32(sy_parse);
+    if (sy_ok) { scale.y = _sy; }
+    _sz, sz_ok := sc.parse_f32(sz_parse);
+    if (sz_ok) { scale.z = _sz; }
+
+    grid = oe.gui_grid(6, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Components", grid.x, grid.y, grid.width, grid.height)) {
         oe.gui.windows["Add components"].active = true;
     }
@@ -443,7 +461,7 @@ data_id_mod_tool :: proc(ct: CameraTool) {
             });
 
 
-            grid = oe.gui_grid(i + 6, 0, 40, wr.width * 0.75, 10);
+            grid = oe.gui_grid(i + 7, 0, 40, wr.width * 0.75, 10);
             oe.gui_text(t, 25, grid.x, grid.y);
         }
     }

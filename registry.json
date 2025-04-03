@@ -61,9 +61,9 @@
         "type": "Model"
     },
     "test_component": {
-        "position": [10, 15, 10],
+        "position": [0, 0, 0],
         "rotation": [0, 0, 0],
-        "scale": [1, 1, 1],
+        "scale": [0, 0, 0],
         "density": 1,
         "restitution": 0.5,
         "shape": 0,

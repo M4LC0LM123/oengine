@@ -776,29 +776,14 @@
 		]
 	},
 	"components": [
-
+		{
+			"tag": "test_component",
+			"type": "RigidBody"
+		},
+		{
+			"tag": "mesh_component",
+			"type": "SimpleMesh"
+		}
 	]
 },
-
-}00000,
-			10.00000000,
-			10.00000000
-		],
-		"rotation": [
-			0.00000000,
-			0.00000000,
-			0.00000000
-		],
-		"scale": [
-			1.00000000,
-			1.00000000,
-			1.00000000
-		]
-	},
-    "components": [
-		{"tag": "test_component", "type": "RigidBody"},
-		{"tag": "mesh_component", "type": "SimpleMesh"}
-	]
-}
-
 }

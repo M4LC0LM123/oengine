@@ -85,7 +85,8 @@ get_component_instr :: proc(s: string) -> LoadInstruction {
 }
 
 get_component_data :: proc(s: string, $T: typeid) -> ^T {
-    return cast(^T)asset_manager.component_reg[{s, T}];
+    comp := cast(^T)asset_manager.component_reg[{s, T}];
+    return new_clone(comp^);
 }
 
 save_registry :: proc(path: string) {
