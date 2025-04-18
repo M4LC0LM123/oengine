@@ -387,6 +387,7 @@ engine_run :: proc(
     render: proc() = proc() { rl.ClearBackground(BLACK); },
     deinit: proc() = nil,
     shader: Shader = {},
+    use_shader: bool = false,
 ) {
     w_create(instance_name);
     w_set_size(width, height);
@@ -404,11 +405,11 @@ engine_run :: proc(
     for (w_tick()) {
         if (update != nil) { update(); }
 
-        rl.BeginShaderMode(shader);
+        if (use_shader) { rl.BeginShaderMode(shader); }
         w_begin_render();
         if (render != nil) { render(); }
         w_end_render();
-        rl.EndShaderMode();
+        if (use_shader) { rl.EndShaderMode(); }
     }
 
     if (deinit != nil) { deinit(); }
