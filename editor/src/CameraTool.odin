@@ -301,7 +301,7 @@ render_tri :: proc(using self: ^CameraTool) {
         rl.DrawTriangle3D(t.pts[0], t.pts[1], t.pts[2], clr);
 
         if (oe.key_pressed(.DELETE)) {
-            ordered_remove(&msc.tris, _active_id);
+            ordered_remove(&msc.tris, auto_cast _active_id);
             oe.tri_count -= 1;
             _active_id = ACTIVE_EMPTY;
             _active_msc_id = ACTIVE_EMPTY;

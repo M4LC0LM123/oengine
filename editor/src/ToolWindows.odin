@@ -539,6 +539,7 @@ load_config :: proc(path: string) -> [3]string {
     res: [3]string;
 
     for i in 0..<len(content) {
+        if (content[i] == oe.STR_EMPTY) { continue; }
         s, _ := strs.remove_all(content[i], " ");
         sides, _ := strs.split(s, "=");
         left := sides[0];
@@ -553,6 +554,30 @@ load_config :: proc(path: string) -> [3]string {
                 res[1] = absolute;
             case "atlas_path":
                 res[2] = absolute;
+            case "w_exe_path":
+                if (oe.sys_os() == oe.OSType.Windows) {
+                    res[0] = absolute;
+                }
+            case "w_reg_path":
+                if (oe.sys_os() == oe.OSType.Windows) {
+                    res[1] = absolute;
+                }
+            case "w_atlas_path":
+                if (oe.sys_os() == oe.OSType.Windows) {
+                    res[2] = absolute;
+                }
+            case "l_exe_path":
+                if (oe.sys_os() == oe.OSType.Linux) {
+                    res[0] = absolute;
+                }
+            case "l_reg_path":
+                if (oe.sys_os() == oe.OSType.Linux) {
+                    res[1] = absolute;
+                }
+            case "l_atlas_path":
+                if (oe.sys_os() == oe.OSType.Linux) {
+                    res[2] = absolute;
+                }
         }
     }
 
