@@ -137,6 +137,7 @@ update :: proc(camera_tool: CameraTool) {
             t := did.transform;
             t.position.x += 1.5;
 
+            flags := did.flags;
             comps := did.comps;
 
             oe.reg_asset(
@@ -146,6 +147,7 @@ update :: proc(camera_tool: CameraTool) {
                     tag, 
                     did.id,
                     t,
+                    flags,
                     comps,
                 }
             );
@@ -176,6 +178,7 @@ update :: proc(camera_tool: CameraTool) {
                     t := did.transform;
                     t.position = pos;
 
+                    flags := did.flags;
                     comps := did.comps;
 
                     oe.reg_asset(
@@ -185,6 +188,7 @@ update :: proc(camera_tool: CameraTool) {
                             tag, 
                             did.id,
                             t,
+                            flags,
                             comps,
                         }
                     );

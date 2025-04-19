@@ -304,6 +304,7 @@ data_id_tool :: proc(ct: CameraTool) {
                 tag, 
                 id, 
                 oe.Transform{msc_target_pos(ct), {}, oe.vec3_one()},
+                fa.fixed_array(u32, 16),
                 fa.fixed_array(oe.ComponentMarshall, 16),
             }
         );
@@ -339,7 +340,7 @@ data_id_mod_tool :: proc(ct: CameraTool) {
     oe.gui_begin("DataID modifier", 
         x = f32(oe.w_render_width()) - 300, 
         y = 200 + oe.gui_top_bar_height,
-        h = 400,
+        h = 450,
         active = false
     );
     wr := oe.gui_rect(oe.gui_window("DataID modifier"));
@@ -347,6 +348,8 @@ data_id_mod_tool :: proc(ct: CameraTool) {
     @static tag: string;
     @static id: u32;
     @static position, scale: oe.Vec3;
+    @static d_flags: [16]u32;
+    @static d_flags_len: i32;
 
     grid := oe.gui_grid(0, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Modify", grid.x, grid.y, grid.width, grid.height)) {
@@ -361,6 +364,9 @@ data_id_mod_tool :: proc(ct: CameraTool) {
         t.position = position;
         t.scale = scale;
 
+        flags := oe.get_asset_var(editor_data.active_data_id, oe.DataID).flags;
+        flags.data = d_flags;
+        flags.len = d_flags_len;
         comps := oe.get_asset_var(editor_data.active_data_id, oe.DataID).comps;
 
         // actually just reregistering
@@ -374,10 +380,13 @@ data_id_mod_tool :: proc(ct: CameraTool) {
                 tag, 
                 id, 
                 t,
+                flags,
                 comps,
             }
         );
         oe.dbg_log(oe.str_add({"Modified data id of tag: ", tag, " and id: ", oe.str_add("", id)}));
+        d_flags = {};
+        d_flags_len = 0;
     }
 
     grid = oe.gui_grid(1, 0, 40, wr.width * 0.75, 10);
@@ -447,6 +456,31 @@ data_id_mod_tool :: proc(ct: CameraTool) {
     if (sz_ok) { scale.z = _sz; }
 
     grid = oe.gui_grid(6, 0, 40, wr.width * 0.75, 10);
+    flag_parse := oe.gui_text_box("ModFlagsTextBox", grid.x, grid.y, grid.width, grid.height);
+    grid = oe.gui_grid(6, 1, 40, wr.width * 0.75, 10);
+    if (oe.gui_button("Add", grid.x, grid.y, grid.width * 0.25, grid.height)) {
+        val, ok := sc.parse_int(flag_parse);
+        if (ok) {
+            d_flags[d_flags_len] = u32(val);
+            d_flags_len += 1;
+        }
+        oe.gui.text_boxes["ModFlagsTextBox"].text = "";
+    }
+
+    if (editor_data.active_data_id == "") {
+        d_flags = {};
+        d_flags_len = 0;
+    }
+
+    text := "";
+    for i in 0..<d_flags_len {
+        text = oe.str_add(text, d_flags[i]);
+        text = oe.str_add({text, ","})
+    }
+    grid = oe.gui_grid(7, 0, 40, wr.width, 10);
+    oe.gui_text(text, 25, grid.x, grid.y);
+
+    grid = oe.gui_grid(8, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Components", grid.x, grid.y, grid.width, grid.height)) {
         oe.gui.windows["Add components"].active = true;
     }
@@ -461,7 +495,7 @@ data_id_mod_tool :: proc(ct: CameraTool) {
             });
 
 
-            grid = oe.gui_grid(i + 7, 0, 40, wr.width * 0.75, 10);
+            grid = oe.gui_grid(i + 9, 0, 40, wr.width * 0.75, 10);
             oe.gui_text(t, 25, grid.x, grid.y);
         }
     }
@@ -472,7 +506,7 @@ data_id_mod_tool :: proc(ct: CameraTool) {
 did_component_tool :: proc(ct: CameraTool) {
     oe.gui_begin("Add components", 
         x = f32(oe.w_render_width()) - 300, 
-        y = 600 + oe.gui_top_bar_height * 2, active = false,
+        y = 650 + oe.gui_top_bar_height * 2, active = false,
         h = 400,
     );
 

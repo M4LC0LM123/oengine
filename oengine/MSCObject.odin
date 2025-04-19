@@ -602,6 +602,7 @@ save_data_ids :: proc(
         tag: string,
         id: u32,
         transform: Transform,
+        flags: []u32,
         components: []ComponentMarshall, 
     };
 
@@ -613,6 +614,7 @@ save_data_ids :: proc(
             data_id.tag, 
             data_id.id, 
             data_id.transform,
+            fa.slice(new_clone(data_id.flags)),
             fa.slice(new_clone(data_id.comps)),
         };
         data, ok := json.marshal(mrshl, {pretty = true});
@@ -713,12 +715,24 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
     reg_tag := str_add("data_id_", tag);
     if (asset_manager.registry[reg_tag] != nil) do reg_tag = str_add(reg_tag, rl.GetRandomValue(1000, 9999));
 
+    flags := fa.fixed_array(u32, 16);
+    if (obj.(json.Object)["flags"] != nil) {
+        flags_handle := obj.(json.Object)["flags"].(json.Array);
+        for i in flags_handle {
+            fa.append(&flags, u32(i.(json.Float)));
+        }
+    }
+
     comps_arr := fa.fixed_array(ComponentMarshall, 16);
 
     if (window.instance_name != EDITOR_INSTANCE) {
         ent := aent_init(tag);
         ent_tr := get_component(ent, Transform);
         ent_tr^ = transform;
+
+        for i in 0..<flags.len {
+            ent.flags |= {flags.data[i]};
+        }
 
         if (obj.(json.Object)["components"] != nil) {
             comps_handle := obj.(json.Object)["components"].(json.Array);
@@ -762,6 +776,7 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
             tag, 
             u32(id), 
             transform,
+            flags,
             comps_arr,
         }
     );

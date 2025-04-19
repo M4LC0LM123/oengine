@@ -10,9 +10,12 @@ ECS_FIXED :: 2
 
 MAX_CMPNTS :: 64
 
+EntFlags :: distinct bit_set[u32(0)..=127]
+
 Entity :: struct {
     id: u32,
     tag: string,
+    flags: EntFlags,
     components: fa.FixedMap(typeid, rawptr, MAX_CMPNTS),
 }
 
