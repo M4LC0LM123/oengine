@@ -1,6 +1,7 @@
 package oengine
 
 import rl "vendor:raylib"
+import "core:math"
 
 Camera :: struct {
     fov, near, far: f32,

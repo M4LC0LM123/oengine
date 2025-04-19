@@ -75,7 +75,7 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
         ecs.register_system(&ecs_ctx, transform_render, ecs.ECS_RENDER);
     }
 
-    physics_thread = thread.create_and_start(ew_fixed_update);
+    physics_thread = thread.create_and_start(ew_fixed_thread);
 }
 
 ew_get_ent :: proc {
@@ -125,12 +125,32 @@ ew_get_ents :: proc(tag: string) -> []AEntity {
 ew_update :: proc() {
     using ecs_world;
     // t := thread.create_and_start(ew_fixed_update, self_cleanup = true);
-    ew_fixed_update();
+    // ew_fixed_update();
 
     fog_update(camera.position);
     rlg.SetViewPositionV(camera.position);
 
     ecs.ecs_update(&ecs_ctx);
+}
+
+@(private = "file")
+ew_fixed_thread :: proc() {
+    using ecs_world;
+    last_time := rl.GetTime();
+    
+    for (!rl.WindowShouldClose()) {
+        current_time := rl.GetTime();
+        delta_time := current_time - last_time;
+        if (delta_time >= FIXED_TIME_STEP) {
+            if (!w_transform_changed() && window.instance_name != "oengine-editor") {
+                pw_update(&physics, FIXED_TIME_STEP);
+                ecs.ecs_fixed_update(&ecs_ctx);
+            }
+            last_time = current_time;
+        } else {
+            thread.yield();
+        }
+    }
 }
 
 @(private = "file")
@@ -154,7 +174,25 @@ ew_render :: proc() {
 
     rl.rlEnableBackfaceCulling();
 
-    ecs.ecs_render(&ecs_ctx);
+    frustum := CameraGetFrustum(camera^, w_render_aspect());
+    if (OE_DEBUG) {
+        DrawFrustum(frustum, RED);
+    }
+
+    // ecs.ecs_render(&ecs_ctx, camera);
+    for i in 0..<fa.range(ecs_ctx.entities) {
+        entity := ecs_ctx.entities.data[i];
+        tr := get_component(entity, Transform);
+        bbox := aabb_to_bounding_box(trans_to_aabb(tr^));
+
+        if (FrustumContainsBox(frustum, bbox)) {
+            for j in 0..<fa.range(ecs_ctx._render_systems) {
+                system := ecs_ctx._render_systems.data[j];
+
+                system(&ecs_ctx, entity);
+            }
+        }
+    }
 
     for &d in decals {
         decal_render(d^);
@@ -185,6 +223,9 @@ ew_render :: proc() {
 
 ew_deinit :: proc() {
     using ecs_world;
+
+    thread.join(physics_thread);
+    thread.destroy(physics_thread);
 
     rlg.DestroyContext(rlg_ctx);
 

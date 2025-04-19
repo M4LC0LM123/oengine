@@ -89,13 +89,13 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
     delta_time = dt;
 
     for n: i32; n < iterations; n += 1 {
-        oct_clear(&tree);
-        // sbp_clear(&sbp_tree);
-        
-        for i in 0..<bodies.len {
-            oct_insert(&tree, bodies.data[i]);
-        }
-
+        // oct_clear(&tree);
+        // // sbp_clear(&sbp_tree);
+        // 
+        // for i in 0..<bodies.len {
+        //     oct_insert(&tree, bodies.data[i]);
+        // }
+        //
         for i := 0; i < fa.range(bodies); i += 1 {
             rb := bodies.data[i];
             rb_fixed_update(rb, delta_time / f32(iterations));

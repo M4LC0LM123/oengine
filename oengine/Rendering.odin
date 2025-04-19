@@ -55,7 +55,15 @@ new_decal :: proc(pos, normal: Vec3, size: Vec2, texture_tag: string, color: Col
 
 decal_render :: proc(using d: Decal) {
     draw_sprite(
-        position, 
+        position - d.normal * 0.1, 
+        size,
+        d._rot,
+        get_asset_var(texture_tag, Texture), 
+        color
+    );
+
+    draw_sprite(
+        position + d.normal * 0.1, 
         size,
         d._rot,
         get_asset_var(texture_tag, Texture), 

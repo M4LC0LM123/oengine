@@ -2,6 +2,7 @@ package oengine
 
 import "core:math"
 import "core:fmt"
+import rl "vendor:raylib"
 
 AABB :: struct {
     x, y, z: f32,
@@ -41,6 +42,26 @@ aabb_collision :: proc(cube1, cube2: AABB) -> bool {
     }
 
     return false;
+}
+
+aabb_to_bounding_box :: proc(aabb: AABB) -> rl.BoundingBox {
+    half_w := aabb.width / 2.0
+    half_h := aabb.height / 2.0
+    half_d := aabb.depth / 2.0
+
+    min := Vec3 {
+        aabb.x - half_w,
+        aabb.y - half_h,
+        aabb.z - half_d,
+    };
+
+    max := Vec3 {
+        aabb.x + half_w,
+        aabb.y + half_h,
+        aabb.z + half_d,
+    };
+
+    return rl.BoundingBox{min = min, max = max}
 }
 
 point_in_aabb :: proc(point: Vec3, box: AABB) -> bool {

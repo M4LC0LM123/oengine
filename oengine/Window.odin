@@ -122,6 +122,10 @@ delta_time :: proc() -> f32 {
     return rl.GetFrameTime();
 }
 
+w_render_aspect :: proc() -> f32 {
+    return f32(w_render_width()) / f32(w_render_height());
+}
+
 w_render_width :: proc() -> i32 {
     return window._render_width;
 }
