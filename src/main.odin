@@ -115,7 +115,7 @@ main :: proc() {
     ps := oe.aent_init("ParticleSystem");
     ps_tr := oe.get_component(ps, oe.Transform);
     ps_tr.position = {5, 3, -10};
-    ps_ps := oe.add_component(ps, oe.ps_init());
+    ps_ps := oe.add_component(ps, oe.ps_init({oe.default_behaviour, oe.gradient_beh}));
     t: oe.Timer;
 
     msc := oe.msc_init();
@@ -218,9 +218,16 @@ main :: proc() {
 
         if (oe.key_pressed(.F3)) do oe.lc_toggle(light_lc);
 
-        // prtcl := oe.particle_init(oe.circle_spawn(1, true), slf = 10, color = oe.RED);
-        // oe.particle_add_behaviour(prtcl, oe.gradient_beh(oe.RED, oe.YELLOW, 200));
-        // oe.ps_add_particle(ps_ps, prtcl, 0.1);
+        prtcl := oe.particle_init(
+            oe.circle_spawn(1, true), 
+            slf = 10,
+            color = oe.RED,
+        );
+        prtcl.data.color1 = oe.RED;
+        prtcl.data.color2 = oe.BLANK;
+        speed: f32 = 100;
+        prtcl.data.data = &speed;
+        oe.ps_add_particle(ps_ps, prtcl, 0.1);
 
         oe.sm_apply_anim(animated_sm, &animated_ma, 0);
 

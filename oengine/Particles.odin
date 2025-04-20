@@ -5,20 +5,28 @@ import "core:fmt"
 import ecs "ecs"
 import "core:encoding/json"
 
-ParticleBehaviour :: struct {
+ParticleData :: struct {
     vel, accel, grav: Vec3,
+    color1, color2: Color,
     data: rawptr,
-    behave: proc(self: ^ParticleBehaviour, p: ^Particle),
+}
+
+ParticleBehaviour :: #type proc(p: ^Particle);
+
+default_behaviour :: proc(p: ^Particle) {
+    p.data.accel.y = -p.data.grav.y;
+    p.data.vel += p.data.accel * rl.GetFrameTime();
+    p.position += p.data.vel * rl.GetFrameTime();
 }
 
 Particle :: struct {
     render: proc(self: ^Particle),
-    behaviours: [dynamic]ParticleBehaviour,
     tint: Color,
     texture: Texture,
     position: Vec3,
     size: Vec3,
     life_time: f32,
+    data: ParticleData,
 }
 
 Particles :: struct {
@@ -26,41 +34,30 @@ Particles :: struct {
     _removed_particles: [dynamic]int,
     position: Vec3,
     timer: Timer,
+    behaviours: [dynamic]ParticleBehaviour
 }
 
 checkered_image: Texture; 
 
-particle_init :: proc(spawn_pos: Vec3 = {}, test_behaviour: bool = true, s_grav: Vec3 = {0, -9.81, 0}, slf: f32 = 10, color: Color = WHITE) -> ^Particle {
-    using res := new(Particle);
+particle_init :: proc(spawn_pos: Vec3 = {}, 
+    s_grav: Vec3 = {0, -9.81, 0}, 
+    slf: f32 = 10, color: Color = WHITE) -> Particle {
+    using res: Particle;
     tint = color;
     texture = checkered_image;
     position = spawn_pos;
     size = {0.5, 0.5, 0.5};
     life_time = slf;
 
+    data.grav = s_grav;
+    data.color1 = WHITE;
+    data.color2 = WHITE;
+
     render = proc(using self: ^Particle) {
         rl.DrawBillboard(ecs_world.camera.rl_matrix, texture, position, size.x, tint);
     }
 
-    behaviours = make([dynamic]ParticleBehaviour);
-
-    if (test_behaviour) {    
-        append(&behaviours, ParticleBehaviour{
-            grav = s_grav,
-
-            behave = proc(using self: ^ParticleBehaviour, p: ^Particle) {
-                accel.y = -grav.y;
-                vel += accel * rl.GetFrameTime();
-                p.position += vel * rl.GetFrameTime(); 
-            }
-        });
-    }
-
     return res;
-}
-
-particle_add_behaviour :: proc(using self: ^Particle, behaviour: ParticleBehaviour) {
-    append(&behaviours, behaviour);
 }
 
 @(private = "file")
@@ -68,18 +65,20 @@ ps_init_all :: proc(using ps: ^Particles) {
     particles = make([dynamic]^Particle);
 }
 
-ps_add_particle :: proc(using self: ^Particles, p: ^Particle, delay: f32 = 0) {
+ps_add_particle :: proc(using self: ^Particles, p: Particle, delay: f32 = 0) {
     if (!interval(&timer, delay)) do return;
 
-    clone := new_clone(p^);
+    clone := new_clone(p);
     clone.position += position;
     append(&particles, clone);
 }
 
-ps_init :: proc() -> Particles {
+ps_init :: proc(behaviours: []ParticleBehaviour) -> Particles {
     ps: Particles;
 
     ps_init_all(&ps);
+    ps.behaviours = make([dynamic]ParticleBehaviour);
+    append(&ps.behaviours, ..behaviours);
 
     return ps;
 }
@@ -91,27 +90,22 @@ ps_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
 
     position = t.position;
 
-
     for i in 0..<len(particles) {
         p := particles[i];
         p.life_time -= 10 * rl.GetFrameTime();
 
         if (p.life_time <= 0) do append(&_removed_particles, i);
 
-        for &b in p.behaviours {
-            b.behave(&b, p);
+        for behaviour in ps.behaviours {
+            behaviour(p);
         }
     }
 
     for &p in _removed_particles {
         if (p != -1 && p < len(particles)) { 
             pr := particles[p];
-            
-            for b in pr.behaviours {
-                free(b.data); 
-            }
 
-            delete(pr.behaviours);
+            free(pr.data.data);
             free(pr);
             ordered_remove(&particles, p);
         }
@@ -146,7 +140,7 @@ ps_parse :: proc(aj: json.Object) -> rawptr {
         gravity = json_vec3_to_vec3(vec_arr);
     }
 
-    ps := ps_init();
+    ps := ps_init({default_behaviour});
     return new_clone(ps);
 }
 

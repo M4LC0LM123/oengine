@@ -12,42 +12,27 @@ GradientBehaviourData :: struct {
     speed: f32,
 }
 
-gradient_beh :: proc(s_clr_a, s_clr_b: Color, s_speed: f32 = 100) -> ParticleBehaviour {
-    pb_data := GradientBehaviourData {
-        clr_a = s_clr_a,
-        clr_b = s_clr_b,
-        speed = s_speed,
-    };
+gradient_beh :: proc(p: ^Particle) {
+    p.tint.rgb = p.data.color1.rgb;
 
-    return ParticleBehaviour {
-        data = new_clone(pb_data),
-        behave = proc(using self: ^ParticleBehaviour, p: ^Particle) {
-            gh_data := get_particle_data(data, GradientBehaviourData);
+    if (p.data.color1 == p.data.color2) { return; }
 
-            p.tint = {gh_data.clr_a.r, gh_data.clr_a.g, gh_data.clr_a.b, p.tint.a};
+    delta_r := i32(p.data.color2.r) - i32(p.data.color1.r);
+    delta_g := i32(p.data.color2.g) - i32(p.data.color1.g);
+    delta_b := i32(p.data.color2.b) - i32(p.data.color1.b);
 
-            if (gh_data.clr_a == gh_data.clr_b) do return;
-
-            delta_r := i32(gh_data.clr_b.r) - i32(gh_data.clr_a.r);
-            delta_g := i32(gh_data.clr_b.g) - i32(gh_data.clr_a.g);
-            delta_b := i32(gh_data.clr_b.b) - i32(gh_data.clr_a.b);
-
-            adjust := proc(speed: f32, comp: u8, delta: i32) -> u8 {
-                step := i32(speed * rl.GetFrameTime());
-                if delta < 0 {
-                    return max(comp - u8(min(-delta, step)), 0);
-                } else {
-                    return min(comp + u8(min(delta, step)), 255);
-                }
-            };
-
-            gh_data.clr_a.r = adjust(gh_data.speed, gh_data.clr_a.r, delta_r);
-            gh_data.clr_a.g = adjust(gh_data.speed, gh_data.clr_a.g, delta_g);
-            gh_data.clr_a.b = adjust(gh_data.speed, gh_data.clr_a.b, delta_b);
+    adjust := proc(speed: f32, comp: u8, delta: i32) -> u8 {
+        step := i32(speed * rl.GetFrameTime());
+        if delta < 0 {
+            return max(comp - u8(min(-delta, step)), 0);
+        } else {
+            return min(comp + u8(min(delta, step)), 255);
         }
     };
-}
 
-decay_beh :: proc(color: Color, s_speed: f32 = 100) -> ParticleBehaviour {
-    return gradient_beh(color, BLANK, s_speed);
+    speed := cast(^f32)p.data.data;
+    speed_val := speed^;
+    p.data.color1.r = adjust(speed_val, p.data.color1.r, delta_r);
+    p.data.color1.g = adjust(speed_val, p.data.color1.g, delta_g);
+    p.data.color1.b = adjust(speed_val, p.data.color1.b, delta_b);
 }
