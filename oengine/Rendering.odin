@@ -10,6 +10,8 @@ import "core:math/linalg"
 DEF_RINGS :: 16
 DEF_SLICES :: 16
 
+DECAL_PERMANENT :: -1
+
 SkyBox :: [6]Texture;
 CubeMap :: [6]Texture;
 
@@ -39,9 +41,10 @@ Decal :: struct {
     color: Color,
     texture_tag: string,
     _rot: Vec3,
+    life_time: f32,
 }
 
-new_decal :: proc(pos, normal: Vec3, size: Vec2, texture_tag: string, color: Color = WHITE) {
+new_decal :: proc(pos, normal: Vec3, size: Vec2, texture_tag: string, color: Color = WHITE, life_time: f32 = 5) {
     d := new(Decal);
     d.position = pos;
     d.normal = normal;
@@ -49,11 +52,12 @@ new_decal :: proc(pos, normal: Vec3, size: Vec2, texture_tag: string, color: Col
     d.color = color;
     d.texture_tag = texture_tag;
     d._rot = look_at(d.position, d.position + d.normal);
+    d.life_time = life_time;
 
     append(&ecs_world.decals, d);
 }
 
-decal_render :: proc(using d: Decal) {
+decal_render :: proc(using d: ^Decal, id: i32) {
     draw_sprite(
         position - d.normal * 0.1, 
         size,
@@ -69,6 +73,13 @@ decal_render :: proc(using d: Decal) {
         get_asset_var(texture_tag, Texture), 
         color
     );
+
+    if (life_time != DECAL_PERMANENT) {
+        life_time -= delta_time();
+        if (life_time <= 0) {
+            append(&ecs_world.removed_decals, id);
+        }
+    }
 }
 
 @(private)

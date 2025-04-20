@@ -17,6 +17,7 @@ ecs_world: struct {
     camera: ^Camera,
     rlg_ctx: rlg.Context,
     decals: [dynamic]^Decal,
+    removed_decals: [dynamic]i32,
     light_count: u32,
     FAE: bool, // fog affects everything
 
@@ -49,6 +50,7 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     tag_image = load_texture(rl.LoadTextureFromImage(img));
 
     decals = make([dynamic]^Decal);
+    removed_decals = make([dynamic]i32);
 
     reg_component(Transform, transform_parse);
     reg_component(RigidBody, rb_parse, rb_loader);
@@ -131,6 +133,13 @@ ew_update :: proc() {
     rlg.SetViewPositionV(camera.position);
 
     ecs.ecs_update(&ecs_ctx);
+
+    for i in removed_decals {
+        if (int(i) < len(decals)) {
+            ordered_remove(&decals, int(i));
+        }
+    }
+    clear(&removed_decals);
 }
 
 @(private = "file")
@@ -194,8 +203,9 @@ ew_render :: proc() {
         }
     }
 
-    for &d in decals {
-        decal_render(d^);
+    for i in 0..<len(decals) {
+        d := decals[i];
+        decal_render(d, i32(i));
     }
 
     if (PHYS_DEBUG) {
