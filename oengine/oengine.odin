@@ -1,7 +1,8 @@
 package oengine
 
-OE_DEBUG := true
-PHYS_DEBUG := true
+OE_DEBUG := false
+PHYS_DEBUG := false
+PHYS_OCTREE_DEBUG := false
 
 OE_DEBUG_COLOR :: GREEN
 PHYS_DEBUG_COLOR :: BLUE

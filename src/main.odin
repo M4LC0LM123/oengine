@@ -32,6 +32,9 @@ main :: proc() {
         return err;
     }
 
+    oe.OE_DEBUG = true;
+    oe.PHYS_DEBUG = true;
+
     oe.w_create();
     oe.w_set_title("gejm");
     oe.w_set_target_fps(60);
@@ -81,7 +84,7 @@ main :: proc() {
 
     player := oe.aent_init("player");
     player_tr := oe.get_component(player, oe.Transform);
-    player_tr.position.y = 5;
+    player_tr.position = {16, 10, 23};
     player_rb := oe.add_component(
         player, oe.rb_init(
             {player_tr.position - {0, 0.5, 0}, player_tr.rotation, {1, 2, 1}}, 
@@ -171,6 +174,10 @@ main :: proc() {
             rlg.SetLightValue(ent_l.id, .ATTENUATION_QUADRATIC, 0.01);
         }
     }
+
+    test_tri := [3]oe.Vec3{{-15, 10, -10}, {-12.5, 7.5, -7.5}, {-10, 12.5, -12.5}};
+    test_aabb := oe.compute_aabb(test_tri[0], test_tri[1], test_tri[2]);
+    test_subdivided := oe.split_aabb_8(test_aabb);
 
     // reset_track_allocator(&track_allocator);
     for (oe.w_tick()) {
@@ -267,6 +274,18 @@ main :: proc() {
 
         oe.sm_custom_render(player_tr, player_sm);
         oe.f_custom_render(water_tr, water_f);
+
+        rl.DrawTriangle3D(
+            test_tri[0],
+            test_tri[1],
+            test_tri[2],
+            oe.WHITE,
+        );
+        oe.draw_aabb_wires(test_aabb, oe.GREEN);
+        for i in 0..<len(test_subdivided) {
+            aabb := test_subdivided[i];
+            oe.draw_aabb_wires(aabb, oe.ORANGE);
+        }
 
         rl.EndMode3D();
         oe.w_end_render();

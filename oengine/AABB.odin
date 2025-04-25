@@ -1,6 +1,7 @@
 package oengine
 
 import "core:math"
+import "core:math/linalg"
 import "core:fmt"
 import rl "vendor:raylib"
 
@@ -18,6 +19,49 @@ trans_to_aabb :: proc(t: Transform) -> AABB {
         height = t.scale.y,
         depth = t.scale.z,
     }
+}
+
+split_aabb_8 :: proc(aabb: AABB) -> [8]AABB {
+    pos := Vec3 {aabb.x, aabb.y, aabb.z};
+
+    half_size := Vec3 {
+        aabb.width * 0.5,
+        aabb.height * 0.5,
+        aabb.depth * 0.5
+    };
+
+    q_size := half_size * 0.5; // quarter size
+
+    return {
+        AABB {pos.x - q_size.x, pos.y - q_size.y, pos.z - q_size.z, half_size.x, half_size.y, half_size.z}, // bottom back left
+        AABB {pos.x + q_size.x, pos.y - q_size.y, pos.z - q_size.z, half_size.x, half_size.y, half_size.z}, // bottom back right
+        AABB {pos.x - q_size.x, pos.y - q_size.y, pos.z + q_size.z, half_size.x, half_size.y, half_size.z}, // bottom front left
+        AABB {pos.x + q_size.x, pos.y - q_size.y, pos.z + q_size.z, half_size.x, half_size.y, half_size.z}, // bottom front right
+        AABB {pos.x - q_size.x, pos.y + q_size.y, pos.z - q_size.z, half_size.x, half_size.y, half_size.z}, // top back left
+        AABB {pos.x + q_size.x, pos.y + q_size.y, pos.z - q_size.z, half_size.x, half_size.y, half_size.z}, // top back right
+        AABB {pos.x - q_size.x, pos.y + q_size.y, pos.z + q_size.z, half_size.x, half_size.y, half_size.z}, // top front left
+        AABB {pos.x + q_size.x, pos.y + q_size.y, pos.z + q_size.z, half_size.x, half_size.y, half_size.z}, // top front right
+    };
+}
+
+compute_aabb :: proc(v0, v1, v2: Vec3) -> AABB {
+    min_x := linalg.min(v0.x, v1.x, v2.x);
+    min_y := linalg.min(v0.y, v1.y, v2.y);
+    min_z := linalg.min(v0.z, v1.z, v2.z);
+
+    max_x := linalg.max(v0.x, v1.x, v2.x);
+    max_y := linalg.max(v0.y, v1.y, v2.y);
+    max_z := linalg.max(v0.z, v1.z, v2.z);
+
+    center := Vec3{(min_x + max_x) * 0.5, (min_y + max_y) * 0.5, (min_z + max_z) * 0.5};
+    return AABB{
+        x = center.x,
+        y = center.y,
+        z = center.z,
+        width  = max_x - min_x,
+        height = max_y - min_y,
+        depth  = max_z - min_z,
+    };
 }
 
 aabb_collision :: proc(cube1, cube2: AABB) -> bool {

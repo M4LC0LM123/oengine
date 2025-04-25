@@ -130,6 +130,10 @@ tile_texture :: proc(texture: Texture, tx: i32) -> Texture {
     return load_texture(target.texture);
 }
 
+draw_aabb_wires :: proc(aabb: AABB, color: Color) {
+    rl.DrawCubeWires({aabb.x, aabb.y, aabb.z}, aabb.width, aabb.height, aabb.depth, color);
+}
+
 draw_quad :: proc(pts: [4]Vec3, tex: Texture, clr: Color) {
     rl.rlPushMatrix();
 

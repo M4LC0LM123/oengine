@@ -183,7 +183,7 @@ ew_render :: proc() {
 
     rl.rlEnableBackfaceCulling();
 
-    frustum := CameraGetFrustum(camera^, w_render_aspect());
+    frustum := camera.frustum;
     if (OE_DEBUG) {
         DrawFrustum(frustum, RED);
     }
@@ -209,13 +209,7 @@ ew_render :: proc() {
     }
 
     if (PHYS_DEBUG) {
-        draw_cube_wireframe(
-            {physics.tree._bounds.x, physics.tree._bounds.y, physics.tree._bounds.z},
-            vec3_zero(),
-            {physics.tree._bounds.width, physics.tree._bounds.height, physics.tree._bounds.depth},
-            rl.GREEN,
-        );
-        pw_debug(physics);
+        pw_debug(&physics);
     }
 
     if (OE_DEBUG) {
@@ -229,6 +223,14 @@ ew_render :: proc() {
     for i in 0..<fa.range(physics.mscs) {
         msc_render(physics.mscs.data[i]);
     }
+}
+
+ent_in_view :: proc(ent: AEntity) -> bool {
+    using ecs_world;
+    tr := get_component(ent, Transform);
+    bbox := aabb_to_bounding_box(trans_to_aabb(tr^));
+
+    return FrustumContainsBox(camera.frustum, bbox);
 }
 
 ew_deinit :: proc() {

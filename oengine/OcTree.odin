@@ -4,98 +4,76 @@ import "core:fmt"
 import rl "vendor:raylib"
 import "fa"
 
-MAX_CAPACITY :: 10 // max entity count in octree quad
-MAX_LEVELS :: 6 // max subdivision level
-MAX_CHILDREN :: 8
+MIN_TRIS :: 8
+MAX_DEPTH :: 6
 
-OcTree :: struct {
-    _level: i32,
-    _rbs: fa.FixedArray(^RigidBody, MAX_CAPACITY),
-    _bounds: AABB,
-    _children: [dynamic]OcTree,
+OctreeNode :: struct {
+    aabb: AABB,
+    children:  [8]^OctreeNode,
+    triangles: [dynamic]^TriangleCollider,
+    is_leaf: bool,
 }
 
-oct_init :: proc(level: i32, bounds: AABB) -> OcTree {
-    return OcTree {
-        _level = level,
-        _rbs = fa.fixed_array(^RigidBody, MAX_CAPACITY),
-        _bounds = bounds,
-        _children = make([dynamic]OcTree, MAX_CHILDREN),
-    };
-}
+build_octree :: proc(tris: [dynamic]^TriangleCollider, aabb: AABB, depth: i32) -> ^OctreeNode {
+    node := new(OctreeNode);
+    node.aabb = aabb;
 
-oct_subdivide :: proc(using self: ^OcTree) {
-    subWidth: f32 = _bounds.width / 2.0;
-    subHeight: f32 = _bounds.height / 2.0;
-    subLength: f32 = _bounds.depth / 2.0;
-    x: f32 = _bounds.x;
-    y: f32 = _bounds.y;
-    z: f32 = _bounds.z;
-
-    append(&_children, oct_init(_level + 1, AABB { x, y, z, subWidth, subHeight, subLength }));
-    append(&_children, oct_init(_level + 1, AABB { x + subWidth, y, z, subWidth, subHeight, subLength }));
-    append(&_children, oct_init(_level + 1, AABB { x, y + subHeight, z, subWidth, subHeight, subLength }));
-    append(&_children, oct_init(_level + 1, AABB { x + subWidth, y + subHeight, z, subWidth, subHeight, subLength }));
-    append(&_children, oct_init(_level + 1, AABB { x, y, z + subLength, subWidth, subHeight, subLength }));
-    append(&_children, oct_init(_level + 1, AABB { x + subWidth, y, z + subLength, subWidth, subHeight, subLength }));
-    append(&_children, oct_init(_level + 1, AABB { x, y + subHeight, z + subLength, subWidth, subHeight, subLength }));
-    append(&_children, oct_init(_level + 1, AABB { x + subWidth, y + subHeight, z + subLength, subWidth, subHeight, subLength }));
-}
-
-oct_insert :: proc(using self: ^OcTree, rb: ^RigidBody) {
-    if (!aabb_collision(trans_to_aabb(rb.transform), _bounds)) do return;
-
-    if (len(_children) == 0 && _rbs.len < MAX_CAPACITY) {
-        fa.append(&_rbs, rb);
-        return;
+    if (depth >= MAX_DEPTH || len(tris) <= MIN_TRIS) {
+        node.triangles = tris;
+        node.is_leaf = true;
+        return node;
     }
 
-    if (len(_children) == 0) {
-        oct_subdivide(self);
-    }
+    child_boxes := split_aabb_8(aabb);
+    children_tris := make([][dynamic]^TriangleCollider, 8);
 
-    for i in 0..<len(_children) {
-        oct_insert(&_children[i], rb);
-    }
-}
-
-oct_retrieve :: proc(using self: ^OcTree, area: AABB) -> fa.FixedArray(^RigidBody, MAX_CAPACITY) {
-    found := fa.fixed_array(^RigidBody, MAX_CAPACITY);
-
-    if (!aabb_collision(_bounds, area)) do return found;
-
-    for i in 0..<_rbs.len {
-        rb := _rbs.data[i];
-        if (aabb_collision(trans_to_aabb(rb.transform), area)) do fa.append(&found, rb);
-    }
-
-    if (len(_children) != 0) {
-        for i in 0..<len(_children) {
-            child_rbs := oct_retrieve(&_children[i], area);
-            
-            for i in 0..<child_rbs.len {
-                fa.append(&found, child_rbs.data[i]);
+    for tri in tris {
+        tri_aabb := compute_aabb(tri.pts[0], tri.pts[1], tri.pts[2]);
+        for j in 0..<8 {
+            if (aabb_collision(tri_aabb, child_boxes[j])) {
+                append(&children_tris[j], tri);
             }
         }
     }
 
-    return found;
-}
-
-oct_clear :: proc(using self: ^OcTree) {
-    fa.clear(&_rbs);
-
-    for i in 0..<len(_children) {
-        oct_clear(&_children[i]);
+    for i in 0..<8 {
+        if (len(children_tris[i]) > 0) {
+            node.children[i] = build_octree(children_tris[i], child_boxes[i], depth + 1);
+        }
     }
 
-    clear(&_children);
+    return node;
 }
 
-oct_bounds :: proc(using self: ^OcTree) -> AABB {
-    return _bounds;
+query_octree :: proc(node: ^OctreeNode, rb: ^RigidBody) {
+    aabb := trans_to_aabb(rb.transform);
+    if (!aabb_collision(node.aabb, aabb)) { return; }
+
+    if (node.is_leaf) {
+        for tri in node.triangles {
+            resolve_tri_collision(rb, tri);
+        }
+        return;
+    }
+
+    for i in 0..<len(node.children) {
+        child := node.children[i];
+        if (child != nil) {
+            query_octree(child, rb);
+        }
+    }
 }
 
-oct_set_bounds :: proc(using self: ^OcTree, bounds: AABB) {
-    _bounds = bounds;
+render_octree :: proc(node: ^OctreeNode, depth: i32) {
+    if node == nil {
+        return;
+    }
+
+    color := Color {255 - u8(depth) * 20, 255 - u8(depth) * 20, 255, 255};
+
+    draw_aabb_wires(node.aabb, color);
+
+    for i in 0..<8 {
+        render_octree(node.children[i], depth + 1);
+    }
 }

@@ -208,6 +208,7 @@ pack_atlas :: proc(atlas: Atlas, path: string) {
 MSCObject :: struct {
     tris: [dynamic]^TriangleCollider,
     _aabb: AABB,
+    tree: ^OctreeNode,
     mesh: rl.Mesh,
     atlas: Atlas,
 }
@@ -220,6 +221,10 @@ msc_init :: proc() -> ^MSCObject {
     fa.append(&ecs_world.physics.mscs, self);
 
     return self;
+}
+
+msc_build :: proc(using self: ^MSCObject) {
+    tree = build_octree(tris, _aabb, 0);
 }
 
 msc_init_atlas :: proc(using self: ^MSCObject, path: string) {
@@ -336,7 +341,7 @@ tri_recalc_uvs :: proc(t: ^TriangleCollider, #any_int uv_rot: i32 = 0) {
     t.rot = uv_rot;
 }
 
-msc_gen_mesh :: proc(using self: ^MSCObject) {
+msc_gen_mesh :: proc(using self: ^MSCObject, gen_tree := true) {
     mesh.triangleCount = i32(len(tris));
     mesh.vertexCount = mesh.triangleCount * 3;
     allocate_mesh(&mesh);
@@ -346,6 +351,10 @@ msc_gen_mesh :: proc(using self: ^MSCObject) {
     }
 
     rl.UploadMesh(&mesh, false);
+
+    if (gen_tree) {
+        msc_build(self);
+    }
 }
 
 gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i32) {

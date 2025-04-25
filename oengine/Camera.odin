@@ -13,7 +13,8 @@ Camera :: struct {
 
     prev_mp, curr_mp: Vec2,
 
-    raycast: Raycast
+    raycast: Raycast,
+    frustum: Frustum,
 }
 
 cm_init :: proc(s_position: Vec3, s_fov: f32 = 60, s_near: f32 = 0.1, s_far: f32 = 100) -> Camera {
@@ -50,6 +51,8 @@ cm_update :: proc(using self: ^Camera) {
 
     raycast.position = position;
     raycast.target = position + vec3_normalize(front) * far;
+
+    frustum = CameraGetFrustum(self^, w_render_aspect());
 }
 
 cm_set_fps :: proc(using self: ^Camera, sensitivity: f32, is_mouse_locked: bool) {
