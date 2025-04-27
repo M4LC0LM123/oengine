@@ -87,14 +87,14 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
             ).x;
 
             if (text_len != 0) {
-                symbol := []u8{text[(len(text) - pos - 1) % len(text)]};
-
-                char_len = rl.MeasureTextEx(
-                    gui_default_font, to_cstr(string(symbol)),
-                    gui_font_size, 2
+                partial_text := text[:len(text) - pos];
+                partial_width := rl.MeasureTextEx(
+                    gui_default_font,
+                    to_cstr(partial_text),
+                    gui_font_size * text_scale,
+                    2
                 ).x;
-
-                cur_x := text_x + (text_len - f32(pos * int(char_len)));
+                cur_x := text_x + partial_width;
 
                 if (i32(gui_cursor_timer) % 2 == 0) {
                     rl.DrawTextEx(
@@ -119,6 +119,10 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
 
     rl.EndScissorMode();
 
+    MOVE_TIMER_MAX :: 0.75
+    @static auto_move_timer: f32 = MOVE_TIMER_MAX;
+    @static auto_move := false;
+
     if (active) {
         if (key_down(.LEFT_CONTROL) || key_down(.LEFT_SUPER)) {
             if (key_pressed(.V)) { 
@@ -129,25 +133,77 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
             }
         }
 
-        if (key_pressed(.RIGHT)) {
-            if (pos > 0) do pos -= 1;
+        if (auto_move_timer <= 0) {
+            auto_move = true;
         }
 
-        if (key_pressed(.LEFT)) {
-            if (pos < len(text) - 1) do pos += 1;
-        }
-
-        if (key_pressed(.BACKSPACE)) {
-            if (len(text) > 0) {
+        if (!auto_move) {
+            if (key_pressed(.RIGHT)) {
                 if (pos > 0) do pos -= 1;
-                text = text[:len(text) - 1];
+            }
+
+            if (key_pressed(.LEFT)) {
+                if (pos <= len(text) - 1) do pos += 1;
+            }
+
+            if (key_pressed(.BACKSPACE)) {
+                if (len(text) > 0) {
+                    if (pos != len(text)) {
+                        text = str_add(text[:len(text) - pos - 1], text[len(text) - pos:]);
+                    }
+                }
+            } else {
+                key := []char{char_pressed()};
+                if (key[0] >= 32 && key[0] <= 125 && !contains(&key[0], raw_data(except), len(except), char)) {
+                    text = str_add(text, utf8.runes_to_string(key));
+                }
+            }
+
+            if (key_down(.RIGHT) || key_down(.LEFT) || key_down(.BACKSPACE)) {
+                auto_move_timer -= delta_time();
+            }
+
+            if (key_up(.RIGHT) && key_up(.LEFT) && key_up(.BACKSPACE)) {
+                auto_move_timer = MOVE_TIMER_MAX;
             }
         } else {
-            key := []char{char_pressed()};
-            if (key[0] >= 32 && key[0] <= 125 && !contains(&key[0], raw_data(except), len(except), char)) {
-                text = str_add(text, utf8.runes_to_string(key));
+            if (key_down(.RIGHT)) {
+                if (pos > 0) { pos -= int(100 * delta_time()); }
+            } 
+
+            if (key_down(.LEFT)) {
+                if (pos <= len(text) - 1) { pos += int(100 * delta_time()); }
+            }
+
+            if (key_down(.BACKSPACE)) {
+                if (len(text) > 0) {
+                    if (pos != len(text)) {
+                        text = str_add(text[:len(text) - pos - 1], text[len(text) - pos:]);
+                    }
+                }
+            } else {
+                key := []char{char_pressed()};
+                if (key[0] >= 32 && key[0] <= 125 && !contains(&key[0], raw_data(except), len(except), char)) {
+                    text = str_add(text, utf8.runes_to_string(key));
+                }
+            }
+
+            if (key_released(.RIGHT) || key_released(.LEFT) || key_released(.BACKSPACE)) {
+                auto_move_timer = MOVE_TIMER_MAX;
+                auto_move = false;
             }
         }
+
+
+        if (key_pressed(.HOME)) {
+            pos = len(text);
+        }
+
+        if (key_pressed(.END)) {
+            pos = 0;
+        }
+
+        
 
         if (!rl.CheckCollisionPointRec(window.mouse_position, rec) &&
             mouse_pressed(.LEFT)) { active = false; }
