@@ -126,7 +126,11 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
     if (active) {
         if (key_down(.LEFT_CONTROL) || key_down(.LEFT_SUPER)) {
             if (key_pressed(.V)) { 
-                text = str_add(text, string(rl.GetClipboardText())); 
+                left := text[:len(text) - pos];
+                copied := string(rl.GetClipboardText());
+                right := text[len(text) - pos:];
+
+                text = str_add({left, copied, right});
             }
             if (key_pressed(.C)) {
                 rl.SetClipboardText(to_cstr(text));
@@ -155,7 +159,11 @@ gui_text_box_render :: proc(using self: ^GuiTextBox, x, y, w, h: f32, decorated:
             } else {
                 key := []char{char_pressed()};
                 if (key[0] >= 32 && key[0] <= 125 && !contains(&key[0], raw_data(except), len(except), char)) {
-                    text = str_add(text, utf8.runes_to_string(key));
+                    left := text[:len(text) - pos];
+                    char_key := utf8.runes_to_string(key);
+                    right := text[len(text) - pos:];
+
+                    text = str_add({left, char_key, right});
                 }
             }
 
