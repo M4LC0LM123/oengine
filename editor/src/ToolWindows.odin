@@ -374,6 +374,7 @@ data_id_mod_tool :: proc(ct: CameraTool) {
 
         editor_data.active_data_id = reg_tag;
 
+        fmt.println(flags);
         oe.reg_asset(reg_tag, 
             oe.DataID {
                 reg_tag, 
@@ -472,13 +473,19 @@ data_id_mod_tool :: proc(ct: CameraTool) {
         d_flags_len = 0;
     }
 
-    text := "";
-    for i in 0..<d_flags_len {
-        text = oe.str_add(text, d_flags[i]);
-        text = oe.str_add({text, ","})
+    if (editor_data.active_data_id != "") {
+        did := oe.get_asset_var(editor_data.active_data_id, oe.DataID);
+        // d_flags = did.flags.data;
+        // d_flags_len = did.flags.len;
+
+        text := "";
+        for i in 0..<did.flags.len {
+            text = oe.str_add(text, did.flags.data[i]);
+            text = oe.str_add({text, ","})
+        }
+        grid = oe.gui_grid(7, 0, 40, wr.width, 10);
+        oe.gui_text(text, 25, grid.x, grid.y);
     }
-    grid = oe.gui_grid(7, 0, 40, wr.width, 10);
-    oe.gui_text(text, 25, grid.x, grid.y);
 
     grid = oe.gui_grid(8, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Components", grid.x, grid.y, grid.width, grid.height)) {

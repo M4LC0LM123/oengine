@@ -106,6 +106,17 @@ ew_get_ent_tag :: proc(tag: string) -> AEntity {
     return nil;
 }
 
+ew_remove_ent :: proc(#any_int id: u32) {
+    ent := ew_get_ent(id);
+
+    if (has_component(ent, RigidBody)) {
+        rb := get_component(ent, RigidBody);
+        fa.remove(&ecs_world.physics.bodies, rb.id);
+    }
+
+    ecs.ecs_remove(&ecs_world.ecs_ctx, ent);
+}
+
 ew_get_ents :: proc(tag: string) -> []AEntity {
     using ecs_world;
 

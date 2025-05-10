@@ -10,6 +10,9 @@ globals: struct {
 };
 
 main :: proc() {
+    oe.OE_DEBUG = true;
+    oe.PHYS_DEBUG = true;
+
     monitor := rl.GetCurrentMonitor();
     oe.w_create(oe.EDITOR_INSTANCE);
     rl.MaximizeWindow();
