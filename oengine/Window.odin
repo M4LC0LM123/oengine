@@ -389,6 +389,7 @@ engine_run :: proc(
     init: proc() = nil,
     update: proc() = nil,
     render: proc() = proc() { rl.ClearBackground(BLACK); },
+    render_ui: proc() = nil,
     deinit: proc() = nil,
     shader: Shader = {},
     use_shader: bool = false,
@@ -414,6 +415,8 @@ engine_run :: proc(
         if (render != nil) { render(); }
         w_end_render();
         if (use_shader) { rl.EndShaderMode(); }
+
+        if (render_ui != nil) { render_ui(); }
     }
 
     if (deinit != nil) { deinit(); }
