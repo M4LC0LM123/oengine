@@ -5,6 +5,7 @@ import "core:fmt"
 import rl "vendor:raylib"
 import "core:math"
 import str "core:strings"
+import rlg "../oengine/rllights"
 
 EDITOR_INSTANCE :: "oengine-editor"
 
@@ -93,6 +94,9 @@ w_create :: proc(name: string = "Game") {
 
     DEFAULT_MATERIAL = rl.LoadMaterialDefault();
     dbg_log("Loaded default material");
+
+    rlg.SetCustomShaderCode(.LIGHTING, DEF_VERT, DEF_FRAG);
+    dbg_log("Set custom shader");
 }
 
 w_set_instance_name :: proc(name: string) {

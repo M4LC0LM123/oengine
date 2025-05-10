@@ -1,87 +1,3 @@
-package oengine
-
-import rl "vendor:raylib"
-import rlg "../oengine/rllights"
-import "core:fmt"
-
-WAVE_FRAG: cstring = `
-#version 330
-
-// Input vertex attributes (from vertex shader)
-in vec2 fragTexCoord;
-in vec4 fragColor;
-
-// Input uniform values
-uniform sampler2D texture0;
-uniform vec4 colDiffuse;
-
-// Output fragment color
-out vec4 finalColor;
-
-uniform float seconds;
-
-uniform vec2 size;
-
-uniform float freqX;
-uniform float freqY;
-uniform float ampX;
-uniform float ampY;
-uniform float speedX;
-uniform float speedY;
-
-void main() {
-    float pixelWidth = 1.0 / size.x;
-    float pixelHeight = 1.0 / size.y;
-    float aspect = pixelHeight / pixelWidth;
-    float boxLeft = 0.0;
-    float boxTop = 0.0;
-
-    vec2 p = fragTexCoord;
-    p.x += cos((fragTexCoord.y - boxTop) * freqX / ( pixelWidth * 750.0) + (seconds * speedX)) * ampX * pixelWidth;
-    p.y += sin((fragTexCoord.x - boxLeft) * freqY * aspect / ( pixelHeight * 750.0) + (seconds * speedY)) * ampY * pixelHeight;
-
-    finalColor = texture(texture0, p)*colDiffuse*fragColor;
-}`;
-
-DEF_VERT: cstring = `
-#version 100
-
-attribute vec3 vertexPosition;
-attribute vec2 vertexTexCoord;
-attribute vec4 vertexTangent;
-attribute vec3 vertexNormal;
-attribute vec4 vertexColor;
-
-uniform lowp int useNormalMap;
-uniform mat4 matNormal;
-uniform mat4 matModel;
-uniform mat4 mvp;
-
-varying vec3 fragPosition;
-varying vec2 fragTexCoord;
-varying vec3 fragNormal;
-varying vec4 fragColor;
-varying mat3 TBN;
-
-void main()
-{
-    fragPosition = vec3(matModel*vec4(vertexPosition, 1.0));
-    fragNormal = (matNormal*vec4(vertexNormal, 0.0)).xyz;
-
-    fragTexCoord = vertexTexCoord ;
-    fragColor = vertexColor ;
-
-    // The TBN matrix is used to transform vectors from tangent space to world space
-    // It is currently used to transform normals from a normal map to world space normals
-    vec3 T = normalize(vec3(matModel*vec4(vertexTangent.xyz, 0.0)));
-    vec3 B = cross(fragNormal, T)*vertexTangent.w;
-    TBN = mat3(T, B, fragNormal);
-
-    gl_Position = mvp*vec4(vertexPosition, 1.0);
-}
-`;
-
-DEF_FRAG: cstring = `
 #version 100
 #define TEX texture2D
 #define TEXCUBE textureCube
@@ -162,9 +78,6 @@ uniform lowp int parallaxMaxLayers;
 uniform float farPlane;
 uniform vec3 colAmbient;
 uniform vec3 viewPos;
-
-uniform float fogDensity;
-uniform vec4 fogColor;
 
 float DistributionGGX(float cosTheta, float alpha) {
     float a = cosTheta * alpha;
@@ -382,66 +295,5 @@ void main() {
         emission *= TEX(maps[EMISSION].texture, uv).rgb;
     }
 
-    vec4 finalColor = vec4(diffuse + specLighting + emission, 1.0);
-
-    // fog
-    float dist = length(viewPos - fragPosition);
-    // const vec4 fogColor = vec4(0.5, 0.5, 0.5, 1.0);
-    // const float fogDensity = 0.08;
-
-    float fogFactor = 1.0/exp((dist * fogDensity) * (dist * fogDensity));
-    fogFactor = clamp(fogFactor, 0.0, 1.0);
-    finalColor = mix(fogColor, finalColor, fogFactor);
-
-    gl_FragColor = finalColor;
-}
-
-`;
-
-set_fog_color :: proc(color: Color) {
-    fog_shader := rlg.GetShader(.LIGHTING)^;
-    color_loc := shader_location(fog_shader, "fogColor");
-
-    color_f := Vec4 {
-        f32(color.r) / 255,
-        f32(color.g) / 255,
-        f32(color.b) / 255,
-        f32(color.a) / 255,
-    };
-
-    rl.SetShaderValue(fog_shader, color_loc, &color_f, .VEC4);
-}
-
-set_fog_density :: proc(density: f32) {
-    fog_shader := rlg.GetShader(.LIGHTING)^;
-    density_loc := shader_location(fog_shader, "fogDensity");
-    density_v := density;
-
-    rl.SetShaderValue(fog_shader, density_loc, &density_v, .FLOAT);
-}
-
-shader_location :: proc(shader: rl.Shader, uniformName: cstring) -> rl.ShaderLocationIndex {
-    loc := rl.GetShaderLocation(shader, uniformName);
-    return loc;
-}
-
-vec_to_mulptr :: proc {
-    vec2_to_mulptr,
-    vec3_to_mulptr,
-    vec4_to_mulptr,
-}
-
-vec3_to_mulptr :: proc(arr: [3]f32) -> rawptr {
-    slice := []f32{arr.x, arr.y, arr.z};
-    return raw_data(slice);
-}
-
-vec2_to_mulptr :: proc(arr: [2]f32) -> rawptr {
-    slice := []f32{arr.x, arr.y};
-    return raw_data(slice);
-}
-
-vec4_to_mulptr :: proc(arr: [4]f32) -> rawptr {
-    slice := []f32{arr.x, arr.y, arr.z, arr.w};
-    return raw_data(slice);
+    gl_FragColor = vec4(diffuse + specLighting + emission, 1.0);
 }

@@ -11,6 +11,9 @@ import "nfd"
 MAX_LIGHTS :: 44
 FIXED_TIME_STEP :: 1.0 / 60.0
 
+FOG_COLOR :: GRAY
+FOG_DENSITY :: 0
+
 ecs_world: struct {
     ecs_ctx: ecs.Context,
     physics: PhysicsWorld,
@@ -42,7 +45,10 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     rlg_ctx = rlg.CreateContext(MAX_LIGHTS);
     rlg.SetContext(rlg_ctx);
 
-    FAE = true;
+    set_fog_density(FOG_DENSITY);
+    set_fog_color(FOG_COLOR);
+
+    FAE = false; // deprecated
     world_fog.density = 0.007;
     world_fog.gradient = 1.5;
 
