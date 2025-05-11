@@ -84,7 +84,7 @@ main :: proc() {
 
     player := oe.aent_init("player");
     player_tr := oe.get_component(player, oe.Transform);
-    player_tr.position = {16, 10, 23};
+    player_tr.position = {0, 5, 0};
     player_rb := oe.add_component(
         player, oe.rb_init(
             {player_tr.position - {0, 0.5, 0}, player_tr.rotation, {1, 2, 1}}, 
@@ -213,6 +213,10 @@ main :: proc() {
             player_rb.velocity.z = 7.5;
         } else {
             player_rb.velocity.xz = {};
+        }
+
+        if (oe.key_pressed(.F5)) {
+            oe.ew_remove_ent(player.id);
         }
 
         if (oe.key_down(oe.Key.F2)) {

@@ -9,6 +9,7 @@ MAX_SYS :: 64
 
 Context :: struct {
     entities: fa.FixedArray(^Entity, MAX_ENTS),
+    removed_ents: [dynamic]i32,
     _update_systems: fa.FixedArray(SystemFunc, MAX_SYS),
     _render_systems: fa.FixedArray(SystemFunc, MAX_SYS),
     _fixed_update_systems: fa.FixedArray(SystemFunc, MAX_SYS),
@@ -17,6 +18,7 @@ Context :: struct {
 ecs_init :: proc() -> Context {
     return Context {
         entities = fa.fixed_array(^Entity, MAX_ENTS),
+        removed_ents = make([dynamic]i32),
         _update_systems = fa.fixed_array(SystemFunc, MAX_SYS),
         _render_systems = fa.fixed_array(SystemFunc, MAX_SYS),
         _fixed_update_systems = fa.fixed_array(SystemFunc, MAX_SYS),
@@ -43,6 +45,11 @@ ecs_update :: proc(ctx: ^Context) {
             system(ctx, entity);
         }
     }
+
+    for id in removed_ents {
+        fa.remove(&entities, id);
+    }
+    clear(&removed_ents);
 }
 
 ecs_render :: proc(ctx: ^Context) {
@@ -69,5 +76,8 @@ ecs_fixed_update :: proc(ctx: ^Context) {
 }
 
 ecs_remove :: proc(ctx: ^Context, ent: ^Entity) {
-    fa.remove_arr(&ctx.entities, int(ent.id));
+    id := fa.get_id(ctx.entities, ent);
+    if (id == -1) { return; }
+
+    append(&ctx.removed_ents, i32(id));
 }

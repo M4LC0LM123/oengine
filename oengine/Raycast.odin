@@ -12,7 +12,7 @@ rc_debug :: proc(using self: Raycast) {
     rl.DrawLine3D(position, target, rl.GREEN);
 }
 
-rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeType) -> bool {
+rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeType) -> (bool, Vec3) {
     if (shape == ShapeType.BOX) {
         tmin, tmax, tymin, tymax, tzmin, tzmax: f32;
         
@@ -45,7 +45,7 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
         }
 
         if ((tmin > tymax) || (tymin > tmax)) {
-            return false;
+            return false, {};
         }
 
         if (tymin > tmin) {
@@ -64,7 +64,7 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
         }
 
         if ((tmin > tzmax) || (tzmin > tmax)) {
-            return false;
+            return false, {};
         }
 
         if (tzmin > tmin) {
@@ -76,8 +76,8 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
         }
 
         // Calculate contact point for a box
-        // contactPoint = position + rotatedRayDirection * tmin;
-        return true;
+        contactPoint := position + rotatedRayDirection * tmin;
+        return true, contactPoint;
     }
      
     if (shape == ShapeType.SPHERE) {
@@ -94,7 +94,7 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
         discriminant: f32 = b * b - 4 * a * c;
 
         if (discriminant < 0) {
-            return false;
+            return false, {};
         }
 
         sqrtDiscriminant: f32 = f32(math.sqrt(discriminant));
@@ -103,14 +103,14 @@ rc_is_colliding :: proc(using self: Raycast, transform: Transform, shape: ShapeT
 
         if (t1 >= 0 || t2 >= 0) {
             // // Calculate contact point for a sphere
-            // contactPoint = position + rayDirection * t1; // You can choose either t1 or t2
-            return true;
+            contactPoint := position + rayDirection * t1; // You can choose either t1 or t2
+            return true, contactPoint;
         }
 
-        return false;
+        return false, {};
     }
 
-    return false;
+    return false, {};
 }
 
 MSCCollisionInfo :: struct {

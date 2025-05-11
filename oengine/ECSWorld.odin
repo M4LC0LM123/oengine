@@ -92,7 +92,12 @@ ew_get_ent :: proc {
 }
 
 ew_get_ent_id :: proc(#any_int id: u32) -> AEntity {
-    return ecs_world.ecs_ctx.entities.data[int(id)];
+    for i in 0..<ecs_world.ecs_ctx.entities.len {
+        ent := ecs_world.ecs_ctx.entities.data[i];
+        if (ent.id == id) { return ent; }
+    }
+
+    return nil;
 }
 
 ew_get_ent_tag :: proc(tag: string) -> AEntity {
@@ -108,10 +113,15 @@ ew_get_ent_tag :: proc(tag: string) -> AEntity {
 
 ew_remove_ent :: proc(#any_int id: u32) {
     ent := ew_get_ent(id);
+    if (ent == nil) { return; }
 
     if (has_component(ent, RigidBody)) {
         rb := get_component(ent, RigidBody);
-        fa.remove(&ecs_world.physics.bodies, rb.id);
+        rb_id := fa.get_id(ecs_world.physics.bodies, rb);
+
+        if (rb_id != -1) {
+            fa.remove(&ecs_world.physics.bodies, rb_id);
+        }
     }
 
     ecs.ecs_remove(&ecs_world.ecs_ctx, ent);
