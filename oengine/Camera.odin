@@ -124,13 +124,4 @@ cm_look_at :: proc(using self: ^Camera, target_position: Vec3) {
 
     self.right = vec3_normalize(vec3_cross(world_up, self.front));
     self.up = vec3_cross(self.front, self.right);
-
-    x, y, z := linalg.euler_angles_from_quaternion_f32(
-        linalg.quaternion_look_at(position, target_position, vec3_y()),
-        .XYZ
-    );
-    rotation = {x, y, z};
-
-    if (rotation.x > 89.0) do rotation.x = 89.0;
-    if (rotation.x < -89.0) do rotation.x = -89.0;
 }
