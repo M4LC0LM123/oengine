@@ -2,6 +2,7 @@ package oengine
 
 import rl "vendor:raylib"
 import "core:math"
+import "core:math/linalg"
 
 Camera :: struct {
     fov, near, far: f32,
@@ -113,4 +114,23 @@ cm_set_fps_controls :: proc(using self: ^Camera, speed: f32, is_mouse_locked, fl
 
 cm_default_fps_matrix :: proc(using self: ^Camera) {
     target = position + front;
+}
+
+cm_look_at :: proc(using self: ^Camera, target_position: Vec3) {
+    self.target = target_position;
+
+    self.front = vec3_normalize(self.target - self.position);
+    world_up := vec3_y();
+
+    self.right = vec3_normalize(vec3_cross(world_up, self.front));
+    self.up = vec3_cross(self.front, self.right);
+
+    x, y, z := linalg.euler_angles_from_quaternion_f32(
+        linalg.quaternion_look_at(position, target_position, vec3_y()),
+        .XYZ
+    );
+    rotation = {x, y, z};
+
+    if (rotation.x > 89.0) do rotation.x = 89.0;
+    if (rotation.x < -89.0) do rotation.x = -89.0;
 }

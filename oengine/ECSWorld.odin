@@ -218,8 +218,13 @@ ew_render :: proc() {
     // ecs.ecs_render(&ecs_ctx, camera);
     for i in 0..<fa.range(ecs_ctx.entities) {
         entity := ecs_ctx.entities.data[i];
-        tr := get_component(entity, Transform);
-        bbox := aabb_to_bounding_box(trans_to_aabb(tr^));
+        tr := get_component(entity, Transform)^;
+
+        if (entity.use_hitbox) {
+            tr = get_component(entity, RigidBody).transform;
+        }
+
+        bbox := aabb_to_bounding_box(trans_to_aabb(tr));
 
         if (FrustumContainsBox(frustum, bbox)) {
             for j in 0..<fa.range(ecs_ctx._render_systems) {

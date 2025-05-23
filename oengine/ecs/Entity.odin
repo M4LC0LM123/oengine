@@ -17,6 +17,7 @@ Entity :: struct {
     tag: string,
     flags: EntFlags,
     components: fa.FixedMap(typeid, rawptr, MAX_CMPNTS),
+    use_hitbox: bool,
 }
 
 entity_init :: proc(ctx: ^Context, transparent := true) -> ^Entity {
