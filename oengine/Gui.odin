@@ -2,6 +2,7 @@ package oengine
 
 import rl "vendor:raylib"
 import strs "core:strings"
+import "core:fmt"
 
 /*
 gui example
@@ -358,9 +359,10 @@ gui_tick :: proc(
     x, y, w, h: f32,
     text: string = STR_EMPTY,
     text_size: f32 = 20,
-    standalone: bool = false) -> bool {
+    standalone: bool = false,
+    decorated: bool = true) -> bool {
     active := gui_active();
-    if (!active.active && !standalone) do return false;
+    if (active != nil && !active.active && !standalone) do return false;
 
     rx: f32;
     ry: f32;
@@ -372,7 +374,11 @@ gui_tick :: proc(
 
     rp := Vec2 {x + rx, y + ry};
 
-    gui_inverse_rec(rp.x, rp.y, w, h);
+    if (decorated) {
+        gui_inverse_rec(rp.x, rp.y, w, h);
+    } else {
+        rl.DrawRectangleLinesEx({rp.x, rp.y, w, h}, 1, WHITE);
+    }
 
     res := tick
 
