@@ -218,13 +218,27 @@ ew_render :: proc() {
     // ecs.ecs_render(&ecs_ctx, camera);
     for i in 0..<fa.range(ecs_ctx.entities) {
         entity := ecs_ctx.entities.data[i];
-        tr := get_component(entity, Transform)^;
 
-        if (entity.use_hitbox) {
-            tr = get_component(entity, RigidBody).transform;
+        bbox: rl.BoundingBox;
+        switch entity.frustum_type {
+            case .INTERNAL:
+                tr := get_component(entity, Transform)^;
+                bbox = aabb_to_bounding_box(trans_to_aabb(tr));
+            case .PHYSICS:
+                _tr := get_component(entity, RigidBody).transform;
+                bbox = aabb_to_bounding_box(trans_to_aabb(_tr));
+            case .CUSTOM:
+                using entity;
+                aabb := AABB{
+                    custom_box.x, custom_box.y, custom_box.z,
+                    custom_box.width, custom_box.height, custom_box.depth
+                };
+                bbox = aabb_to_bounding_box(aabb);
         }
 
-        bbox := aabb_to_bounding_box(trans_to_aabb(tr));
+        if (OE_DEBUG) {
+            rl.DrawBoundingBox(bbox, ORANGE);
+        }
 
         if (FrustumContainsBox(frustum, bbox)) {
             for j in 0..<fa.range(ecs_ctx._render_systems) {

@@ -12,12 +12,23 @@ MAX_CMPNTS :: 64
 
 EntFlags :: distinct bit_set[u32(0)..=127]
 
+FrustumType :: enum {
+    INTERNAL = 0,
+    PHYSICS,
+    CUSTOM
+}
+
+AABB :: struct {
+    x, y, z, width, height, depth: f32,
+}
+
 Entity :: struct {
     id: u32,
     tag: string,
     flags: EntFlags,
     components: fa.FixedMap(typeid, rawptr, MAX_CMPNTS),
-    use_hitbox: bool,
+    frustum_type: FrustumType,
+    custom_box: AABB,
 }
 
 entity_init :: proc(ctx: ^Context, transparent := true) -> ^Entity {
