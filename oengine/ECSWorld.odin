@@ -86,6 +86,17 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     physics_thread = thread.create_and_start(ew_fixed_thread);
 }
 
+ew_clear :: proc() {
+    using ecs_world;
+
+    fa.clear(&ecs_ctx.entities);
+    fa.clear(&physics.bodies);
+    fa.clear(&physics.mscs);
+
+    rlg_ctx = rlg.CreateContext(MAX_LIGHTS);
+    rlg.SetContext(rlg_ctx);
+}
+
 ew_get_ent :: proc {
     ew_get_ent_id,
     ew_get_ent_tag,
