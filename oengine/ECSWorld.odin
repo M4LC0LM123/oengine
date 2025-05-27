@@ -89,6 +89,40 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
 ew_clear :: proc() {
     using ecs_world;
 
+    rlg.DestroyContext(rlg_ctx);
+
+    pw_deinit(&physics);
+
+    for i in 0..<ecs_ctx.entities.len {
+        ent := ecs_ctx.entities.data[i];
+        for j in 0..<ent.components.len {
+            type, comp := fa.map_pair(ent.components, j);
+
+            if (type == RigidBody) { continue; }
+            free(comp);
+        }
+        free(ent);
+    }
+
+    for i in 0..<physics.mscs.len {
+        msc := physics.mscs.data[i];
+        
+        if (msc.tris != nil) {
+            for j in 0..<len(msc.tris) {
+                tri := msc.tris[j];
+                free(tri);
+            }
+            delete(msc.tris);
+        }
+
+        if (msc.tree != nil) {
+            free_octree(msc.tree);
+        }
+
+        // msc.mesh = {};
+        // free(msc);
+    }
+
     fa.clear(&ecs_ctx.entities);
     fa.clear(&physics.bodies);
     fa.clear(&physics.mscs);
@@ -184,7 +218,7 @@ ew_update :: proc() {
 ew_fixed_thread :: proc() {
     using ecs_world;
     last_time := rl.GetTime();
-    
+
     for (!rl.WindowShouldClose()) {
         current_time := rl.GetTime();
         delta_time := current_time - last_time;

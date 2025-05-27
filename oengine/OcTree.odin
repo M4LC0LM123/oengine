@@ -77,3 +77,21 @@ render_octree :: proc(node: ^OctreeNode, depth: i32) {
         render_octree(node.children[i], depth + 1);
     }
 }
+
+free_octree :: proc(node: ^OctreeNode) {
+    if (node == nil) { return; }
+
+    for i in 0..<8 {
+        if node.children[i] != nil {
+            free_octree(node.children[i]);
+            node.children[i] = nil;
+        }
+    }
+
+    if (node.is_leaf && node.triangles != nil) {
+        delete(node.triangles);
+        node.triangles = nil;
+    }
+
+    free(node);
+}

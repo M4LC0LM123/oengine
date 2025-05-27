@@ -66,10 +66,12 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
     for n: i32; n < iterations; n += 1 {
         for i := 0; i < fa.range(bodies); i += 1 {
             rb := bodies.data[i];
+            if (rb == nil) { continue; }
             rb_fixed_update(rb, delta_time / f32(iterations));
                     
             for i in 0..<fa.range(mscs) {
                 msc := mscs.data[i];
+                if (msc == nil) { continue; }
                 if (!aabb_collision(msc._aabb, trans_to_aabb(rb.transform))) {
                     continue;
                 }
@@ -86,6 +88,7 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
 
             for j := i + 1; j < fa.range(bodies); j += 1 {
                 rb2 := bodies.data[j];
+                if (rb2 == nil) { continue; }
 
                 if (ignored(rb, rb2)) do continue;
                 if (!collision_transforms(rb.transform, rb2.transform)) do continue;
@@ -107,6 +110,7 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
 
         for i in 0..<fa.range(joints) {
             joint := joints.data[i];
+            if (joint == nil) { continue; }
             joint.update(joint);
         }
     }

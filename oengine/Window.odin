@@ -6,6 +6,7 @@ import rl "vendor:raylib"
 import "core:math"
 import str "core:strings"
 import rlg "../oengine/rllights"
+import "core:mem"
 
 EDITOR_INSTANCE :: "oengine-editor"
 
@@ -397,6 +398,8 @@ engine_run :: proc(
     deinit: proc() = nil,
     shader: Shader = {},
     use_shader: bool = false,
+    track_leaks: bool = false,
+    leak_key: Key = Key.F4,
 ) {
     w_create(instance_name);
     w_set_size(width, height);
@@ -411,7 +414,29 @@ engine_run :: proc(
 
     if (init != nil) { init(); }
 
+    track_allocator: mem.Tracking_Allocator;
+
+    if (track_leaks) {
+        def_allocator := context.allocator;
+        track_allocator: mem.Tracking_Allocator;
+        mem.tracking_allocator_init(&track_allocator, def_allocator);
+        context.allocator = mem.tracking_allocator(&track_allocator);
+    }
+
+    reset_track_allocator :: proc(a: ^mem.Tracking_Allocator) -> bool {
+        err := false;
+
+        for _, value in a.allocation_map {
+            fmt.printf("%v: allocated %v bytes\n", value.location, value.size);
+            err = true;
+        }
+
+        mem.tracking_allocator_clear(a);
+        return err;
+    }
+
     for (w_tick()) {
+        mem.tracking_allocator_clear(&track_allocator);
         if (update != nil) { update(); }
 
         if (use_shader) { rl.BeginShaderMode(shader); }
@@ -421,6 +446,12 @@ engine_run :: proc(
         if (use_shader) { rl.EndShaderMode(); }
 
         if (render_ui != nil) { render_ui(); }
+
+        if (track_leaks) {
+            if (key_pressed(leak_key)) { 
+                reset_track_allocator(&track_allocator); 
+            }
+        }
     }
 
     if (deinit != nil) { deinit(); }
