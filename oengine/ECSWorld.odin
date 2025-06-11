@@ -86,6 +86,15 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     physics_thread = thread.create_and_start(ew_fixed_thread);
 }
 
+ew_toggle_physics :: proc() {
+    using ecs_world;
+    physics.paused = !physics.paused;
+}
+
+world :: proc() -> type_of(ecs_world) {
+    return ecs_world;
+}
+
 ew_clear :: proc() {
     using ecs_world;
 

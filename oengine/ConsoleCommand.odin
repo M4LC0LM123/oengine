@@ -93,7 +93,6 @@ exit_cmd :: proc(args: []string) {
     using dev_console;
     console_print("Exiting...");
 
-    ew_deinit();
     w_close();
 
     os.exit(0); 

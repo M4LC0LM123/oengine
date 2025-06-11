@@ -39,7 +39,7 @@ PhysicsWorld :: struct {
     delta_time: f32,
     iterations: i32,
 
-    // sbp_tree: SBPTree(WORLD_SECTOR_SIZE),
+    paused: bool,
 }
 
 pw_init :: proc(using self: ^PhysicsWorld, s_gravity: Vec3, s_iter: i32 = 8) {
@@ -62,6 +62,7 @@ pw_debug :: proc(using self: ^PhysicsWorld) {
 
 pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
     delta_time = dt;
+    if (paused) { return; }
 
     for n: i32; n < iterations; n += 1 {
         for i := 0; i < fa.range(bodies); i += 1 {
