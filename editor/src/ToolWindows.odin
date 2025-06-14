@@ -57,7 +57,10 @@ registry_tool :: proc(ct: CameraTool) {
             if (paths[1] != oe.STR_EMPTY) {
                 if (filepath.ext(paths[1]) == ".json") {
                     oe.load_registry(paths[1]);
-                    globals.registry_atlas = oe.am_texture_atlas();
+
+                    if (paths[2] == oe.STR_EMPTY) {
+                        globals.registry_atlas = oe.am_texture_atlas();
+                    }
                 }
                 rl.ChangeDirectory(oe.to_cstr(root));
             }
