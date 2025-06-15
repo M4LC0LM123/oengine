@@ -15,6 +15,11 @@ types := [?]string {
 
 Object :: map[string]ODType
 
+I32 :: i32
+F32 :: f32
+STRING :: string
+BOOL :: bool
+
 ODType :: union {
     i32,
     f32,
@@ -95,9 +100,45 @@ parse :: proc(data: string) -> Object {
     return result;
 }
 
-marshall :: proc(value: any) -> []string {
-    fmt.println(value);
-    return nil;
+// i32 f32 string and bool are default values
+// other is considered a struct or a union
+marshal :: proc(data: any, type: typeid, name: string, indent: string = "") -> string {
+    if (type == i32) {
+        left := strings.concatenate({indent, "i32 ", name, " = "});
+        return str_add(left, data); 
+    } else if (type == f32) {
+        left := strings.concatenate({indent, "f32 ", name, " = "});
+        return str_add(left, data); 
+    } else if (type == string) {
+        left := strings.concatenate({indent, "string ", name, " = ", "\""});
+        return strings.concatenate({str_add(left, data), "\""}); 
+    } else if (type == bool) {
+        left := strings.concatenate({indent, "bool ", name, " = "});
+        return str_add(left, data); 
+    }
+
+    result := strings.concatenate({indent, "object ", name, " {\n"});
+    _types := reflect.struct_field_types(type);
+    names := reflect.struct_field_names(type);
+    values := make([]string, len(names));
+    for i in 0..<len(values) {
+        values[i] = str_add(
+            "", 
+            reflect.struct_field_value_by_name(data, names[i])
+        );
+    }
+
+    for i in 0..<len(values) {
+        value := reflect.struct_field_value_by_name(data, names[i]);
+        result = strings.concatenate(
+            {result, 
+            marshal(value, value.id, names[i], 
+            strings.concatenate({indent, "    "})), "\n"}
+        );
+    }
+
+    result = strings.concatenate({result, indent, "}"});
+    return result;
 }
 
 split_line :: proc(line: string) -> []string {
@@ -135,6 +176,45 @@ split_line :: proc(line: string) -> []string {
     }
 
     res[res_i] = line[prev_i + 1:];
+
+    return res;
+}
+
+str_add :: proc(buf: string, elem: $E, _fmt: string = "%v%.2f") -> string {
+    type := typeid_of(type_of(elem));
+    if (type == f32 || type == f64) {
+        // return fmt.aprintf(fmt.aprint("%v", _fmt, sep = ""), buf, elem);
+        return str_printf(_fmt, buf, elem);
+    }
+
+    // return fmt.aprintf("%v%v", buf, elem);
+    return str_printf("%v%v", buf, elem);
+}
+
+str_printf :: proc(
+    frmt: string, 
+    args: ..any, 
+    allocator := context.allocator, 
+    newline := false) -> string {
+	strb: strings.Builder;
+    defer strings.builder_destroy(&strb);
+	strings.builder_init(&strb, allocator);
+
+    fmt.sbprintf(&strb, frmt, ..args, newline=newline);
+
+    return strings.clone(strings.to_string(strb));
+}
+
+str_print :: proc(
+    args: ..any, 
+    sep := " ", 
+    allocator := context.allocator) -> string {
+	strb: strings.Builder;
+	strings.builder_init(&strb, allocator);
+
+	res := strings.clone(fmt.sbprint(&strb, ..args, sep=sep));
+
+    strings.builder_destroy(&strb);
 
     return res;
 }

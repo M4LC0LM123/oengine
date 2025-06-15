@@ -10,10 +10,23 @@ main :: proc() {
     start := time.now();
     data := od.parse(string(text));
     fmt.println(time.since(start));
-    // fmt.println(data);
+    fmt.println(data);
 
     color: struct {
-        r, g, b: i32
+        r, g, b: i32,
+        flags: struct {
+            blend: bool,
+            transparent: bool,
+        },
+        channels: struct {
+            alpha: f32,
+            name: string,
+        },
+        nested: struct {
+            nest: struct {
+                bird: bool,
+            },
+        },
     };
 
     color.r = data["rgb"].(od.Object)["r"].(i32);
@@ -23,7 +36,6 @@ main :: proc() {
     fmt.println(color);
 
     player := data["player"].(od.Object);
-    fmt.println(player);
 
-    od.marshall(player);
+    fmt.println(od.marshal(color, type_of(color), "color"));
 }
