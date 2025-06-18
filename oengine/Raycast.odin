@@ -128,7 +128,32 @@ get_mouse_rc :: proc(camera: Camera, scalar: f32 = 100) -> Raycast {
     };
 }
 
-rc_is_colliding_msc :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, MSCCollisionInfo) {
+rc_is_colliding_msc :: proc(using self: Raycast, msc: ^MSCObject, closest := false) -> (bool, MSCCollisionInfo) {
+    if (closest) {
+        distance := F32_MAX;
+        collision := false;
+        info: MSCCollisionInfo;
+
+        for i in 0..<len(msc.tris) {
+            t := msc.tris[i];
+            ok, pt := ray_tri_collision(self, t);
+            if (ok) {
+                normal := linalg.cross(t.pts[1] - t.pts[0], t.pts[2] - t.pts[0]);
+                normal = linalg.normalize(normal);
+
+                dist := vec3_dist(position, pt);
+                if (dist < distance) {
+                    info = {t, pt, normal, i};
+                    distance = dist;
+                }
+
+                collision = true;
+            }
+        }
+
+        return collision, info;
+    }
+
     for i in 0..<len(msc.tris) {
         t := msc.tris[i];
         ok, pt := ray_tri_collision(self, t);
@@ -143,7 +168,7 @@ rc_is_colliding_msc :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, MSCC
 }
 
 // the resulting array is sorted by the distance of collision
-rc_colliding_tris :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, [dynamic]MSCCollisionInfo) {
+rc_colliding_tris :: proc(using self: Raycast, msc: ^MSCObject, sort := true) -> (bool, [dynamic]MSCCollisionInfo) {
     res := make([dynamic]MSCCollisionInfo);
     coll: bool;
 
@@ -158,7 +183,7 @@ rc_colliding_tris :: proc(using self: Raycast, msc: ^MSCObject) -> (bool, [dynam
         }
     }
 
-    sort_tris(self, &res);
+    if (sort) { sort_tris(self, &res); }
     return coll, res;
 }
 
