@@ -1,0 +1,165 @@
+i32 dbg_pos = 3
+string exe_path = "{windows;linux;mac}"
+
+object water {
+	string path = "../assets/water.png"
+	string type = "Texture"
+}
+
+object albedo {
+	string path = "../assets/albedo.png"
+	string type = "Texture"
+}
+
+object skybox {
+	string type = "CubeMap"
+	string path_front = "../assets/skybox/frontx.png"
+	string path_back = "../assets/skybox/backx.png"
+	string path_left = "../assets/skybox/leftx.png"
+	string path_right = "../assets/skybox/rightx.png"
+	string path_top = "../assets/skybox/topx.png"
+	string path_bottom = "../assets/skybox/bottomx.png"
+}
+
+object troll {
+	string path = "../assets/trollface.png"
+	string type = "Texture"
+}
+
+object normal {
+	string path = "../assets/normal.png"
+	string type = "Texture"
+}
+
+object orm {
+	string path = "../assets/orm.png"
+	string type = "Texture"
+}
+
+object dudlic {
+	string path = "../assets/dudlic.png"
+	string type = "Texture"
+}
+
+object vesna {
+	string path = "../assets/vesna.png"
+	string type = "Texture"
+}
+
+object leon {
+	string path = "../assets/leon.png"
+	string type = "Texture"
+}
+
+object huh {
+	string path = "../assets/jump.mp3"
+	f32 volume = 1.0
+	string type = "Sound"
+}
+
+object celsium_man {
+	string path = "../assets/models/cesium_man.m3d"
+	string type = "Model"
+}
+
+object swat {
+	string path = "../assets/models/dudlic.m3d"
+	string type = "Model"
+}
+
+object lara {
+	string path = "../assets/models/lara.m3d"
+	string type = "Model"
+}
+
+object test_component {
+	object position {
+		f32 x = 0
+		f32 y = 0
+		f32 z = 0
+	}
+	object rotation {
+		f32 x = 0
+		f32 y = 0
+		f32 z = 0
+	}
+	object scale {
+		f32 x = 0
+		f32 y = 0
+		f32 z = 0
+	}
+	f32 density = 1
+	f32 restitution = 0.5
+	i32 shape = 0
+	bool is_static = false
+	string type = "RigidBody"
+}
+
+object mesh_component {
+	i32 shape = 0
+	string texture = "troll"
+	object color {
+		i32 r = 255
+		i32 g = 255
+		i32 b = 255
+		i32 a = 255
+	}
+	string type = "SimpleMesh"
+}
+
+object light_1 {
+	i32 light_type = 0
+	object color {
+		i32 r = 255
+		i32 g = 0
+		i32 b = 0
+		i32 a = 255
+	}
+	string type = "Light"
+}
+
+object light_2 {
+	i32 light_type = 1
+	object color {
+		i32 r = 255
+		i32 g = 255
+		i32 b = 255
+		i32 a = 255
+	}
+	string type = "Light"
+}
+
+object particles {
+	f32 life_time = 10
+	object color {
+		i32 r = 255
+		i32 g = 255
+		i32 b = 255
+		i32 a = 255
+	}
+	bool default_behaviour = true
+	object gravity {
+		f32 x = 0
+		f32 y = -9.81
+		f32 z = 0
+	}
+	string type = "Particles"
+}
+
+object spatial_audio {
+	string sound = "huh"
+	f32 strength = 1
+	bool can_play = true
+	string type = "SpatialAudio"
+}
+
+object fluid_component {
+	string texture = "water"
+	object color {
+		i32 r = 255
+		i32 g = 255
+		i32 b = 255
+		i32 a = 255
+	}
+	string type = "Fluid"
+}

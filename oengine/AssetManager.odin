@@ -1,7 +1,6 @@
 package oengine
 
 import "core:fmt"
-import "core:encoding/json"
 import "core:io"
 import "core:os"
 import "core:path/filepath"
@@ -9,6 +8,10 @@ import sc "core:strconv"
 import strs "core:strings"
 import rl "vendor:raylib"
 import "fa"
+import od "object_data"
+import "core:encoding/json"
+import "core:thread"
+import "core:sync"
 
 MAX_DIDS :: 2048
 MAX_TEXTURES :: 2048
@@ -35,7 +38,13 @@ Asset :: union {
     DataID,
 }
 
-LoadInstruction :: #type proc(asset_json: json.Object) -> rawptr
+LazyAsset :: struct {
+    loaded: bool,
+    data: Asset,
+}
+
+// LoadInstruction :: #type proc(asset_json: json.Object) -> rawptr
+LoadInstruction :: #type proc(asset: od.Object) -> rawptr
 LoaderFunc :: #type proc(ent: AEntity, tag: string)
 
 ComponentParse :: struct {
@@ -91,6 +100,76 @@ get_component_data :: proc(s: string, $T: typeid) -> ^T {
 }
 
 save_registry :: proc(path: string) {
+    if (filepath.ext(path) == ".od") {
+        save_registry_od(path);
+        return;
+    }
+
+    save_registry_json(path);
+}
+
+save_registry_od :: proc(path: string) {
+    using asset_manager;
+    mode := FileMode.WRITE_RONLY | FileMode.CREATE;
+    file := file_handle(path, mode);
+    res: string;
+
+    TextureMarshal :: struct {
+        path: string,
+        type: string,
+    }
+    
+    ModelMarshal :: struct {
+        path: string,
+        type: string,
+    }
+
+    SoundMarshal :: struct {
+        path: string,
+        volume: f32,
+        type: string,
+    }
+
+    CubeMapMarshal :: struct {
+        type: string,
+        path_front: string,
+        path_back: string,
+        path_left: string,
+        path_right: string,
+        path_top: string,
+        path_bottom: string,
+    }
+
+    for tag, asset in registry {
+        #partial switch var in asset {
+            case Texture:
+                tm := TextureMarshal { var.path, "Texture" };
+                res = str_add({res, od.marshal(tm, TextureMarshal, tag), "\n"});
+            case Model:
+                mm := ModelMarshal { var.path, "Model" };
+                res = str_add({res, od.marshal(mm, ModelMarshal, tag), "\n"});
+            case Sound:
+                sm := SoundMarshal { var.path, var.volume, "Sound" };
+                res = str_add({res, od.marshal(sm, SoundMarshal, tag), "\n"});
+            case CubeMap:
+                cmm := CubeMapMarshal {
+                    "CubeMap",
+                    var[0].path,
+                    var[1].path,
+                    var[2].path,
+                    var[3].path,
+                    var[4].path,
+                    var[5].path,
+                };
+                res = str_add({res, od.marshal(cmm, CubeMapMarshal, tag), "\n"});
+        }
+    }
+
+    file_write(file, res);
+    file_close(file);
+}
+
+save_registry_json :: proc(path: string) {
     using asset_manager;
     mode := FileMode.WRITE_RONLY | FileMode.CREATE;
     file := file_handle(path, mode);
@@ -141,7 +220,197 @@ save_registry :: proc(path: string) {
     file_close(file);
 }
 
+TagObjectPair :: struct {
+    tag: string,
+    object: od.Object,
+}
+
+AssetJob :: struct {
+    tag: string,
+    type: string,
+    data: od.Object,
+}
+
+CJobPair :: struct{tag: string, asset: [6]Image}
+TJobPair :: struct{tag: string, asset: Image}
+cubemap_job: [dynamic]CJobPair;
+texture_job: [dynamic]TJobPair;
+jobs_done: i32;
+
+load_asset_job :: proc(data: rawptr) {
+    job := cast(^AssetJob)data;
+    tag := job.tag;
+    data := job.data;
+
+    if job.type == "CubeMap" {
+        front := get_path(data["path_front"].(string));
+        back := get_path(data["path_back"].(string));
+        left := get_path(data["path_left"].(string));
+        right := get_path(data["path_right"].(string));
+        top := get_path(data["path_top"].(string));
+        bottom := get_path(data["path_bottom"].(string));
+
+        sky := [6]Image {
+            load_image(strs.clone(front)), load_image(strs.clone(back)),
+            load_image(strs.clone(left)), load_image(strs.clone(right)),
+            load_image(strs.clone(top)), load_image(strs.clone(bottom)),
+        };
+        // reg_asset(strs.clone(tag), sky);
+        append(&cubemap_job, CJobPair {strs.clone(tag), sky});
+    } else if job.type == "Sound" {
+        path := get_path(data["path"].(string));
+        vol, ok := sc.parse_f32(data["path"].(string));
+        res := load_sound(strs.clone(path));
+        if ok do set_sound_vol(&res, vol);
+        reg_asset(strs.clone(tag), res);
+    } else if job.type == "Texture" {
+        res := get_path(data["path"].(string));
+        tex := load_image(strs.clone(res));
+        // reg_asset(strs.clone(tag), tex);
+        append(&texture_job, TJobPair{strs.clone(tag), tex});
+    } else if job.type == "Model" {
+        res := get_path(data["path"].(string));
+        mdl := load_model(strs.clone(res));
+        reg_asset(strs.clone(tag), mdl);
+    }
+
+    sync.atomic_add(&jobs_done, 1);
+    if (OE_DEBUG) {
+        dbg_log(str_add("Finished job: ", sync.atomic_load(&jobs_done)));
+    }
+}
+
 load_registry :: proc(path: string) {
+    if (filepath.ext(path) == ".od") {
+        load_registry_od(path);
+        return;
+    }
+
+    load_registry_json(path);
+}
+
+load_registry_od :: proc(path: string) {
+    data, ok := os.read_entire_file_from_filename(path);
+    if (!ok) {
+        dbg_log("Failed to open file ", DebugType.WARNING);
+        return;
+    }
+
+    od_data := od.parse(string(data));
+    root := od_data;
+
+    second_pass := make([dynamic]TagObjectPair);
+    jobs := make([dynamic]^AssetJob);
+    threads := make([dynamic]^thread.Thread);
+
+    for tag, asset in root {
+        if (tag == "dbg_pos") {
+            val := asset.(i32);
+            window._dbg_stats_pos = val;
+            continue;
+        } else if (tag == "exe_path") {
+            val := asset.(string);
+            epath: string;
+            s_id, e_id: i32;
+            semi0, semi1: i32 = -1, -1;
+
+            for i in 0..<len(val) {
+                c := val[i];
+                if (c == '{') { s_id = auto_cast i; }
+                else if (c == '}') { e_id = auto_cast i; }
+                else if (c == ';') {
+                    if (semi0 == -1) { semi0 = auto_cast i; }
+                    else { semi1 = auto_cast i; }
+                }
+            }
+
+            epath = val[:s_id];
+            platform := sys_os();
+            plat: string;
+            if (platform == .Windows) { plat = val[s_id + 1:semi0]; }
+            else if (platform == .Linux) { plat = val[semi0 + 1:semi1]; }
+            else if (platform == .Darwin) { plat = val[semi1 + 1:e_id]; }
+            epath = str_add(epath, plat);
+            epath = str_add(epath, val[e_id + 1:]);
+
+            window._exe_path = strs.clone(epath);
+            continue;
+        }
+
+        asset_od := asset.(od.Object);
+        type := asset_od["type"].(string);
+
+        if (type == "CubeMap" || 
+            type == "Sound" || 
+            type == "Texture" || 
+            type == "Model") {
+            job := new(AssetJob);
+            job^ = AssetJob{strs.clone(tag), type, asset_od};
+            append(&jobs, job);
+            h := thread.create_and_start_with_data(job, load_asset_job);
+            append(&threads, h);
+        } else {
+            append(&second_pass, TagObjectPair{strs.clone(tag), asset_od});
+        }
+    }
+
+    for h in threads { thread.join(h); }
+
+    for pair in cubemap_job {
+        sky: CubeMap;
+
+        for i in 0..<len(pair.asset) {
+            sky[i] = load_texture(
+                pair.asset[i].path,
+                rl.LoadTextureFromImage(pair.asset[i].data)
+            );
+            deinit_image(pair.asset[i]);
+        }
+
+        reg_asset(pair.tag, sky);
+    }
+
+    for pair in texture_job {
+        reg_asset(
+            pair.tag, 
+            load_texture(pair.asset.path, rl.LoadTextureFromImage(pair.asset.data))
+        );
+        deinit_image(pair.asset);
+    }
+
+    clear(&cubemap_job);
+    clear(&texture_job);
+
+    for pair in second_pass {
+        tag := pair.tag;
+        asset_od := pair.object;
+        type := asset_od["type"].(string);
+
+        if (type == "CubeMap" || 
+            type == "Sound" || 
+            type == "Texture" || 
+            type == "Model") { continue; }
+
+        ct := ComponentType {
+            name = tag,
+            type = get_component_type(type),
+        };
+
+        instr := get_component_instr(type);
+        if (instr != nil) {
+            asset_manager.component_reg[ct] = instr(asset_od);
+        } else {
+            dbg_log("Parse instructions are nil", .ERROR);
+        }
+    }
+
+    defer delete(data);
+    defer delete(second_pass);
+    defer delete(jobs);
+    defer delete(threads);
+}
+
+load_registry_json :: proc(path: string) {
     data, ok := os.read_entire_file_from_filename(path);
     if (!ok) {
         dbg_log("Failed to open file ", DebugType.WARNING);
@@ -255,7 +524,7 @@ load_registry :: proc(path: string) {
 
         instr := get_component_instr(type);
         if (instr != nil) {
-            asset_manager.component_reg[ct] = instr(asset_json);
+            asset_manager.component_reg[ct] = instr(od.json_to_od(asset_json));
         } else {
             dbg_log("Parse instructions are nil", .ERROR);
         }

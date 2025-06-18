@@ -6,6 +6,7 @@ import "core:strings"
 import rl "vendor:raylib"
 import ecs "ecs"
 import "core:encoding/json"
+import od "object_data"
 
 Sprite :: struct {
     src: rl.Rectangle,
@@ -282,35 +283,29 @@ sm_set_shader :: proc(using self: ^SimpleMesh, s_shader: Shader) {
     }
 }
 
-sm_parse :: proc(asset_json: json.Object) -> rawptr {
-    shape := ShapeType(asset_json["shape"].(json.Float));
+sm_parse :: proc(asset: od.Object) -> rawptr {
+    shape := ShapeType(od.target_type(asset["shape"], i32));
 
     is_lit := true;
-    if (json_contains(asset_json, "is_lit")) {
-        is_lit = asset_json["is_lit"].(json.Boolean);
+    if (od_contains(asset, "is_lit")) {
+        is_lit = asset["is_lit"].(bool);
     }
 
     use_fog: bool;
-    if (json_contains(asset_json, "use_fog")) {
-        use_fog = asset_json["use_fog"].(json.Boolean);
+    if (od_contains(asset, "use_fog")) {
+        use_fog = asset["use_fog"].(bool);
     }
 
     texture: Texture;
-    if (json_contains(asset_json, "texture")) {
-        texture_tag := asset_json["texture"].(json.String);
+    if (od_contains(asset, "texture")) {
+        texture_tag := asset["texture"].(string);
         texture = get_asset_var(texture_tag, Texture);
     }
 
-    color_arr := asset_json["color"].(json.Array);
-    color := Color {
-        u8(color_arr[0].(json.Float)), 
-        u8(color_arr[1].(json.Float)), 
-        u8(color_arr[2].(json.Float)), 
-        u8(color_arr[3].(json.Float))
-    };
+    color := od_color(asset["color"].(od.Object));
 
     if (shape == .MODEL) {
-        model_tag := asset_json["model"].(json.String);
+        model_tag := asset["model"].(string);
         model := model_clone(get_asset_var(model_tag, Model));
 
         sm := sm_init(model, color);
@@ -319,7 +314,7 @@ sm_parse :: proc(asset_json: json.Object) -> rawptr {
 
         return new_clone(sm);
     } else if (shape == .CUBEMAP) {
-        cubemap_tag := asset_json["cubemap"].(json.String);
+        cubemap_tag := asset["cubemap"].(string);
         cubemap := get_asset_var(cubemap_tag, CubeMap);
 
         sm := sm_init(cubemap, color);

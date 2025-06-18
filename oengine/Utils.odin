@@ -9,6 +9,7 @@ import "core:fmt"
 import "core:math/linalg"
 import "core:math/rand"
 import "core:encoding/json"
+import od "object_data"
 
 STR_EMPTY :: ""
 
@@ -375,6 +376,60 @@ json_clr_parse :: proc(color_arr: json.Array) -> Color {
     };
 }
 
+od_vec3 :: proc(obj: od.Object) -> Vec3 {
+    if (od_contains(obj, "x") &&
+        od_contains(obj, "y") &&
+        od_contains(obj, "z")) {
+
+        x := obj["x"].(f32);
+        y := obj["y"].(f32);
+        z := obj["z"].(f32);
+        return Vec3 {x, y, z};
+    }
+
+    if (od_contains(obj, "v0") &&
+        od_contains(obj, "v1") &&
+        od_contains(obj, "v2")) {
+
+        x := obj["v0"].(f32);
+        y := obj["v1"].(f32);
+        z := obj["v2"].(f32);
+        return Vec3 {x, y, z};
+    }
+
+    dbg_log("Failed to load Vec3 from od.Object", .WARNING);
+    return {};
+}
+
+od_color :: proc(obj: od.Object) -> Color {
+    if (od_contains(obj, "r") &&
+        od_contains(obj, "g") &&
+        od_contains(obj, "b") &&
+        od_contains(obj, "a")) {
+
+        r := u8(obj["r"].(i32));
+        g := u8(obj["g"].(i32));
+        b := u8(obj["b"].(i32));
+        a := u8(obj["a"].(i32));
+        return Color {r, g, b, a};
+    }
+
+    if (od_contains(obj, "v0") &&
+        od_contains(obj, "v1") &&
+        od_contains(obj, "v2") &&
+        od_contains(obj, "v3")) {
+
+        r := u8(obj["v0"].(f32));
+        g := u8(obj["v1"].(f32));
+        b := u8(obj["v2"].(f32));
+        a := u8(obj["v3"].(f32));
+        return Color {r, g, b, a};
+    }
+
+    dbg_log("Failed to load Color from od.Object", .WARNING);
+    return {};
+}
+
 DIGITS := "0123456789";
 
 is_digit :: proc(s: string) -> bool {
@@ -421,6 +476,10 @@ contains :: proc(element, array: rawptr, arr_len: int, $T: typeid) -> bool {
 }
 
 json_contains :: proc(object: json.Object, tag: string) -> bool {
+    return object[tag] != nil;
+}
+
+od_contains :: proc(object: od.Object, tag: string) -> bool {
     return object[tag] != nil;
 }
 

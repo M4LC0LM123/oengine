@@ -161,6 +161,14 @@ map_proj_tool :: proc(ct: CameraTool) {
                     oe.update_msc(oe.ecs_world.physics.mscs.data[msc_id], msc);
                 }
                 oe.remove_msc(msc);
+            } else if (filepath.ext(path) == ".od") {
+                msc := oe.msc_init();
+                oe.load_msc(msc, path, false);
+
+                if (msc_id != ACTIVE_EMPTY) {
+                    oe.update_msc(oe.ecs_world.physics.mscs.data[msc_id], msc);
+                }
+                oe.remove_msc(msc);
             }
         } else {
             if (filepath.ext(path) == ".json") {
@@ -169,6 +177,9 @@ map_proj_tool :: proc(ct: CameraTool) {
             } else if (filepath.ext(path) == ".obj") {
                 msc := oe.msc_init();
                 oe.msc_from_model(msc, oe.load_model(path));
+            } else if (filepath.ext(path) == ".od") {
+                msc := oe.msc_init();
+                oe.load_msc(msc, path);
             }
         }
     }
@@ -177,10 +188,14 @@ map_proj_tool :: proc(ct: CameraTool) {
     if (oe.gui_button("Save msc", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_file();
         if (path != oe.STR_EMPTY) {
-            oe.msc_to_json(oe.ecs_world.physics.mscs.data[0], path);
+            if (filepath.ext(path) == ".json") {
+                oe.msc_to_json(oe.ecs_world.physics.mscs.data[0], path);
+            } else if (filepath.ext(path) == ".od") {
+                oe.save_msc(oe.ecs_world.physics.mscs.data[0], path);
+            }
 
             if (oe.ecs_world.physics.mscs.len == 0) {
-                oe.load_data_ids(path);
+                oe.save_data_ids(path);
             }
         }
     }
@@ -196,6 +211,8 @@ map_proj_tool :: proc(ct: CameraTool) {
         }
     }
 
+    @static use_json: bool;
+
     grid = oe.gui_grid(3, 1, 40, wr.width * 0.5, 10);
     @static map_name: string;
     map_name = oe.gui_text_box(
@@ -205,14 +222,17 @@ map_proj_tool :: proc(ct: CameraTool) {
     grid = oe.gui_grid(3, 0, 40, wr.width * 0.5, 10);
     if (oe.gui_button("Save map", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_folder();
-        oe.save_map(map_name, path);
+        oe.save_map(map_name, path, use_json);
     }
 
     grid = oe.gui_grid(4, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Load map", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_folder();
-        oe.load_map(path, globals.registry_atlas);
+        oe.load_map(path, globals.registry_atlas, use_json);
     }
+
+    grid = oe.gui_grid(5, 0, 40, 40, 10);
+    use_json = oe.gui_tick(use_json, grid.x, grid.y, grid.width, grid.height, "Use json");
 
     oe.gui_end();
 }

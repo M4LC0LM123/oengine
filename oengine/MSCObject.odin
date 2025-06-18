@@ -9,6 +9,8 @@ import "core:io"
 import "core:os"
 import strs "core:strings"
 import "fa"
+import od "object_data"
+import "core:path/filepath"
 
 /*
 EXAMPLE
@@ -53,7 +55,7 @@ load_atlas :: proc(path: string) -> Atlas {
     img_path := str_add(path, "/atlas.png");
     res.texture = load_texture(img_path);
 
-    data_path := str_add(path, "/atlas.json");
+    data_path := str_add(path, "/atlas.od");
     data, ok := os.read_entire_file_from_filename(data_path);
     if (!ok) {
         dbg_log("Failed to open file ", DebugType.WARNING);
@@ -61,38 +63,31 @@ load_atlas :: proc(path: string) -> Atlas {
     }
     defer delete(data);
 
-    json_data, err := json.parse(data);
-    if (err != json.Error.None) {
-		dbg_log("Failed to parse the json file", DebugType.WARNING);
-		dbg_log(str_add("Error: ", err), DebugType.WARNING);
-		return {};
-	}
-	defer json.destroy_value(json_data);
+    od_data := od.parse(string(data));
+    root := od_data;
 
-    json_obj := json_data.(json.Object);
-
-    for k, v in json_obj {
+    for k, v in root {
         if (k == "path") { continue; }
 
         if (k[:len(k) - 1] == "texture") {
-            tex_data := v.(json.Object);
-            texture_tag := tex_data["tag"].(json.String);
-            texture_uvs := tex_data["uvs"].(json.Array);
+            tex_data := v.(od.Object);
+            texture_tag := tex_data["tag"].(string);
+            texture_uvs := tex_data["uvs"].(od.Object);
             uv0 := Vec2{
-                f32(texture_uvs[0].(json.Array)[0].(json.Float)),
-                f32(texture_uvs[0].(json.Array)[1].(json.Float)),
+                texture_uvs["uv_0"].(od.Object)["x"].(f32),
+                texture_uvs["uv_0"].(od.Object)["y"].(f32),
             };
             uv1 := Vec2{
-                f32(texture_uvs[1].(json.Array)[0].(json.Float)),
-                f32(texture_uvs[1].(json.Array)[1].(json.Float)),
+                texture_uvs["uv_1"].(od.Object)["x"].(f32),
+                texture_uvs["uv_1"].(od.Object)["y"].(f32),
             };
             uv2 := Vec2{
-                f32(texture_uvs[2].(json.Array)[0].(json.Float)),
-                f32(texture_uvs[2].(json.Array)[1].(json.Float)),
+                texture_uvs["uv_2"].(od.Object)["x"].(f32),
+                texture_uvs["uv_2"].(od.Object)["y"].(f32),
             };
             uv3 := Vec2{
-                f32(texture_uvs[3].(json.Array)[0].(json.Float)),
-                f32(texture_uvs[3].(json.Array)[1].(json.Float)),
+                texture_uvs["uv_3"].(od.Object)["x"].(f32),
+                texture_uvs["uv_3"].(od.Object)["y"].(f32),
             };
 
             uvs := [4]Vec2 {
@@ -160,34 +155,46 @@ atlas_texture_rec :: proc(atlas: Atlas, at: AtlasTexture, flipped := false) -> R
     };
 }
 
+ODVec2 :: struct { x, y: f32 }
+vec2_to_od :: proc(v: Vec2) -> ODVec2 {
+    return ODVec2 {v.x, v.y};
+}
+
 save_atlas :: proc(atlas: Atlas, path: string) {
     file := file_handle(path, FileMode.WRITE_RONLY | FileMode.CREATE);
-    res := "{";
+    res: string;
 
-    PathMarshall :: struct {path: string}
-    path := PathMarshall{atlas.path};
-    data, ok := json.marshal(path, {pretty = true});
-    
-    if (ok != nil) {
-        fmt.printfln("An error occured marshalling data: %v", ok);
-        return;
+    res = str_add({res, od.marshal(atlas.path, string, "path"), "\n"});
+
+    SubTextureMarshal :: struct {
+        tag: string,
+        uvs: struct {
+            uv_0: ODVec2,
+            uv_1: ODVec2,
+            uv_2: ODVec2,
+            uv_3: ODVec2,
+        },
     }
-
-    res = str_add({res, string(data[1:len(data) - 2]), ","});
 
     for i in 0..<len(atlas.subtextures) {
-        _data, _ok := json.marshal(atlas.subtextures[i], {pretty = true});
-        
-        if (_ok != nil) {
-            fmt.printfln("An error occured marshalling data: %v", ok);
-            return;
-        }
+        uvs := atlas.subtextures[i].uvs;
+        stm := SubTextureMarshal {
+            tag = atlas.subtextures[i].tag,
+            uvs = {
+                vec2_to_od(uvs[0]), 
+                vec2_to_od(uvs[1]), 
+                vec2_to_od(uvs[2]), 
+                vec2_to_od(uvs[3])
+            },
+        };
 
-        res = str_add({res, str_add("\n\"texture", i), "\": {\n"});
-        res = str_add({res, string(_data[1:len(_data) - 2]), "},\n"});
+        res = str_add({
+            res, 
+            od.marshal(stm, SubTextureMarshal, str_add("texture", i)),
+            "\n"
+        });
     }
 
-    res = str_add(res, "\n}");
     file_write(file, res);
     file_close(file);
 }
@@ -199,7 +206,7 @@ pack_atlas :: proc(atlas: Atlas, path: string) {
     img_path := str_add({path, "/atlas.png"});
     rl.ExportImage(img, strs.clone_to_cstring(img_path));
 
-    data_path := str_add({path, "/atlas.json"});
+    data_path := str_add({path, "/atlas.od"});
     res := atlas;
     res.path = img_path;
     save_atlas(res, data_path);
@@ -448,6 +455,149 @@ msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}) {
     }
 }
 
+ODVec3 :: struct { x, y, z: f32 }
+ODColor :: struct { r, g, b, a: i32 }
+
+vec3_to_od :: proc(v: Vec3) -> ODVec3 {
+    return ODVec3 {v.x, v.y, v.z};
+}
+
+color_to_od :: proc(c: Color) -> ODColor {
+    return ODColor {i32(c.r), i32(c.g), i32(c.b), i32(c.a)};
+}
+
+CompArrayMarshal :: struct {
+    c0: ComponentMarshall,
+    c1: ComponentMarshall,
+    c2: ComponentMarshall,
+    c3: ComponentMarshall,
+    c4: ComponentMarshall,
+    c5: ComponentMarshall,
+    c6: ComponentMarshall,
+    c7: ComponentMarshall,
+    c8: ComponentMarshall,
+    c9: ComponentMarshall,
+    c10: ComponentMarshall,
+    c11: ComponentMarshall,
+    c12: ComponentMarshall,
+    c13: ComponentMarshall,
+    c14: ComponentMarshall,
+    c15: ComponentMarshall,
+}
+
+comps_to_od :: proc(s: [16]ComponentMarshall) -> CompArrayMarshal {
+    return CompArrayMarshal {
+        s[0], s[1], s[2], s[3],
+        s[4], s[5], s[6], s[7],
+        s[8], s[9], s[10], s[11],
+        s[12], s[13], s[14], s[15],
+    };
+}
+
+save_msc :: proc(
+    using self: ^MSCObject,
+    path: string,
+    save_dids: bool = true,
+    mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
+    file := file_handle(path, mode);
+
+    res: string;
+
+    TriangleColliderMarshal :: struct {
+        pts: struct {
+            pt_0: ODVec3,
+            pt_1: ODVec3,
+            pt_2: ODVec3,
+        },
+        color: ODColor,
+        texture_tag: string,
+        is_lit: bool,
+        use_fog: bool,
+        rot: i32,
+        flipped: bool,
+        normal: ODVec3,
+    }
+
+    i := 0;
+    for t in tris {
+        tm := TriangleColliderMarshal {
+            pts = {vec3_to_od(t.pts[0]), vec3_to_od(t.pts[1]), vec3_to_od(t.pts[2])},
+            color = color_to_od(t.color),
+            texture_tag = t.texture_tag,
+            is_lit = t.is_lit,
+            use_fog = t.use_fog,
+            rot = t.rot,
+            flipped = t.flipped,
+            normal = vec3_to_od(t.normal),
+        };
+        data := od.marshal(tm, TriangleColliderMarshal, str_add("triangle", i));
+
+        res = str_add({res, data, "\n"});
+        i += 1;
+    }
+
+    DataIDMarshal :: struct {
+        tag: string,
+        id: i32,
+        transform: struct {
+            position: ODVec3,
+            rotation: ODVec3,
+            scale: ODVec3,
+        },
+        components: CompArrayMarshal,
+    };
+
+    if (save_dids) {
+        j := 0;
+        dids := get_reg_data_ids();
+        for i in 0..<len(dids) {
+            data_id := dids[i];
+            mrshl := DataIDMarshal {
+                tag = data_id.tag,
+                id = i32(data_id.id),
+                transform = {
+                    position = vec3_to_od(data_id.transform.position),
+                    rotation = vec3_to_od(data_id.transform.rotation),
+                    scale = vec3_to_od(data_id.transform.scale),
+                },
+                components = comps_to_od(data_id.comps.data),
+            };
+
+            data := od.marshal(mrshl, DataIDMarshal, str_add("data_id", j));
+            res = str_add({res, data, "\n"});
+            j += 1;
+        }
+        delete(dids);
+    }
+
+    file_write(file, res);
+    file_close(file);
+}
+
+load_msc :: proc(using self: ^MSCObject, path: string, load_dids := true) {
+    data, ok := os.read_entire_file_from_filename(path);
+    if (!ok) {
+        dbg_log("Failed to open file ", DebugType.WARNING);
+        return;
+    }
+    defer delete(data);
+
+    _data := od.parse(string(data));
+    msc := _data;
+
+    for tag, obj in msc {
+        if (strs.contains(tag, "triangle")) { msc_load_tri(self, obj.(od.Object)); }
+        else { 
+            if (load_dids) {
+                msc_load_data_id(
+                    strs.clone(obj.(od.Object)["tag"].(json.String)), 
+                    obj.(od.Object)
+                ); 
+            }
+        }
+    }
+}
+
 msc_to_json :: proc(
     using self: ^MSCObject, 
     path: string,
@@ -600,7 +750,61 @@ msc_from_json :: proc(using self: ^MSCObject, path: string, load_dids := true) {
     }
 }
 
-save_data_ids :: proc(
+save_data_ids :: proc (
+    path: string,
+    mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
+    if (filepath.ext(path) == ".od") {
+        save_data_ids_od(path, mode);
+        return;
+    }
+
+    save_data_ids_json(path, mode);
+}
+
+save_data_ids_od :: proc(
+    path: string,
+    mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
+    file := file_handle(path, mode);
+
+    res: string;
+
+    DataIDMarshal :: struct {
+        tag: string,
+        id: i32,
+        transform: struct {
+            position: ODVec3,
+            rotation: ODVec3,
+            scale: ODVec3,
+        },
+        components: CompArrayMarshal,
+    };
+
+    j := 0;
+    dids := get_reg_data_ids();
+    for i in 0..<len(dids) {
+        data_id := dids[i];
+        mrshl := DataIDMarshal {
+            tag = data_id.tag,
+            id = i32(data_id.id),
+            transform = {
+                position = vec3_to_od(data_id.transform.position),
+                rotation = vec3_to_od(data_id.transform.rotation),
+                scale = vec3_to_od(data_id.transform.scale),
+            },
+            components = comps_to_od(data_id.comps.data),
+        };
+
+        data := od.marshal(mrshl, DataIDMarshal, str_add("data_id", j));
+        res = str_add({res, data, "\n"});
+        j += 1;
+    }
+    delete(dids);
+
+    file_write(file, res);
+    file_close(file);
+}
+
+save_data_ids_json :: proc(
     path: string,
     mode: FileMode = FileMode.WRITE_RONLY | FileMode.CREATE) {
     file := file_handle(path, mode);
@@ -645,7 +849,7 @@ save_data_ids :: proc(
 }
 
 save_map :: proc(
-    name, path: string, mode: FileMode = .WRITE_RONLY | .CREATE) {
+    name, path: string, use_json := false, mode: FileMode = .WRITE_RONLY | .CREATE) {
     dir := str_add({path, "/", name})
     create_dir(dir);
 
@@ -653,19 +857,30 @@ save_map :: proc(
         msc := ecs_world.physics.mscs.data[i];
         if (len(msc.tris) == 0) { continue; }
         name := str_add("msc", i);
-        res_path := str_add({dir, "/", name, ".json"});
-        msc_to_json(ecs_world.physics.mscs.data[i], res_path, save_dids = false);
+
+        if (use_json) {
+            res_path := str_add({dir, "/", name, ".json"});
+            msc_to_json(ecs_world.physics.mscs.data[i], res_path, save_dids = false);
+        } else {
+            res_path := str_add({dir, "/", name, ".od"});
+            save_msc(ecs_world.physics.mscs.data[i], res_path, save_dids = false);
+        }
     }
 
-    save_data_ids(str_add(dir, "/data_ids.json"));
+    if (use_json) {
+        save_data_ids(str_add(dir, "/data_ids.json"));
+    } else {
+        save_data_ids(str_add(dir, "/data_ids.od"));
+    }
 }
 
-load_map :: proc(path: string, atlas: Atlas) {
+load_map :: proc(path: string, atlas: Atlas, use_json := false) {
     list := get_files(path);
 
     for dir in list {
         msc := msc_init();
-        msc_from_json(msc, dir);
+        if (use_json) { msc_from_json(msc, dir); }
+        else { load_msc(msc, dir); }
         msc.atlas = atlas;
         msc_gen_mesh(msc);
     }
@@ -709,7 +924,88 @@ json_vec3_to_vec3 :: proc(v: json.Array) -> Vec3 {
     };
 }
 
-msc_load_data_id :: proc(tag: string, obj: json.Value) {
+msc_load_data_id :: proc {
+    msc_load_data_id_json,
+    msc_load_data_id_od,
+}
+
+msc_load_data_id_od :: proc(tag: string, obj: od.Object) {
+    id := obj["id"].(i32);
+
+    if (!od_contains(obj, "transform")) do return;
+
+    transfrom_obj := obj["transform"].(od.Object);
+    transform := Transform {
+        position = od_vec3(transfrom_obj["position"].(od.Object)),
+        rotation = od_vec3(transfrom_obj["rotation"].(od.Object)),
+        scale = od_vec3(transfrom_obj["scale"].(od.Object)),
+    };
+
+    reg_tag := str_add("data_id_", tag);
+    if (asset_manager.registry[reg_tag] != nil) { 
+        reg_tag = str_add(reg_tag, rl.GetRandomValue(1000, 9999)); 
+    }
+
+    comps_arr := fa.fixed_array(ComponentMarshall, 16);
+
+    if (window.instance_name != EDITOR_INSTANCE) {
+        ent := aent_init(tag);
+        ent_tr := get_component(ent, Transform);
+        ent_tr^ = transform;
+
+        if (od_contains(obj, "components")) {
+            comps_handle := obj["components"].(od.Object);
+
+            for i in 0..<comps_arr.len {
+                comp := comps_handle[str_add("c", i)].(od.Object);
+                tag := comp["tag"].(string);
+                type := comp["type"].(string);
+
+                loader := asset_manager.component_loaders[type];
+                if (loader != nil) { loader(ent, tag); }
+                fa.append(
+                    &comps_arr, 
+                    ComponentMarshall {
+                        strs.clone(tag), 
+                        strs.clone(type)
+                    },
+                );
+            }
+        }
+    } else {
+        if (od_contains(obj, "components")) {
+            comps_handle := obj["components"].(od.Object);
+
+            for i in 0..<comps_arr.len {
+                comp := comps_handle[str_add("c", i)].(od.Object);
+                tag := comp["tag"].(string);
+                type := comp["type"].(string);
+
+                fa.append(
+                    &comps_arr, 
+                    ComponentMarshall {
+                        strs.clone(tag), 
+                        strs.clone(type)
+                    },
+                );
+            }
+        }
+    }
+
+    reg_asset(
+        reg_tag, 
+        DataID {
+            reg_tag, 
+            tag, 
+            u32(id), 
+            transform,
+            {},
+            comps_arr,
+        }
+    );
+}
+
+msc_load_data_id_json :: proc(tag: string, obj: json.Value) {
     id := obj.(json.Object)["id"].(json.Float);
 
     if (obj.(json.Object)["transform"] == nil) do return;
@@ -791,7 +1087,99 @@ msc_load_data_id :: proc(tag: string, obj: json.Value) {
     );
 }
 
-msc_load_tri :: proc(using self: ^MSCObject, obj: json.Value) {
+msc_load_tri :: proc {
+    msc_load_tri_json,
+    msc_load_tri_od,
+}
+
+msc_load_tri_od :: proc(using self: ^MSCObject, obj: od.Object) {
+    tri: [3]Vec3;
+    if (od_contains(obj, "pts")) {
+        pts_h := obj["pts"].(od.Object);
+
+        tri[0] = {
+            pts_h["pt_0"].(od.Object)["x"].(f32),
+            pts_h["pt_0"].(od.Object)["y"].(f32),
+            pts_h["pt_0"].(od.Object)["z"].(f32),
+        };
+
+        tri[1] = {
+            pts_h["pt_1"].(od.Object)["x"].(f32),
+            pts_h["pt_1"].(od.Object)["y"].(f32),
+            pts_h["pt_1"].(od.Object)["z"].(f32),
+        };
+
+        tri[2] = {
+            pts_h["pt_2"].(od.Object)["x"].(f32),
+            pts_h["pt_2"].(od.Object)["y"].(f32),
+            pts_h["pt_2"].(od.Object)["z"].(f32),
+        };
+    }
+
+    color: Color;
+    if (od_contains(obj, "color")) {
+        color.r = u8(obj["color"].(od.Object)["r"].(i32));
+        color.g = u8(obj["color"].(od.Object)["g"].(i32));
+        color.b = u8(obj["color"].(od.Object)["b"].(i32));
+        color.a = u8(obj["color"].(od.Object)["a"].(i32));
+    }
+
+    tex_tag := obj["texture_tag"].(string);
+
+    if (!asset_exists(tex_tag)) {
+        dbg_log(
+            str_add({"Texture ", tex_tag, " doesn't exist in the asset manager"}), 
+            DebugType.WARNING
+        );
+    }
+
+    is_lit := true;
+    if (od_contains(obj, "is_lit")) {
+        is_lit = obj["is_lit"].(bool);
+    }
+
+    use_fog := OE_FAE;
+    if (od_contains(obj, "use_fog")) {
+        use_fog = obj["use_fog"].(bool);
+    }
+
+    rot: i32;
+    if (od_contains(obj, "rot")) {
+        rot = obj["rot"].(i32);
+    }
+
+    flipped: bool;
+    if (od_contains(obj, "flipped"))  {
+        flipped = obj["flipped"].(bool);
+    }
+
+    normal: Vec3;
+    set_normal := false;
+    if (od_contains(obj, "normal")) {
+        normal = od_vec3(obj["normal"].(od.Object));
+        set_normal = true;
+    }
+
+    if (set_normal) {
+        msc_append_tri(
+            self, tri[0], tri[1], tri[2], 
+            color = color, texture_tag = strs.clone(tex_tag), 
+            is_lit = is_lit, use_fog = use_fog, 
+            rot = rot, normal = normal, 
+            flipped = flipped
+        );
+    } else {
+        msc_append_tri(
+            self, tri[0], tri[1], tri[2], 
+            color = color, texture_tag = strs.clone(tex_tag), 
+            is_lit = is_lit, use_fog = use_fog, 
+            rot = rot, normal = surface_normal(tri), 
+            flipped = flipped
+        );
+    }
+}
+
+msc_load_tri_json :: proc(using self: ^MSCObject, obj: json.Value) {
     tri: [3]Vec3;
     if (obj.(json.Object)["pts"] != nil) {
         pts := obj.(json.Object)["pts"].(json.Array);

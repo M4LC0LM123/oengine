@@ -5,6 +5,7 @@ import "core:fmt"
 import rl "vendor:raylib"
 import ecs "ecs"
 import "core:encoding/json"
+import od "object_data"
 
 Fluid :: struct {
     transform: Transform,
@@ -106,12 +107,11 @@ f_set :: proc(using self: ^Fluid, name: string, val: f32) {
     );
 }
 
-f_parse :: proc(aj: json.Object) -> rawptr {
-    texture_tag := aj["texture"].(json.String);
+f_parse :: proc(asset: od.Object) -> rawptr {
+    texture_tag := asset["texture"].(string);
     texture := get_asset_var(texture_tag, Texture);
 
-    color_arr := aj["color"].(json.Array);
-    color := json_clr_parse(color_arr);
+    color := od_color(asset["color"].(od.Object));
 
     f := f_init(texture);
     f.color = color;

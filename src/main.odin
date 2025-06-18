@@ -13,6 +13,8 @@ import "core:math"
 import "core:math/linalg"
 import rlg "../oengine/rllights"
 import "core:mem"
+import "core:time"
+import "core:thread"
 
 main :: proc() {
     def_allocator := context.allocator;
@@ -40,8 +42,10 @@ main :: proc() {
     oe.w_set_target_fps(60);
     oe.window.debug_stats = true;
 
+    start := time.now(); 
     oe.ew_init(oe.vec3_y() * 50);
-    oe.load_registry("../registry.json");
+    oe.load_registry("../registry.od");
+    fmt.println(time.since(start));
 
     camera := oe.cm_init(oe.vec3_zero());
     is_mouse_locked: bool = false;
@@ -121,26 +125,22 @@ main :: proc() {
     ps_ps := oe.add_component(ps, oe.ps_init({oe.default_behaviour, oe.gradient_beh}));
     t: oe.Timer;
 
+    s := time.now();
     msc := oe.msc_init();
-    oe.msc_from_json(msc, "../assets/maps/test.json");
+    // oe.msc_from_json(msc, "../assets/maps/test.json");
+    oe.load_msc(msc, "../test_msc.od");
     msc.atlas = oe.load_atlas("../assets/atlas");
     // msc.atlas = oe.am_texture_atlas();
     // oe.pack_atlas(msc.atlas, "../assets/atlas");
-    oe.msc_gen_mesh(msc);
+    fmt.println(time.since(s));
 
     msc2 := oe.msc_init();
     oe.msc_from_model(
         msc2, oe.load_model("../assets/maps/bowl.obj"), oe.vec3_z() * -35
     );
-    oe.msc_gen_mesh(msc2);
 
-    updated := oe.msc_init();
-    oe.msc_from_json(updated, "../assets/maps/test.json");
-    updated.atlas = msc.atlas;
-    oe.update_msc(updated, msc2);
-    oe.msc_gen_mesh(updated);
-
-    oe.remove_msc(msc);
+    oe.update_msc(msc, msc2);
+    oe.msc_gen_mesh(msc);
     oe.remove_msc(msc2);
 
     light2 := oe.aent_init("light");
@@ -269,7 +269,7 @@ main :: proc() {
         if (coll) {
             rl.DrawLine3D(info.point, info.point + info.normal, oe.RED);
 
-            // rl.DrawSphere(info.point, 0.25, oe.RED);
+            rl.DrawSphere(info.point, 0.25, oe.RED);
             oe.draw_sprite(info.point, oe.vec2_one(), oe.look_at(info.point, info.point + info.normal), troll, oe.WHITE);
             if (oe.mouse_pressed(.LEFT)) {
                 oe.new_decal(info.point, info.normal, oe.vec2_one(), "troll");

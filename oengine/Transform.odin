@@ -4,6 +4,7 @@ import rl "vendor:raylib"
 import ecs "ecs"
 import "core:fmt"
 import "core:encoding/json"
+import od "object_data"
 
 Transform :: struct {
     position: Vec3,
@@ -42,16 +43,11 @@ transform_subtract :: proc(t1, t2: Transform) -> Transform {
     };
 }
 
-transform_parse :: proc(asset_json: json.Object) -> rawptr {
-    // _h handle
-    pos_h := asset_json["position"].(json.Array);
-    rot_h := asset_json["rotation"].(json.Array);
-    sc_h := asset_json["scale"].(json.Array);
-
+transform_parse :: proc(asset: od.Object) -> rawptr {
     t := Transform {
-        position = json_vec3_to_vec3(pos_h),
-        rotation = json_vec3_to_vec3(rot_h),
-        scale = json_vec3_to_vec3(sc_h),
+        position = od_vec3(asset["position"].(od.Object)),
+        rotation = od_vec3(asset["rotation"].(od.Object)),
+        scale = od_vec3(asset["scale"].(od.Object)),
     };
 
     return new_clone(t);

@@ -6,6 +6,7 @@ import rl "vendor:raylib"
 import ecs "ecs"
 import "fa"
 import "core:encoding/json"
+import od "object_data"
 
 MASS_SCALAR :: 100
 MAX_VEL :: 50
@@ -327,21 +328,21 @@ rb_slope_negative :: proc(using self: ^RigidBody) -> bool {
             shape_variant.(Slope)[0][0] > shape_variant.(Slope)[1][0]);
 }
 
-rb_parse :: proc(asset_json: json.Object) -> rawptr {
-    pos_h := asset_json["position"].(json.Array);
-    rot_h := asset_json["rotation"].(json.Array);
-    sc_h := asset_json["scale"].(json.Array);
+rb_parse :: proc(asset: od.Object) -> rawptr {
+    pos_h := od_vec3(asset["position"].(od.Object));
+    rot_h := od_vec3(asset["rotation"].(od.Object));
+    sc_h := od_vec3(asset["scale"].(od.Object));
 
     t := Transform {
-        position = json_vec3_to_vec3(pos_h),
-        rotation = json_vec3_to_vec3(rot_h),
-        scale = json_vec3_to_vec3(sc_h),
+        position = pos_h,
+        rotation = rot_h,
+        scale = sc_h,
     };
 
-    density := f32(asset_json["density"].(json.Float));
-    restitution := f32(asset_json["restitution"].(json.Float));
-    shape := ShapeType(i32(asset_json["shape"].(json.Float)));
-    is_static := bool(asset_json["is_static"].(json.Boolean));
+    density := asset["density"].(f32);
+    restitution := asset["restitution"].(f32);
+    shape := ShapeType(od.target_type(asset["shape"], i32));
+    is_static := asset["is_static"].(bool);
 
     rb := rb_init(t, density, restitution, is_static, shape);
     return new_clone(rb);

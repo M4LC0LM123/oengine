@@ -4,6 +4,7 @@ import "ecs"
 import "core:fmt"
 import rl "vendor:raylib"
 import "core:encoding/json"
+import od "object_data"
 
 MAX_SOUND_DISTANCE :: 10
 
@@ -47,15 +48,15 @@ sa_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     rl.SetSoundVolume(sound, strength);
 }
 
-sa_parse :: proc(aj: json.Object) -> rawptr {
-    sound_tag := aj["sound"].(json.String);
+sa_parse :: proc(asset: od.Object) -> rawptr {
+    sound_tag := asset["sound"].(string);
     sound := get_asset_var(sound_tag, Sound);
 
-    strength := f32(aj["strength"].(json.Float));
+    strength := asset["strength"].(f32);
 
     can_play := true;
-    if (json_contains(aj, "can_play")) {
-        can_play = aj["can_play"].(json.Boolean);
+    if (od_contains(asset, "can_play")) {
+        can_play = asset["can_play"].(bool);
     }
 
     sa := sa_init({}, sound);

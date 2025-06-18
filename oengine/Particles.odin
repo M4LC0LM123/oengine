@@ -4,6 +4,7 @@ import rl "vendor:raylib"
 import "core:fmt"
 import ecs "ecs"
 import "core:encoding/json"
+import od "object_data"
 
 ParticleData :: struct {
     vel, accel, grav: Vec3,
@@ -123,21 +124,19 @@ ps_render :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     }
 }
 
-ps_parse :: proc(aj: json.Object) -> rawptr {
-    life_time := f32(aj["life_time"].(json.Float));
+ps_parse :: proc(asset: od.Object) -> rawptr {
+    life_time := asset["life_time"].(f32);
 
-    color_arr := aj["color"].(json.Array);
-    color := json_clr_parse(color_arr);
+    color := od_color(asset["color"].(od.Object));
 
     def_beh := true;
-    if (json_contains(aj, "default_behaviour")) {
-        def_beh = aj["default_behaviour"].(json.Boolean);
+    if (od_contains(asset, "default_behaviour")) {
+        def_beh = asset["default_behaviour"].(bool);
     }
 
     gravity := Vec3 {0, -9.81, 0};
-    if (json_contains(aj, "gravity")) {
-        vec_arr := aj["gravity"].(json.Array);
-        gravity = json_vec3_to_vec3(vec_arr);
+    if (od_contains(asset, "gravity")) {
+        gravity = od_vec3(asset["gravity"].(od.Object));
     }
 
     ps := ps_init({default_behaviour});

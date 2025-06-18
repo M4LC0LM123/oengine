@@ -5,6 +5,7 @@ import rl "vendor:raylib"
 import rlg "rllights"
 import ecs "ecs"
 import "core:encoding/json"
+import od "object_data"
 
 Light :: struct {
     id: u32,
@@ -95,26 +96,19 @@ lc_clone :: proc(l: Light) -> Light {
     return res;
 }
 
-lc_parse :: proc(asset_json: json.Object) -> rawptr {
-
+lc_parse :: proc(asset: od.Object) -> rawptr {
     id := ecs_world.light_count; 
-    if (asset_json["id"] != nil) {
-        id = u32(asset_json["id"].(json.Float));
+    if (asset["id"] != nil) {
+        id = u32(od.target_type(asset["id"], i32));
     }
 
-    type := rlg.LightType(asset_json["light_type"].(json.Float));
+    type := rlg.LightType(od.target_type(asset["light_type"], i32));
 
-    color_arr := asset_json["color"].(json.Array);
-    color := Color {
-        u8(color_arr[0].(json.Float)), 
-        u8(color_arr[1].(json.Float)), 
-        u8(color_arr[2].(json.Float)), 
-        u8(color_arr[3].(json.Float))
-    };
+    color := od_color(asset["color"].(od.Object));
 
     enabled := true;
-    if (json_contains(asset_json, "enabled")) {
-        enabled = asset_json["enabled"].(json.Boolean);
+    if (od_contains(asset, "enabled")) {
+        enabled = asset["enabled"].(bool);
     }
 
     lc := lc_init_id(id, type, color);

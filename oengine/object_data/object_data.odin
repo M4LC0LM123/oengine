@@ -4,6 +4,7 @@ import "core:strings"
 import "core:strconv"
 import "core:fmt"
 import "core:reflect"
+import "core:encoding/json"
 
 types := [?]string {
     "i32",
@@ -14,6 +15,68 @@ types := [?]string {
 };
 
 Object :: map[string]ODType
+
+json_to_od :: proc(object: json.Object) -> Object {
+    res: Object;
+
+    for k, v in object {
+        #partial switch var in v {
+            case json.Integer:
+                res[k] = i32(var);
+            case json.Float:
+                res[k] = f32(var);
+            case json.String:
+                res[k] = var;
+            case json.Boolean:
+                res[k] = var;
+            case json.Object:
+                res[k] = json_to_od(var);
+            case json.Array:
+                res[k] = json_array_to_od(var);
+        }
+    }
+    
+    return res;
+}
+
+json_array_to_od :: proc(array: json.Array) -> Object {
+    res: Object;
+
+    i := 0;
+    for value in array {
+        key := str_add("v", i);
+
+        #partial switch var in value {
+            case json.Integer:
+                res[key] = i32(var);
+            case json.Float:
+                res[key] = f32(var);
+            case json.String:
+                res[key] = var;
+            case json.Boolean:
+                res[key] = var;
+            case json.Object:
+                res[key] = json_to_od(var);
+            case json.Array:
+                res[key] = json_array_to_od(var);
+        }
+
+        i += 1;
+    }
+
+    return res;
+}
+
+target_type :: proc(obj: ODType, $T: typeid) -> T {
+    #partial switch var in obj {
+        case i32:
+            return T(var);
+        case f32:
+            return T(var);
+    }
+
+    return T(0);
+}
 
 I32 :: i32
 F32 :: f32
@@ -53,7 +116,7 @@ parse :: proc(data: string) -> Object {
             continue;
         }
 
-        if (strings.contains(line, "}")) {
+        if (strings.trim_space(line) == "}") {
             child := object_stack[len(object_stack) - 1];
             parent := object_stack[len(object_stack) - 2];
 
@@ -63,18 +126,12 @@ parse :: proc(data: string) -> Object {
             continue;
         }
 
+        line := strings.trim_space(line);
         split := split_line(line);
-    
-        offset := 0;
-        for i in split {
-            if (i == "") {
-                offset += 1;
-            }
-        }
 
-        type := split[offset];
-        field_name := split[offset + 1];
-        value := split[offset + 3];
+        type := split[0];
+        field_name := split[1];
+        value := split[3];
 
         if (type == "i32") {
             val, _ := strconv.parse_int(value);
