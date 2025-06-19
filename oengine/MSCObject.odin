@@ -956,7 +956,7 @@ msc_load_data_id_od :: proc(tag: string, obj: od.Object) {
         if (od_contains(obj, "components")) {
             comps_handle := obj["components"].(od.Object);
 
-            for i in 0..<comps_arr.len {
+            for i in 0..<16 {
                 comp := comps_handle[str_add("c", i)].(od.Object);
                 tag := comp["tag"].(string);
                 type := comp["type"].(string);
@@ -976,7 +976,7 @@ msc_load_data_id_od :: proc(tag: string, obj: od.Object) {
         if (od_contains(obj, "components")) {
             comps_handle := obj["components"].(od.Object);
 
-            for i in 0..<comps_arr.len {
+            for i in 0..<16 {
                 comp := comps_handle[str_add("c", i)].(od.Object);
                 tag := comp["tag"].(string);
                 type := comp["type"].(string);
