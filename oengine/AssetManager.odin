@@ -233,12 +233,14 @@ AssetJob :: struct {
 
 CJobPair :: struct{tag: string, asset: [6]Image}
 TJobPair :: struct{tag: string, asset: Image}
+MJobPair :: struct{tag: string, path: string}
 cubemap_job: [dynamic]CJobPair;
 texture_job: [dynamic]TJobPair;
+model_job: [dynamic]MJobPair;
 jobs_done: i32;
 
-load_asset_job :: proc(data: rawptr) {
-    job := cast(^AssetJob)data;
+load_asset_job :: proc(_data: rawptr) {
+    job := cast(^AssetJob)_data;
     tag := job.tag;
     data := job.data;
 
@@ -270,8 +272,9 @@ load_asset_job :: proc(data: rawptr) {
         append(&texture_job, TJobPair{strs.clone(tag), tex});
     } else if job.type == "Model" {
         res := get_path(data["path"].(string));
-        mdl := load_model(strs.clone(res));
-        reg_asset(strs.clone(tag), mdl);
+        // mdl := load_model(strs.clone(res));
+        // reg_asset(strs.clone(tag), mdl);
+        append(&model_job, MJobPair{strs.clone(tag), res});
     }
 
     sync.atomic_add(&jobs_done, 1);
@@ -300,7 +303,6 @@ load_registry_od :: proc(path: string) {
     root := od_data;
 
     second_pass := make([dynamic]TagObjectPair);
-    jobs := make([dynamic]^AssetJob);
     threads := make([dynamic]^thread.Thread);
 
     for tag, asset in root {
@@ -346,9 +348,9 @@ load_registry_od :: proc(path: string) {
             type == "Model") {
             job := new(AssetJob);
             job^ = AssetJob{strs.clone(tag), type, asset_od};
-            append(&jobs, job);
             h := thread.create_and_start_with_data(job, load_asset_job);
             append(&threads, h);
+            // load_asset_job(job);
         } else {
             append(&second_pass, TagObjectPair{strs.clone(tag), asset_od});
         }
@@ -378,8 +380,14 @@ load_registry_od :: proc(path: string) {
         deinit_image(pair.asset);
     }
 
+    for pair in model_job {
+        mdl := load_model(pair.path);
+        reg_asset(pair.tag, mdl);
+    }
+
     clear(&cubemap_job);
     clear(&texture_job);
+    clear(&model_job);
 
     for pair in second_pass {
         tag := pair.tag;
@@ -406,7 +414,6 @@ load_registry_od :: proc(path: string) {
 
     defer delete(data);
     defer delete(second_pass);
-    defer delete(jobs);
     defer delete(threads);
 }
 
