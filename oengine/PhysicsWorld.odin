@@ -34,6 +34,7 @@ PhysicsWorld :: struct {
     reverse_slopes: [dynamic]u32,
     joints: fa.FixedArray(^Joint, MAX_JOINTS),
     mscs: fa.FixedArray(^MSCObject, MAX_MSCS),
+    tree: BodyOctree,
 
     gravity: Vec3,
     delta_time: f32,
@@ -46,6 +47,7 @@ pw_init :: proc(using self: ^PhysicsWorld, s_gravity: Vec3, s_iter: i32 = 8) {
     bodies = fa.fixed_array(^RigidBody, MAX_RBS);
     joints = fa.fixed_array(^Joint, MAX_JOINTS);
     mscs = fa.fixed_array(^MSCObject, MAX_MSCS);
+    tree = make_tree({}, {1000, 1000, 1000});
 
     gravity = s_gravity;
     iterations = s_iter;
@@ -60,15 +62,27 @@ pw_debug :: proc(using self: ^PhysicsWorld) {
     }
 }
 
+ContactPair :: struct {
+    a, b: int,
+}
+
 pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
     delta_time = dt;
     if (paused) { return; }
 
+    @static narrow_pairs: [dynamic]ContactPair;
+    @static candidates: [dynamic]int;
+
     for n: i32; n < iterations; n += 1 {
+        bo_clear_tree(tree.root);
+        clear(&candidates);
+
         for i := 0; i < fa.range(bodies); i += 1 {
             rb := bodies.data[i];
             if (rb == nil) { continue; }
             rb_fixed_update(rb, delta_time / f32(iterations));
+
+            insert_octree(tree.root, int(rb.id), get_aabb(int(rb.id)));
                     
             for i in 0..<fa.range(mscs) {
                 msc := mscs.data[i];
@@ -87,13 +101,39 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
                 }
             }
 
-            for j := i + 1; j < fa.range(bodies); j += 1 {
-                rb2 := bodies.data[j];
+
+            // // clear narrow phase
+            // clear(&narrow_pairs);
+            //
+            // // broadphase
+            // for j := i + 1; j < fa.range(bodies); j += 1 {
+            //     rb2 := bodies.data[j];
+            //     if (rb2 == nil) { continue; }
+            //
+            //     if (ignored(rb, rb2)) do continue;
+            //     if (!collision_transforms(rb.transform, rb2.transform)) do continue;
+            //
+            //     append(&narrow_pairs, ContactPair{i, j});
+            // }
+
+        }
+
+        for i in 0..<fa.range(bodies) {
+            rb := bodies.data[i];
+            if (rb == nil || rb.is_static) { continue; }
+
+            clear(&candidates);
+            bo_query_octree(tree.root, get_aabb(int(rb.id)), &candidates);
+            for other_id in candidates {
+                if (other_id == int(rb.id)) { continue; }
+
+                rb2 := bodies.data[other_id];
                 if (rb2 == nil) { continue; }
 
-                if (ignored(rb, rb2)) do continue;
-                if (!collision_transforms(rb.transform, rb2.transform)) do continue;
+                if (ignored(rb, rb2)) { continue; }
+                if (!collision_transforms(rb.transform, rb2.transform)) { continue; }
 
+                // Narrowphase
                 if (rb.shape == ShapeType.HEIGHTMAP) {
                     resolve_heightmap_collision(rb, rb2);
                 } else if (rb2.shape == ShapeType.HEIGHTMAP) {
@@ -106,8 +146,26 @@ pw_update :: proc(using self: ^PhysicsWorld, dt: f32) {
                     resolve_aabb_collision(self, rb, rb2);
                 }
             }
-
         }
+
+        // narrow phase
+        // for i in 0..<len(narrow_pairs) {
+        //     pair := narrow_pairs[i];
+        //     rb := bodies.data[pair.a];
+        //     rb2 := bodies.data[pair.b];
+        //
+        //     if (rb.shape == ShapeType.HEIGHTMAP) {
+        //         resolve_heightmap_collision(rb, rb2);
+        //     } else if (rb2.shape == ShapeType.HEIGHTMAP) {
+        //         resolve_heightmap_collision(rb2, rb);
+        //     } else if (rb.shape == ShapeType.SLOPE) {
+        //         resolve_slope_collision(self, rb, rb2);
+        //     } else if (rb2.shape == ShapeType.SLOPE) {
+        //         resolve_slope_collision(self, rb2, rb);
+        //     } else {
+        //         resolve_aabb_collision(self, rb, rb2);
+        //     }
+        // }
 
         for i in 0..<fa.range(joints) {
             joint := joints.data[i];

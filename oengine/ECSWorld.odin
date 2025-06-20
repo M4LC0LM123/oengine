@@ -7,6 +7,7 @@ import "fa"
 import "core:fmt"
 import "core:thread"
 import "nfd"
+import "core:time"
 
 MAX_LIGHTS :: 44
 FIXED_TIME_STEP :: 1.0 / 60.0
@@ -100,41 +101,42 @@ ew_clear :: proc() {
 
     rlg.DestroyContext(rlg_ctx);
 
-    pw_deinit(&physics);
-
-    for i in 0..<ecs_ctx.entities.len {
-        ent := ecs_ctx.entities.data[i];
-        for j in 0..<ent.components.len {
-            type, comp := fa.map_pair(ent.components, j);
-
-            if (type == RigidBody) { continue; }
-            free(comp);
-        }
-        free(ent);
-    }
-
-    for i in 0..<physics.mscs.len {
-        msc := physics.mscs.data[i];
-        
-        if (msc.tris != nil) {
-            for j in 0..<len(msc.tris) {
-                tri := msc.tris[j];
-                free(tri);
-            }
-            delete(msc.tris);
-        }
-
-        if (msc.tree != nil) {
-            free_octree(msc.tree);
-        }
-
-        // msc.mesh = {};
-        // free(msc);
-    }
-
+    // pw_deinit(&physics);
+    //
+    // for i in 0..<ecs_ctx.entities.len {
+    //     ent := ecs_ctx.entities.data[i];
+    //     for j in 0..<ent.components.len {
+    //         type, comp := fa.map_pair(ent.components, j);
+    //
+    //         if (type == RigidBody) { continue; }
+    //         free(comp);
+    //     }
+    //     free(ent);
+    // }
+    //
+    // for i in 0..<physics.mscs.len {
+    //     msc := physics.mscs.data[i];
+    //     
+    //     if (msc.tris != nil) {
+    //         for j in 0..<len(msc.tris) {
+    //             tri := msc.tris[j];
+    //             free(tri);
+    //         }
+    //         delete(msc.tris);
+    //     }
+    //
+    //     if (msc.tree != nil) {
+    //         free_octree(msc.tree);
+    //     }
+    //
+    //     // msc.mesh = {};
+    //     // free(msc);
+    // }
+    //
     fa.clear(&ecs_ctx.entities);
     fa.clear(&physics.bodies);
     fa.clear(&physics.mscs);
+    tri_count = 0;
 
     rlg_ctx = rlg.CreateContext(MAX_LIGHTS);
     rlg.SetContext(rlg_ctx);
@@ -230,8 +232,8 @@ ew_fixed_thread :: proc() {
 
     for (!rl.WindowShouldClose()) {
         current_time := rl.GetTime();
-        delta_time := current_time - last_time;
-        if (delta_time >= FIXED_TIME_STEP) {
+        dt := current_time - last_time;
+        if (dt >= FIXED_TIME_STEP) {
             if (!w_transform_changed() && window.instance_name != "oengine-editor") {
                 pw_update(&physics, FIXED_TIME_STEP);
                 ecs.ecs_fixed_update(&ecs_ctx);
