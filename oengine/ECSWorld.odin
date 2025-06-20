@@ -101,19 +101,19 @@ ew_clear :: proc() {
 
     rlg.DestroyContext(rlg_ctx);
 
-    // pw_deinit(&physics);
-    //
-    // for i in 0..<ecs_ctx.entities.len {
-    //     ent := ecs_ctx.entities.data[i];
-    //     for j in 0..<ent.components.len {
-    //         type, comp := fa.map_pair(ent.components, j);
-    //
-    //         if (type == RigidBody) { continue; }
-    //         free(comp);
-    //     }
-    //     free(ent);
-    // }
-    //
+    pw_deinit(&physics);
+
+    for i in 0..<ecs_ctx.entities.len {
+        ent := ecs_ctx.entities.data[i];
+        for j in 0..<ent.components.len {
+            type, comp := fa.map_pair(ent.components, j);
+
+            if (type == RigidBody) { continue; }
+            free(comp);
+        }
+        free(ent);
+    }
+
     // for i in 0..<physics.mscs.len {
     //     msc := physics.mscs.data[i];
     //     
@@ -133,6 +133,7 @@ ew_clear :: proc() {
     //     // free(msc);
     // }
     //
+
     fa.clear(&ecs_ctx.entities);
     fa.clear(&physics.bodies);
     fa.clear(&physics.mscs);
