@@ -66,6 +66,8 @@ ct_render :: proc(using self: ^CameraTool) {
     if (mode == .PERSPECTIVE) {
         rl.BeginMode3D(camera_perspective.rl_matrix);
         oe.draw_debug_axis(3);
+        oe.draw_debug_axis(-3);
+        oe.draw_grid3D(oe.OCTREE_SIZE, 1, {150, 150, 150, 255});
         oe.ew_render();
         render(self^);
         render_tri(self);

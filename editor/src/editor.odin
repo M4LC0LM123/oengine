@@ -37,7 +37,7 @@ main :: proc() {
 
         // render
         oe.w_begin_render();
-        rl.ClearBackground(rl.BLACK);
+        rl.ClearBackground({50, 50, 50, 255});
 
         ct_render(&camera_tool);
 
@@ -52,7 +52,8 @@ main :: proc() {
         oe.w_end_render();
     }
 
-    oe.ew_deinit();
+    delete(distances);
+    delete(collided_dids);
     oe.w_close();
 }
 

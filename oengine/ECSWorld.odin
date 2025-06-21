@@ -320,6 +320,9 @@ ew_render :: proc() {
         for i in 0..<len(dids) { draw_data_id(dids[i]); }
         delete(dids);
         draw_debug_axis();
+
+        rl.DrawCubeWiresV({}, vec3_one() * OCTREE_SIZE, GREEN);
+
     }
 
     rl.rlDisableBackfaceCulling();

@@ -18,6 +18,8 @@ WORLD_SIZE :: 200
 SECTOR_SIZE :: 10
 WORLD_SECTOR_SIZE :: WORLD_SIZE / SECTOR_SIZE
 
+OCTREE_SIZE :: 500
+
 TriangleCollider :: struct {
     using pts: [3]Vec3,
     normal: Vec3,
@@ -47,7 +49,7 @@ pw_init :: proc(using self: ^PhysicsWorld, s_gravity: Vec3, s_iter: i32 = 8) {
     bodies = fa.fixed_array(^RigidBody, MAX_RBS);
     joints = fa.fixed_array(^Joint, MAX_JOINTS);
     mscs = fa.fixed_array(^MSCObject, MAX_MSCS);
-    tree = make_tree({}, {1000, 1000, 1000});
+    tree = make_tree({}, vec3_one() * OCTREE_SIZE);
 
     gravity = s_gravity;
     iterations = s_iter;

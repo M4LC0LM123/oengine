@@ -6,7 +6,7 @@ debug = False
 if (len(sys.argv) > 1):
     if (sys.argv[1] == "-editor"):
         editor = True
-    elif (sys.argv[1] == "-debug");
+    elif (sys.argv[1] == "-debug"):
     	debug = True
 
 if (editor):

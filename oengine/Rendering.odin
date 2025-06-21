@@ -176,10 +176,10 @@ draw_sprite :: proc(pos: Vec3, size: Vec2, rot: Vec3, tex: Texture, clr: Color) 
     rl.rlPopMatrix();
 }
 
-draw_debug_axis :: proc(#any_int size: i32 = 1) {
-    rl.DrawLine3D({}, vec3_x(), BLUE);
-    rl.DrawLine3D({}, vec3_y(), RED);
-    rl.DrawLine3D({}, vec3_z(), GREEN);
+draw_debug_axis :: proc(size: f32 = 1) {
+    rl.DrawLine3D({}, vec3_x() * size, BLUE);
+    rl.DrawLine3D({}, vec3_y() * size, RED);
+    rl.DrawLine3D({}, vec3_z() * size, GREEN);
 }
 
 draw_data_id :: proc(using self: DataID) {
@@ -349,6 +349,26 @@ draw_text_3d :: proc(font: rl.Font, text: string, position: Vec3, size: f32, col
     rl.rlPopMatrix();
 }
 
+draw_grid3D :: proc(slices, spacing: i32, color: Color) {
+    halfSlices := slices / 2;
+
+    rl.rlBegin(rl.RL_LINES);
+        for i := -halfSlices; i <= halfSlices; i += 1 {
+            if (i == 0) {
+                rl.rlColor4ub(color.r, color.g, color.b, color.a);
+            } else {
+                rl.rlColor4ub(color.r - 50, color.g - 50, color.b - 50, color.a);
+            }
+
+            rl.rlVertex3f(f32(i*spacing), 0.0, f32(-halfSlices*spacing));
+            rl.rlVertex3f(f32(i*spacing), 0.0, f32(halfSlices*spacing));
+
+            rl.rlVertex3f(f32(-halfSlices*spacing), 0.0, f32(i*spacing));
+            rl.rlVertex3f(f32(halfSlices*spacing), 0.0, f32(i*spacing));
+        }
+    rl.rlEnd();
+}
+
 draw_grid2D :: proc(slices, spacing: i32, color: Color) {
     rl.rlPushMatrix();
 
@@ -363,6 +383,42 @@ draw_grid2D :: proc(slices, spacing: i32, color: Color) {
     }
 
     rl.DrawCircleV(vec2_one() * f32(slices) * 0.5 * f32(spacing), 5, RED);
+
+    rl.rlPopMatrix();
+}
+
+draw_grid2D_inf :: proc(camera_pos: Vec2, slices, spacing: i32, color: Color) {
+    screen_w := f32(w_render_width());
+    screen_h := f32(w_render_height());
+
+    half_w := screen_w * 0.5;
+    half_h := screen_h * 0.5;
+
+    // Calculate visible world-space bounds with slight padding
+    pad := f32(spacing)
+    min_x := camera_pos.x - half_w - pad;
+    max_x := camera_pos.x + half_w + pad;
+    min_y := camera_pos.y - half_h - pad;
+    max_y := camera_pos.y + half_h + pad;
+
+    // Snap to nearest lower grid point
+    start_x := i32(math.floor(min_x / f32(spacing))) * spacing;
+    start_y := i32(math.floor(min_y / f32(spacing))) * spacing;
+    end_x   := i32(math.ceil(max_x / f32(spacing))) * spacing;
+    end_y   := i32(math.ceil(max_y / f32(spacing))) * spacing;
+
+    rl.rlPushMatrix();
+    rl.rlTranslatef(-camera_pos.x + half_w, -camera_pos.y + half_h, 0); // Center camera in screen
+
+    // Vertical lines
+    for x := start_x; x <= end_x; x += spacing {
+        rl.DrawLine(x, start_y, x, end_y, color);
+    }
+
+    // Horizontal lines
+    for y := start_y; y <= end_y; y += spacing {
+        rl.DrawLine(start_x, y, end_x, y, color);
+    }
 
     rl.rlPopMatrix();
 }
