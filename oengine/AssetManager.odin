@@ -733,8 +733,11 @@ asset_is :: proc(self: Asset, $T: typeid) -> bool {
     return false;
 }
 
+asset_mutex: sync.Mutex;
 reg_asset :: proc(tag: string, asset: Asset) {
     using asset_manager;
+    sync.lock(&asset_mutex);
+    defer sync.unlock(&asset_mutex);
     registry[tag] = asset;
 }
 

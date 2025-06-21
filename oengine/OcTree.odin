@@ -89,7 +89,6 @@ free_octree :: proc(node: ^OctreeNode) {
     }
 
     if (node.is_leaf && node.triangles != nil) {
-        delete(node.triangles);
         node.triangles = nil;
     }
 

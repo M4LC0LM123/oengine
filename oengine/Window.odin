@@ -344,6 +344,8 @@ w_close :: proc() {
     dbg_log(" ");
     dbg_log("Closing...");
 
+    ew_deinit();
+
     rl.CloseAudioDevice();
     dbg_log("Closed audio device");
 
