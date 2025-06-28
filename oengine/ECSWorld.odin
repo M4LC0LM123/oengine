@@ -1,7 +1,6 @@
 package oengine
 
 import rl "vendor:raylib"
-import rlg "rllights"
 import ecs "ecs"
 import "fa"
 import "core:fmt"
@@ -9,7 +8,6 @@ import "core:thread"
 import "nfd"
 import "core:time"
 
-MAX_LIGHTS :: 44
 FIXED_TIME_STEP :: 1.0 / 60.0
 
 FOG_COLOR :: GRAY
@@ -19,10 +17,9 @@ ecs_world: struct {
     ecs_ctx: ecs.Context,
     physics: PhysicsWorld,
     camera: ^Camera,
-    rlg_ctx: rlg.Context,
+    ray_ctx: RayContext, // lighting context
     decals: [dynamic]^Decal,
     removed_decals: [dynamic]i32,
-    light_count: u32,
     FAE: bool, // fog affects everything
 
     accumulator: f32,
@@ -43,11 +40,13 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
 
     accumulator = 0;
 
-    rlg_ctx = rlg.CreateContext(MAX_LIGHTS);
-    rlg.SetContext(rlg_ctx);
-
-    set_fog_density(FOG_DENSITY);
-    set_fog_color(FOG_COLOR);
+    ray_ctx.shader = load_shader_data(
+        rl.LoadShaderFromMemory(DEFAULT_VERT, DEFAULT_FRAG)
+    );
+    ray_ambient(ray_ctx.shader, DARK_GRAY);
+    ray_view_loc(ray_ctx.shader);
+    ray_fog_density(ray_ctx.shader, 0);
+    ray_fog_color(ray_ctx.shader, DARK_GRAY);
 
     FAE = false; // deprecated
     world_fog.density = 0.007;
@@ -99,7 +98,7 @@ world :: proc() -> type_of(ecs_world) {
 ew_clear :: proc() {
     using ecs_world;
 
-    rlg.DestroyContext(rlg_ctx);
+    ray_ctx.light_count = 0;
 
     pw_deinit(&physics);
 
@@ -138,9 +137,6 @@ ew_clear :: proc() {
     fa.clear(&physics.bodies);
     fa.clear(&physics.mscs);
     tri_count = 0;
-
-    rlg_ctx = rlg.CreateContext(MAX_LIGHTS);
-    rlg.SetContext(rlg_ctx);
 }
 
 ew_get_ent :: proc {
@@ -214,7 +210,9 @@ ew_update :: proc() {
     // ew_fixed_update();
 
     fog_update(camera.position);
-    rlg.SetViewPositionV(camera.position);
+
+    ray_set_view(ray_ctx.shader, camera^);
+    update_light_count(ray_ctx.shader, ray_ctx.light_count);
 
     ecs.ecs_update(&ecs_ctx);
 
@@ -344,8 +342,6 @@ ew_deinit :: proc() {
 
     thread.join(physics_thread);
     thread.destroy(physics_thread);
-
-    rlg.DestroyContext(rlg_ctx);
 
     nfd.Quit();
 

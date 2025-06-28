@@ -11,7 +11,6 @@ import ecs "../oengine/ecs"
 import fa "../oengine/fa"
 import "core:math"
 import "core:math/linalg"
-import rlg "../oengine/rllights"
 import "core:mem"
 import "core:time"
 import "core:thread"
@@ -40,6 +39,8 @@ main :: proc() {
     oe.w_create();
     oe.w_set_title("gejm");
     oe.w_set_target_fps(60);
+    oe.w_set_trace_log_type(.USE_ALL);
+    oe.w_set_trace_log_level(.WARNING);
     oe.window.debug_stats = true;
 
     start := time.now(); 
@@ -95,7 +96,6 @@ main :: proc() {
             1.0, 0.5, false, oe.ShapeType.BOX)
     );
     player_sm := oe.add_component(player, oe.sm_init(oe.tex_flip_vert(troll)));
-    player_sm.is_lit = false;
     player_sm.user_call = true;
     player_jump := oe.add_component(player, oe.sa_init(player_tr.position, jump_sfx));
     player_rb.collision_mask = oe.coll_mask(1);
@@ -128,7 +128,7 @@ main :: proc() {
     s := time.now();
     msc := oe.msc_init();
     // oe.msc_from_json(msc, "../assets/maps/test.json");
-    oe.load_msc(msc, "../test_msc.od");
+    oe.load_msc(msc, "../test_msc.od", load_dids = true);
     msc.atlas = oe.load_atlas("../assets/atlas");
     // msc.atlas = oe.am_texture_atlas();
     // oe.pack_atlas(msc.atlas, "../assets/atlas");
@@ -164,16 +164,6 @@ main :: proc() {
     lara_sm := oe.add_component(lara_ent, oe.sm_init(oe.model_clone(swat)));
     lara_ma := oe.ma_load(lara_sm.tex.(oe.Model).path);
     lara_sm.offset.scale = {1.5, 0.75, 1.5};
-
-    for ent in oe.ew_get_ents("light") {
-        if (!oe.has_component(ent, oe.Light)) { continue; }
-        ent_l := oe.get_component(ent, oe.Light);
-        if (ent_l.type == .DIRECTIONAL) {
-            rlg.SetLightVec3(ent_l.id, .DIRECTION, {0, -1, 0});
-            rlg.SetLightValue(ent_l.id, .ENERGY, 1);
-            rlg.SetLightValue(ent_l.id, .ATTENUATION_QUADRATIC, 0.01);
-        }
-    }
 
     test_tri := [3]oe.Vec3{{-15, 10, -10}, {-12.5, 7.5, -7.5}, {-10, 12.5, -12.5}};
     test_aabb := oe.compute_aabb(test_tri[0], test_tri[1], test_tri[2]);

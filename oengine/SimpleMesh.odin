@@ -175,14 +175,9 @@ sm_custom_render :: proc(t: ^Transform, sm: ^SimpleMesh) {
         target.position.y = transform.position.y - 0.5;
     }
 
-    if (!sm_tex_is(sm, Model)) {
-        if (shader_defined(shader)) {
-            rl.BeginShaderMode(shader);
-        }
-    }
-
     #partial switch v in tex {
         case Model:
+            sm_set_shader(sm, ecs_world.ray_ctx.shader);
             draw_model(v, target, color, is_lit, offset);
         case CubeMap:
             draw_cube_map(v, target, color);
@@ -201,8 +196,6 @@ sm_custom_render :: proc(t: ^Transform, sm: ^SimpleMesh) {
             );
     }
 
-    if (sm_tex_is(sm, Model)) do return;
-    rl.EndShaderMode();
 }
 
 sm_toggle_lit :: proc(using self: ^SimpleMesh) {
@@ -279,7 +272,10 @@ sm_set_shader :: proc(using self: ^SimpleMesh, s_shader: Shader) {
     }
 
     if (sm_tex_is(self, Model)) {
-        sm_tex(self, Model).materials[0].shader = shader.data;
+        m := sm_tex(self, Model);
+        for i in 0..<m.materialCount {
+            m.materials[i].shader = shader.data;
+        }
     }
 }
 

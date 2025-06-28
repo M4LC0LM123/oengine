@@ -2,7 +2,6 @@ package oengine
 
 import "core:fmt"
 import rl "vendor:raylib"
-import rlg "rllights"
 import ecs "ecs"
 import "core:encoding/json"
 import od "object_data"
@@ -10,44 +9,73 @@ import od "object_data"
 Light :: struct {
     id: u32,
     transform: Transform,
-    type: rlg.LightType,
-    color: Color,
-    enabled: bool,
+    data: RayLight,
 }
 
 @(private = "file")
-lc_init_all :: proc(using lc: ^Light, s_type: rlg.LightType = .OMNI, s_color: Color = WHITE) {
+lc_init_all :: proc(
+    using lc: ^Light, 
+    s_type: RayLightType = .Point,
+    target: Vec3 = {},
+    s_color: Color = WHITE,
+    intensity: f32 = 1.0
+) {
     transform = transform_default();
-    type = s_type;
-    color = s_color;
-    enabled = true;
 
-    rlg.UseLight(id, enabled);
-    rlg.SetLightType(id, type);
-    rlg.SetLightVec3(id, .POSITION, transform.position);
-    rlg.SetLightColor(id, color);
+    data = ray_create_light(
+        lc.id,
+        s_type, 
+        transform.position, 
+        target, s_color, 
+        ecs_world.ray_ctx.shader, intensity
+    );
 }
 
 lc_toggle :: proc(using lc: ^Light) {
-    rlg.ToggleLight(id);
+    data.enabled = !data.enabled;
 }
 
-lc_init :: proc(s_type: rlg.LightType = .OMNI, s_color: Color = WHITE) -> Light {
+lc_init :: proc(
+    s_type: RayLightType = .Point, 
+    s_color: Color = WHITE,
+) -> Light {
     lc: Light;
-    lc.id = ecs_world.light_count;
-    ecs_world.light_count += 1;
+    lc.id = u32(ecs_world.ray_ctx.light_count);
+    ecs_world.ray_ctx.light_count += 1;
 
-    lc_init_all(&lc, s_type, s_color);
+    lc_init_all(&lc, s_type = s_type, s_color = s_color);
     
     return lc;
 }
 
-lc_init_id :: proc(id: u32, s_type: rlg.LightType = .OMNI, s_color: Color = WHITE) -> Light {
+lc_init_id :: proc(
+    id: u32, 
+    s_type: RayLightType = .Point, 
+    s_color: Color = WHITE) -> Light {
     lc: Light;
     lc.id = id;
-    ecs_world.light_count += 1;
+    ecs_world.ray_ctx.light_count += 1;
 
-    lc_init_all(&lc, s_type, s_color);
+    lc_init_all(&lc, s_type = s_type, s_color = s_color);
+    
+    return lc;
+}
+
+lc_init_without_adding :: proc(
+    id: u32, 
+    s_type: RayLightType = .Point, 
+    s_color: Color = WHITE) -> Light {
+    lc: Light;
+    lc.id = id;
+    using lc;
+
+    transform = transform_default();
+
+    data.enabled = true;
+    data.type = s_type;
+    data.position = transform.position;
+    data.color = s_color;
+    data.intensity = 1.0;
     
     return lc;
 }
@@ -58,51 +86,46 @@ lc_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     using lc;
 
     transform = t^;
+    data.position = transform.position;
 
-    rlg.SetLightVec3(id, .POSITION, transform.position);
-    rlg.SetLightColor(id, color);
+    update_light_values(ecs_world.ray_ctx.shader, data);
 }
 
 lc_clone :: proc(l: Light) -> Light {
-    res := lc_init(l.type, l.color);
-
-    rlg.SetLightVec3(res.id, .DIRECTION, rlg.GetLightVec3(l.id, .DIRECTION));
-    rlg.SetLightVec3(res.id, .SPECULAR, rlg.GetLightVec3(l.id, .SPECULAR));
-    rlg.SetLightValue(res.id, .ENERGY, rlg.GetLightValue(l.id, .ENERGY));
-    rlg.SetLightValue(res.id, .SIZE, rlg.GetLightValue(l.id, .SIZE));
-    rlg.SetLightValue(res.id, .INNER_CUTOFF, rlg.GetLightValue(l.id, .INNER_CUTOFF));
-    rlg.SetLightValue(res.id, .OUTER_CUTOFF, rlg.GetLightValue(l.id, .OUTER_CUTOFF));
-    rlg.SetLightValue(
-        res.id, 
-        .ATTENUATION_CLQ, 
-        rlg.GetLightValue(l.id, .ATTENUATION_CLQ)
-    );
-    rlg.SetLightValue(
-        res.id, 
-        .ATTENUATION_LINEAR, 
-        rlg.GetLightValue(l.id, .ATTENUATION_LINEAR)
-    );
-    rlg.SetLightValue(
-        res.id, 
-        .ATTENUATION_CONSTANT, 
-        rlg.GetLightValue(l.id, .ATTENUATION_CONSTANT)
-    );
-    rlg.SetLightValue(
-        res.id, 
-        .ATTENUATION_QUADRATIC, 
-        rlg.GetLightValue(l.id, .ATTENUATION_QUADRATIC)
-    );
+    res := lc_init(l.data.type, l.data.color);
+    res.transform = l.transform;
+    res.data = l.data;
 
     return res;
 }
 
+lc_clone_data :: proc(d, l: RayLight) -> (data: RayLight) {
+    data.type = l.type;
+    data.enabled = l.enabled;
+    data.position = l.position;
+    data.target = l.target;
+    data.color = l.color;
+    data.intensity = l.intensity;
+    data.attenuation = data.attenuation;
+
+    data.enabledLoc = d.enabledLoc;
+    data.typeLoc = d.typeLoc;
+    data.positionLoc = d.positionLoc;
+    data.targetLoc = d.targetLoc;
+    data.colorLoc = d.colorLoc;
+    data.inner_loc = d.inner_loc;
+    data.outer_loc = d.outer_loc;
+    data.intensity_loc = d.intensity_loc;
+    return;
+}
+
 lc_parse :: proc(asset: od.Object) -> rawptr {
-    id := ecs_world.light_count; 
+    id := u32(ecs_world.ray_ctx.light_count); 
     if (asset["id"] != nil) {
         id = u32(od.target_type(asset["id"], i32));
     }
 
-    type := rlg.LightType(od.target_type(asset["light_type"], i32));
+    type := RayLightType(od.target_type(asset["light_type"], i32));
 
     color := od_color(asset["color"].(od.Object));
 
@@ -111,12 +134,14 @@ lc_parse :: proc(asset: od.Object) -> rawptr {
         enabled = asset["enabled"].(bool);
     }
 
-    lc := lc_init_id(id, type, color);
-    lc.enabled = enabled;
+    lc := lc_init_without_adding(id, type, color);
+    lc.data.enabled = enabled;
     return new_clone(lc);
 }
 
 lc_loader :: proc(ent: AEntity, tag: string) {
     using comp := get_component_data(tag, Light);
-    add_component(ent, lc_clone(comp^));
+    light := lc_init(comp.data.type, comp.data.color);
+    light.data = lc_clone_data(light.data, comp.data);
+    add_component(ent, light);
 }

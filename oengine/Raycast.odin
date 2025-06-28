@@ -158,8 +158,9 @@ rc_is_colliding_msc :: proc(using self: Raycast, msc: ^MSCObject, closest := fal
         t := msc.tris[i];
         ok, pt := ray_tri_collision(self, t);
         if (ok) {
-            normal := linalg.cross(t.pts[1] - t.pts[0], t.pts[2] - t.pts[0]);
-            normal = linalg.normalize(normal);
+            // normal := linalg.cross(t.pts[1] - t.pts[0], t.pts[2] - t.pts[0]);
+            // normal = linalg.normalize(normal);
+            normal := t.normal;
             return true, {t, pt, normal, i};
         }
     }
@@ -176,8 +177,9 @@ rc_colliding_tris :: proc(using self: Raycast, msc: ^MSCObject, sort := true) ->
         t := msc.tris[i];
         ok, pt := ray_tri_collision(self, t);
         if (ok) {
-            normal := linalg.cross(t.pts[1] - t.pts[0], t.pts[2] - t.pts[0]);
-            normal = linalg.normalize(normal);
+            // normal := linalg.cross(t.pts[1] - t.pts[0], t.pts[2] - t.pts[0]);
+            // normal = linalg.normalize(normal);
+            normal := t.normal; // no need to calculate normal again
             append(&res, MSCCollisionInfo{t, pt, normal, i});
             coll = true;
         }

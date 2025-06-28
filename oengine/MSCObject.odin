@@ -3,7 +3,6 @@ package oengine
 import "core:fmt"
 import "core:math"
 import rl "vendor:raylib"
-import rlg "rllights"
 import "core:encoding/json"
 import "core:io"
 import "core:os"
@@ -1265,11 +1264,12 @@ msc_load_tri_json :: proc(using self: ^MSCObject, obj: json.Value) {
 msc_render :: proc(using self: ^MSCObject) {
     m := DEFAULT_MATERIAL;
     m.maps[rl.MaterialMapIndex.ALBEDO].texture = atlas;
+    m.shader = ecs_world.ray_ctx.shader;
 
     if (window.instance_name == EDITOR_INSTANCE) {
         msc_old_render(self);
     } else {
-        rlg.DrawMesh(mesh, m, rl.Matrix(1));
+        rl.DrawMesh(mesh, m, rl.Matrix(1));
     }
 
     if (PHYS_DEBUG) {

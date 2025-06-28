@@ -108,7 +108,7 @@ object mesh_component {
 }
 
 object light_1 {
-	i32 light_type = 0
+	i32 light_type = 1
 	object color {
 		i32 r = 255
 		i32 g = 0

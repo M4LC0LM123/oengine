@@ -1,7 +1,6 @@
 package oengine
 
 import rl "vendor:raylib"
-import rlg "rllights"
 import "core:fmt"
 import "core:math"
 import strs "core:strings"
@@ -637,8 +636,24 @@ draw_model :: proc(
         rotation_axis = {};
     } 
 
-    if (is_lit) { rlg.DrawModelEx(model, transform.position + offset.position, rotation_axis, angle, transform.scale * offset.scale, color); }
-    else { rl.DrawModelEx(model, transform.position + offset.position, rotation_axis, angle, transform.scale * offset.scale, color); }
+    if (is_lit) { 
+        rl.BeginShaderMode(ecs_world.ray_ctx.shader);
+        rl.DrawModelEx(
+            model, 
+            transform.position + offset.position, 
+            rotation_axis, angle, 
+            transform.scale * offset.scale, color
+        ); 
+        rl.EndShaderMode();
+    }
+    else { 
+        rl.DrawModelEx(
+            model, 
+            transform.position + offset.position, 
+            rotation_axis, angle, 
+            transform.scale * offset.scale, color
+        );
+    }
 }
 
 shape_transform_renders := [?]proc(Texture, Transform, Color) {

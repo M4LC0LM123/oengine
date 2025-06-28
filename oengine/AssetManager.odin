@@ -292,7 +292,8 @@ load_registry :: proc(path: string) {
     load_registry_json(path);
 }
 
-load_registry_od :: proc(path: string) {
+// threaded is wip, it works and is faster but unstable and tends to not load some stuff
+load_registry_od :: proc(path: string, threaded := false) {
     data, ok := os.read_entire_file_from_filename(path);
     if (!ok) {
         dbg_log("Failed to open file ", DebugType.WARNING);
@@ -303,7 +304,11 @@ load_registry_od :: proc(path: string) {
     root := od_data;
 
     second_pass := make([dynamic]TagObjectPair);
-    threads := make([dynamic]^thread.Thread);
+
+    threads: [dynamic]^thread.Thread;
+    if (threaded) {
+        threads = make([dynamic]^thread.Thread);
+    }
 
     for tag, asset in root {
         if (tag == "dbg_pos") {
@@ -348,15 +353,21 @@ load_registry_od :: proc(path: string) {
             type == "Model") {
             job := new(AssetJob);
             job^ = AssetJob{strs.clone(tag), type, asset_od};
-            h := thread.create_and_start_with_data(job, load_asset_job);
-            append(&threads, h);
-            // load_asset_job(job);
+
+            if (threaded) {
+                h := thread.create_and_start_with_data(job, load_asset_job);
+                append(&threads, h);
+            } else {
+                load_asset_job(job);
+            }
         } else {
             append(&second_pass, TagObjectPair{strs.clone(tag), asset_od});
         }
     }
 
-    for h in threads { thread.join(h); }
+    if (threaded) {
+        for h in threads { thread.join(h); }
+    }
 
     for pair in cubemap_job {
         sky: CubeMap;

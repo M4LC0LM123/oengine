@@ -5,7 +5,6 @@ import "core:fmt"
 import rl "vendor:raylib"
 import "core:math"
 import str "core:strings"
-import rlg "../oengine/rllights"
 import "core:mem"
 
 EDITOR_INSTANCE :: "oengine-editor"
@@ -95,9 +94,6 @@ w_create :: proc(name: string = "Game") {
 
     DEFAULT_MATERIAL = rl.LoadMaterialDefault();
     dbg_log("Loaded default material");
-
-    rlg.SetCustomShaderCode(.LIGHTING, DEF_VERT, DEF_FRAG);
-    dbg_log("Set custom shader");
 }
 
 w_set_instance_name :: proc(name: string) {
@@ -263,7 +259,7 @@ w_begin_render :: proc() {
     rl.BeginTextureMode(window.target);
 }
 
-DBG_INFO_STAT_COUNT :: 8
+DBG_INFO_STAT_COUNT :: 9
 DBG_INFO_POS_COUNT :: 5
 
 w_end_render :: proc() {
@@ -305,6 +301,7 @@ w_end_render :: proc() {
             str_add("rbs: ", ecs_world.physics.bodies.len),
             str_add("tris: ", tri_count),
             str_add("decals: ", len(ecs_world.decals)),
+            str_add("lights: ", ecs_world.ray_ctx.light_count),
         };
 
         for i in 0..<len(text_info) {
