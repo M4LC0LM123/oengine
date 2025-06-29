@@ -38,7 +38,7 @@ cm_init :: proc(s_position: Vec3, s_fov: f32 = 60, s_near: f32 = 0.1, s_far: f32
 
     raycast = Raycast {
         position,
-        position * front * far,
+        position + front * far,
     };
 
     return res;

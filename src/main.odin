@@ -169,6 +169,13 @@ main :: proc() {
     test_aabb := oe.compute_aabb(test_tri[0], test_tri[1], test_tri[2]);
     test_subdivided := oe.split_aabb_8(test_aabb);
 
+    flashlight := oe.aent_init("flashlight");
+    flashlight_tr := oe.get_component(flashlight, oe.Transform);
+    flashlight_tr.position = {15, 5, 15};
+    flashlight_lc := oe.add_component(flashlight, oe.lc_init(.Spot));
+    flashlight_lc.data.target = {15, 0, 15};
+    oe.ray_light_cutoffs(oe.world().ray_ctx.shader, flashlight_lc.data, 37.5, 47.5);
+
     // reset_track_allocator(&track_allocator);
     for (oe.w_tick()) {
         oe.ew_update();
@@ -184,6 +191,10 @@ main :: proc() {
         oe.cm_set_fps_controls(&camera, 10, is_mouse_locked, true);
         oe.cm_default_fps_matrix(&camera);
         oe.cm_update(&camera);
+
+        // flashlight_tr := oe.get_component(flashlight, oe.Light);
+        // flashlight_tr.transform.position = camera.position;
+        // flashlight_lc.data.target = camera.raycast.position - camera.raycast.target;
 
         if (oe.key_pressed(oe.Key.RIGHT_SHIFT)) {
             player_rb.velocity.y = 15;
