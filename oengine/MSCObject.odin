@@ -10,6 +10,7 @@ import strs "core:strings"
 import "fa"
 import od "object_data"
 import "core:path/filepath"
+import "core:math/linalg"
 
 /*
 EXAMPLE
@@ -962,6 +963,7 @@ msc_load_data_id_od :: proc(tag: string, obj: od.Object) {
 
                 loader := asset_manager.component_loaders[type];
                 if (loader != nil) { loader(ent, tag); }
+
                 fa.append(
                     &comps_arr, 
                     ComponentMarshall {

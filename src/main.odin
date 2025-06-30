@@ -128,7 +128,7 @@ main :: proc() {
     s := time.now();
     msc := oe.msc_init();
     // oe.msc_from_json(msc, "../assets/maps/test.json");
-    oe.load_msc(msc, "../test_msc.od", load_dids = true);
+    oe.load_msc(msc, "../assets/maps/test.od", load_dids = true);
     msc.atlas = oe.load_atlas("../assets/atlas");
     // msc.atlas = oe.am_texture_atlas();
     // oe.pack_atlas(msc.atlas, "../assets/atlas");
@@ -293,6 +293,7 @@ main :: proc() {
         }
 
         rl.EndMode3D();
+
         oe.w_end_render();
         if (oe.key_pressed(.F4)) do reset_track_allocator(&track_allocator);
     }

@@ -129,6 +129,34 @@ tile_texture :: proc(texture: Texture, tx: i32) -> Texture {
     return load_texture(target.texture);
 }
 
+tile_texture_xy :: proc(texture: Texture, tx, ty: i32) -> Texture {
+    width := f32(texture.width) / f32(tx);
+    height := f32(texture.height) / f32(ty);
+
+    target := rl.LoadRenderTexture(texture.width, texture.height);
+
+    rl.BeginTextureMode(target);
+    rl.ClearBackground(rl.WHITE);
+
+    for i in 0..<tx {
+        for j in 0..<ty {
+            x := f32(i) * width;
+            y := f32(j) * height;
+
+            rl.DrawTexturePro(
+                texture,
+                {0, 0, f32(texture.width), f32(texture.height)},
+                {x, y, width, height},
+                {}, 0, rl.WHITE
+            );
+        }
+    }
+
+    rl.EndTextureMode();
+
+    return load_texture(target.texture);
+}
+
 draw_aabb_wires :: proc(aabb: AABB, color: Color) {
     rl.DrawCubeWires({aabb.x, aabb.y, aabb.z}, aabb.width, aabb.height, aabb.depth, color);
 }
@@ -684,7 +712,13 @@ cube_map_identity :: proc(tex: Texture) -> CubeMap {
     };
 }
 
-draw_cube_map :: proc(cube_map: CubeMap, transform: Transform, color: Color) {
+draw_cube_map :: proc(
+    cube_map: CubeMap, transform: Transform, color: Color, lit := false) {
+    if (lit) {
+        rl.BeginShaderMode(ecs_world.ray_ctx.shader);
+        rl.rlEnableShader(ecs_world.ray_ctx.shader.id);
+    }
+
     rl.rlPushMatrix();
     rl.rlTranslatef(transform.position.x, transform.position.y, transform.position.z);
     rl.rlRotatef(transform.rotation.x, 1, 0, 0);
@@ -758,6 +792,10 @@ draw_cube_map :: proc(cube_map: CubeMap, transform: Transform, color: Color) {
 
     rl.rlSetTexture(0);
 
+    if (lit) {
+        rl.rlDisableShader();
+        rl.EndShaderMode();
+    }
 }
 
 draw_cube_texture :: proc(texture: Texture, transform: Transform, color: Color) {

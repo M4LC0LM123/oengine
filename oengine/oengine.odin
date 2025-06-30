@@ -15,3 +15,6 @@ OE_FAE :: #config(FAE, false)
 DATA_PATH :: "set from data!"
 
 QUOTES :: "\""
+
+CSG_RB :: "csg_box_rb"
+CSG_SM :: "csg_box_sm"

@@ -3,7 +3,9 @@ package main
 import "core:fmt"
 import rl "vendor:raylib"
 import oe "../../oengine"
+import "../../oengine/fa"
 import "core:math"
+import "core:math/linalg"
 
 GRID_SPACING :: 25
 GRID_COLOR :: oe.Color {255, 255, 255, 125}
@@ -23,6 +25,9 @@ CameraTool :: struct {
     mouse_locked: bool,
     camera_orthographic: rl.Camera2D,
     mode: CameraMode,
+    tile_edit: bool,
+    tile_layer: f32,
+    tile_size: oe.Vec3,
 
     _mouse_pos: oe.Vec2,
     _prev_mouse_pos: oe.Vec2,
@@ -42,6 +47,7 @@ ct_init :: proc() -> CameraTool {
         mode = .PERSPECTIVE,
         _active_id = ACTIVE_EMPTY,
         _active_msc_id = ACTIVE_EMPTY,
+        tile_size = {1, 1, 1},
     };
 }
 
@@ -67,10 +73,86 @@ ct_render :: proc(using self: ^CameraTool) {
         rl.BeginMode3D(camera_perspective.rl_matrix);
         oe.draw_debug_axis(3);
         oe.draw_debug_axis(-3);
+        rl.rlPushMatrix();
+        rl.rlTranslatef(0, tile_layer, 0);
         oe.draw_grid3D(oe.OCTREE_SIZE, 1, {150, 150, 150, 255});
+        rl.rlPopMatrix();
+
         oe.ew_render();
         render(self^);
         render_tri(self);
+
+        if (tile_edit) {
+            mouse_ray := oe.get_mouse_rc(camera_perspective);
+            plane := oe.Transform {
+                {0, tile_layer, 0}, {}, {oe.OCTREE_SIZE, 0.25, oe.OCTREE_SIZE}
+            };
+            coll, point := oe.rc_is_colliding(mouse_ray, plane, .BOX);
+            snapped := oe.Vec3 {
+                math.floor(point.x),
+                tile_layer,
+                math.floor(point.z),
+            };
+
+            position := snapped + tile_size * 0.5;
+
+            rl.DrawCubeWiresV(position, tile_size, oe.GREEN);
+
+            if (!oe.gui_mouse_over() && !oe.gui_text_active()) {
+                if (oe.mouse_pressed(.LEFT)) {
+                    id := u32(72);
+                    tag := "csg_box";
+                    reg_tag := oe.str_add("data_id_", tag);
+                    if (oe.asset_manager.registry[reg_tag] != nil) {
+                        reg_tag = oe.str_add(reg_tag, oe.rand_digits(4));
+                    }
+
+                    comps := fa.fixed_array(oe.ComponentMarshall, 16);
+                    fa.append(
+                        &comps, oe.ComponentMarshall{oe.CSG_RB, "RigidBody"}
+                    );
+                    fa.append(
+                        &comps, oe.ComponentMarshall{oe.CSG_SM, "SimpleMesh"}
+                    );
+
+                    oe.reg_asset(
+                        reg_tag, 
+                        oe.DataID {
+                            reg_tag, 
+                            tag, 
+                            id, 
+                            oe.Transform{
+                                position, {}, tile_size
+                            },
+                            fa.fixed_array(u32, 16),
+                            comps,
+                        }
+                    );
+                    oe.dbg_log(
+                        oe.str_add(
+                            {"Added data id of tag: ", 
+                            tag, " and id: ", oe.str_add("", id)}
+                        )
+                    );
+
+                    if (editor_data.csg_textures[tile_size] == {}) {
+                        tiling := i32(linalg.max(tile_size));
+                        img := rl.GenImageChecked(
+                            2 * tiling, 2 * tiling, 
+                            1, 1, 
+                            oe.BLACK, oe.PINK
+                        );
+
+                        editor_data.csg_textures[tile_size] = oe.load_texture(
+                            rl.LoadTextureFromImage(img)
+                        );
+
+                        rl.UnloadImage(img);
+                    }
+                }
+            }
+        }
+
         rl.EndMode3D();
     } else {
         rl.BeginMode2D(camera_orthographic);
@@ -415,6 +497,46 @@ update_point_ortho :: proc(using self: ^CameraTool, pt: oe.Vec2, #any_int vertex
 ct_update_perspective :: proc(using self: ^CameraTool) {
     if (oe.key_pressed(oe.Key.ESCAPE)) {
         mouse_locked = !mouse_locked;
+    }
+
+    if (!oe.gui_mouse_over() && !oe.gui_text_active()) {
+        if (oe.key_down(.LEFT_SHIFT)) {
+            if (oe.key_pressed(.T)) {
+                tile_edit = !tile_edit;
+            }
+
+            if (oe.key_pressed(.ENTER)) {
+                tile_layer = 0;
+            }
+        }
+
+        if (oe.key_down(.LEFT_SHIFT)) {
+            if (oe.key_pressed(.EQUAL)) {
+                tile_layer += 0.5;
+            }
+            if (oe.key_pressed(.MINUS)) {
+                tile_layer -= 0.5;
+            }
+
+            if (oe.key_pressed(.LEFT)) {
+                tile_size.x -= 0.5;
+            }
+            if (oe.key_pressed(.RIGHT)) {
+                tile_size.x += 0.5;
+            }
+            if (oe.key_pressed(.UP)) {
+                tile_size.z -= 0.5;
+            }
+            if (oe.key_pressed(.DOWN)) {
+                tile_size.z += 0.5;
+            }
+            if (oe.key_pressed(.COMMA)) {
+                tile_size.y -= 0.5;
+            }
+            if (oe.key_pressed(.PERIOD)) {
+                tile_size.y += 0.5;
+            }
+        }
     }
 
     oe.cm_set_fps(&camera_perspective, 0.1, mouse_locked);

@@ -104,8 +104,9 @@ parse :: proc(data: string) -> Object {
 
     _data, ok := strings.remove_all(data, "\r");
     lines := strings.split(_data, "\n");
+    line_number := 0;
     for line in lines {
-        if (line == "") { continue; }
+        if (line == "") { line_number += 1; continue; }
 
         if (strings.has_prefix(strings.trim_space(line), "object ")) {
             split := strings.split(strings.trim_space(line), " ");
@@ -113,6 +114,7 @@ parse :: proc(data: string) -> Object {
             _new := new(Object);
 
             append(&object_stack, ObjectPair{_new, obj_name});
+            line_number += 1;
             continue;
         }
 
@@ -123,6 +125,7 @@ parse :: proc(data: string) -> Object {
             parent.obj^[child.name] = child.obj^;
 
             pop(&object_stack);
+            line_number += 1;
             continue;
         }
 
@@ -150,6 +153,7 @@ parse :: proc(data: string) -> Object {
             object_stack[len(object_stack) - 1].obj[field_name] = val;
         }
 
+        line_number += 1;
     }
 
     delete(object_stack);

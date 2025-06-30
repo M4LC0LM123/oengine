@@ -1,6 +1,7 @@
 package oengine
 
 import "core:math"
+import "core:math/linalg"
 import "core:fmt"
 import "core:strings"
 import rl "vendor:raylib"
@@ -298,6 +299,11 @@ sm_parse :: proc(asset: od.Object) -> rawptr {
         texture = get_asset_var(texture_tag, Texture);
     }
 
+    if (od_contains(asset, "tiling")) {
+        tiling := od.target_type(asset["tiling"], i32);
+        texture = tile_texture(texture, tiling);
+    }
+
     color := od_color(asset["color"].(od.Object));
 
     if (shape == .MODEL) {
@@ -310,12 +316,17 @@ sm_parse :: proc(asset: od.Object) -> rawptr {
 
         return new_clone(sm);
     } else if (shape == .CUBEMAP) {
-        cubemap_tag := asset["cubemap"].(string);
-        cubemap := get_asset_var(cubemap_tag, CubeMap);
+        cubemap_tag: string;
+        cubemap: CubeMap;
+        if (od_contains(asset, "cubemap")) {
+            cubemap_tag = asset["cubemap"].(string);
+            cubemap = get_asset_var(cubemap_tag, CubeMap);
+        }
 
         sm := sm_init(cubemap, color);
         sm.is_lit = is_lit;
         sm.use_fog = use_fog;
+        sm.texture = texture;
 
         return new_clone(sm);
     }
@@ -329,5 +340,52 @@ sm_parse :: proc(asset: od.Object) -> rawptr {
 
 sm_loader :: proc(ent: AEntity, tag: string) {
     comp := get_component_data(tag, SimpleMesh);
-    add_component(ent, comp^);
+    clone := comp^;
+
+    if (int(clone.shape) < 10) {
+        clone.tex = mesh_loaders[int(clone.shape)]();
+        sm_set_texture(&clone, clone.texture);
+    }
+
+    if (clone.shape == .MODEL) {
+        clone.tex = model_clone(comp.tex.(Model));
+    }
+
+    if (tag == CSG_SM) {
+        ent_tr := get_component(ent, Transform);
+        if (clone.shape == .CUBEMAP) {
+            get_tile_count :: proc(s: f32) -> i32 {
+                if (s >= 1) { return i32(s); }
+                else if (s > 0) { return i32(1.0 / s + 0.5); }
+
+                return 1;
+            }
+
+            scale := linalg.abs(ent_tr.scale);
+
+            tiling := Vec3i {
+                get_tile_count(scale.x),
+                get_tile_count(scale.y),
+                get_tile_count(scale.z),
+            };
+
+            tiled := CubeMap {
+                tile_texture_xy(clone.texture, tiling.x, tiling.y),
+                tile_texture_xy(clone.texture, tiling.x, tiling.y),
+                tile_texture_xy(clone.texture, tiling.z, tiling.y),
+                tile_texture_xy(clone.texture, tiling.z, tiling.y),
+                tile_texture_xy(clone.texture, tiling.x, tiling.z),
+                tile_texture_xy(clone.texture, tiling.x, tiling.z),
+            };
+
+            clone.tex = tiled;
+        }
+        if (clone.shape == .BOX) {
+            tiling := i32(linalg.max(linalg.abs(ent_tr.scale)));
+            tiled := tile_texture(clone.texture, tiling);
+            sm_set_texture(&clone, tiled);
+        }
+    }
+
+    add_component(ent, clone);
 }

@@ -49,6 +49,19 @@ main :: proc() {
         data_id_mod_tool(camera_tool);
         did_component_tool(camera_tool);
 
+        oe.gui_text(
+            oe.str_add("mode: ", camera_tool.mode), 
+            20, 10, f32(oe.w_render_height()) - 90, true
+        );
+        oe.gui_text(
+            oe.str_add("tile edit: ", camera_tool.tile_edit), 
+            20, 10, f32(oe.w_render_height()) - 60, true
+        );
+        oe.gui_text(
+            oe.str_add("tile layer: ", camera_tool.tile_layer), 
+            20, 10, f32(oe.w_render_height()) - 30, true
+        );
+
         oe.w_end_render();
     }
 
@@ -261,8 +274,16 @@ render :: proc(camera_tool: CameraTool) {
         for i in 0..<did.comps.len {
             comp := did.comps.data[i];
             if (comp.type == "SimpleMesh") {
-                sm := oe.get_component_data(comp.tag, oe.SimpleMesh);
-                oe.sm_custom_render(&did.transform, sm);
+                if (comp.tag == oe.CSG_SM) {
+                    oe.draw_cube_texture(
+                        editor_data.csg_textures[did.transform.scale],
+                        did.transform,
+                        oe.WHITE
+                    );
+                } else {
+                    sm := oe.get_component_data(comp.tag, oe.SimpleMesh);
+                    oe.sm_custom_render(&did.transform, sm);
+                }
             }
         }
     }

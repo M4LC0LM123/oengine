@@ -17,6 +17,7 @@ Vec3 :: linalg.Vector3f32
 Vec2 :: linalg.Vector2f32
 Vec4 :: linalg.Vector4f32
 Vec2i :: [2]i32
+Vec3i :: [3]i32
 
 Deg2Rad :: math.PI / 180.0
 Rad2Deg :: 180.0 / math.PI

@@ -72,6 +72,41 @@ object lara {
 	string type = "Model"
 }
 
+object csg_box_rb {
+	object position {
+		f32 x = 0
+		f32 y = 0
+		f32 z = 0
+	}
+	object rotation {
+		f32 x = 0
+		f32 y = 0
+		f32 z = 0
+	}
+	object scale {
+		f32 x = 0
+		f32 y = 0
+		f32 z = 0
+	}
+	f32 density = 1
+	f32 restitution = 0.5
+	i32 shape = 0
+	bool is_static = true
+	string type = "RigidBody"
+}
+
+object csg_box_sm {
+	i32 shape = 12
+	string texture = "albedo"
+	object color {
+		i32 r = 255
+		i32 g = 255
+		i32 b = 255
+		i32 a = 255
+	}
+	string type = "SimpleMesh"
+}
+
 object test_component {
 	object position {
 		f32 x = 0

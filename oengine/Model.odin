@@ -41,6 +41,22 @@ model_clone :: proc(m: Model) -> Model {
     return load_model(str.clone(m.path));
 }
 
+model_mat_clone :: proc(m: Model) -> Model {
+    clone := m;
+    clone.materials[0] = rl.LoadMaterialDefault();
+    if (m.materialCount > 0) {
+        clone.materials = cast(^rl.Material)rl.MemAlloc(
+            u32(m.materialCount * size_of(rl.Material))
+        );
+
+        for i in 0..<m.materialCount {
+            clone.materials[i] = m.materials[i];
+        }
+    }
+
+    return clone;
+}
+
 deinit_model :: proc(Model: Model) {
     rl.UnloadModel(Model.data);
 }

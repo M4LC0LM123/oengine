@@ -32,10 +32,8 @@ registry_tool :: proc(ct: CameraTool) {
     grid = oe.gui_grid(2, 0, 40, wr.width * 0.75, 10);
     if (oe.gui_button("Load registry", grid.x, grid.y, grid.width, grid.height)) {
         path := oe.nfd_file();
-        if (filepath.ext(path) == ".json") {
-            oe.load_registry(path);
-            globals.registry_atlas = oe.am_texture_atlas();
-        }
+        oe.load_registry(path);
+        globals.registry_atlas = oe.am_texture_atlas();
         rl.ChangeDirectory(oe.to_cstr(root));
     }
 
