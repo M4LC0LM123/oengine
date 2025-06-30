@@ -643,25 +643,6 @@ load_asset :: proc(asset: ^Asset) {
     }
 }
 
-get_asset_type :: proc(asset: Asset) -> $T {
-    #partial switch v in asset {
-        case Texture:
-            return asset.(Texture);
-        case Model:
-            return asset.(Model);
-        case Shader:
-            return asset.(Shader);
-        case CubeMap:
-            return asset.(CubeMap);
-        case Sound:
-            return asset.(Sound);
-        case DataID:
-            return asset.(DataID);
-    }
-
-    return nil;
-}
-
 @(private)
 get_path :: proc(path: string) -> string {
     absolute, ok := filepath.abs(path);

@@ -1,3 +1,4 @@
+#+feature dynamic-literals
 package oengine
 
 GridCellSize :: 5.0

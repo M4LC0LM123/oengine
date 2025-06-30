@@ -106,8 +106,8 @@ ps_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
         if (p != -1 && p < len(particles)) { 
             pr := particles[p];
 
-            free(pr.data.data);
-            free(pr);
+            // free(pr.data.data);
+            // free(pr);
             ordered_remove(&particles, p);
         }
         p = -1;
