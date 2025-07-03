@@ -52,8 +52,8 @@ main :: proc() {
     is_mouse_locked: bool = false;
     oe.ecs_world.camera = &camera;
 
-    skybox := oe.get_asset_var("skybox", oe.SkyBox);
-    oe.set_skybox_filtering(skybox);
+    skybox_tex := oe.get_asset_var("skybox", oe.SkyBox);
+    oe.set_skybox_filtering(skybox_tex);
     albedo := oe.get_asset_var("albedo", oe.Texture);
     orm := oe.get_asset_var("orm", oe.Texture);
     troll := oe.get_asset_var("troll", oe.Texture);
@@ -65,6 +65,8 @@ main :: proc() {
     celsium := oe.get_asset_var("celsium_man", oe.Model);
     swat := oe.get_asset_var("swat", oe.Model);
     lara := oe.get_asset_var("lara", oe.Model);
+
+    skybox := oe.gen_skybox(oe.gen_cubemap_texture(skybox_tex));
 
     floor := oe.aent_init("Floor");
     floor_tr := oe.get_component(floor, oe.Transform);
@@ -263,7 +265,7 @@ main :: proc() {
         rl.ClearBackground(rl.SKYBLUE);
 
         rl.BeginMode3D(camera.rl_matrix);
-        oe.draw_skybox(skybox, rl.WHITE);
+        oe.draw_skybox_mesh(skybox);
         oe.ew_render();
 
         coll, info := oe.rc_is_colliding_msc(camera.raycast, msc, true);

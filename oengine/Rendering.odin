@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:math"
 import strs "core:strings"
 import "core:math/linalg"
+import "core:mem"
 
 DEF_RINGS :: 16
 DEF_SLICES :: 16
@@ -151,6 +152,76 @@ tile_texture_xy :: proc(texture: Texture, tx, ty: i32) -> Texture {
             );
         }
     }
+
+    rl.EndTextureMode();
+
+    return load_texture(target.texture);
+}
+
+// wip, works for textures of same size
+gen_cubemap_texture :: proc(cubemap: CubeMap, fullres := true) -> Texture {
+    tex_width := cubemap[0].width;
+    tex_height := cubemap[0].height;
+
+    tile_width := f32(tex_width) / 3;
+    tile_height := f32(tex_height) / 3;
+
+    full_width := 4 * tex_width / 3;
+    full_height := tex_height;
+    if (fullres) {
+        full_width = tex_width * 4;
+        full_height = tex_height * 3;
+
+        tile_width = f32(tex_width);
+        tile_height = f32(tex_height);
+    }
+
+    target := rl.LoadRenderTexture(full_width, full_height);
+
+    rl.BeginTextureMode(target);
+    rl.ClearBackground(rl.WHITE);
+
+    rl.DrawTexturePro(
+        cubemap[CubeMapSide.BOTTOM],
+        {0, 0, -f32(tex_width), -f32(tex_height)},
+        {tile_width, 0, tile_width, tile_height},
+        {}, 0, rl.WHITE
+    );
+
+    rl.DrawTexturePro(
+        cubemap[CubeMapSide.LEFT],
+        {0, 0, -f32(tex_width), f32(tex_height)},
+        {0, tile_height, tile_width, tile_height},
+        {}, 0, rl.WHITE
+    );
+
+    rl.DrawTexturePro(
+        cubemap[CubeMapSide.BACK],
+        {0, 0, -f32(tex_width), f32(tex_height)},
+        {tile_width, tile_height, tile_width, tile_height},
+        {}, 0, rl.WHITE
+    );
+
+    rl.DrawTexturePro(
+        cubemap[CubeMapSide.RIGHT],
+        {0, 0, f32(tex_width), f32(tex_height)},
+        {2 * tile_width, tile_height, tile_width, tile_height},
+        {}, 0, rl.WHITE
+    );
+
+    rl.DrawTexturePro(
+        cubemap[CubeMapSide.FRONT],
+        {0, 0, f32(tex_width), f32(tex_height)},
+        {3 * tile_width, tile_height, tile_width, tile_height},
+        {}, 0, rl.WHITE
+    );
+
+    rl.DrawTexturePro(
+        cubemap[CubeMapSide.TOP],
+        {0, 0, f32(tex_width), f32(tex_height)},
+        {tile_width, 2 * tile_height, tile_width, tile_height},
+        {}, 0, rl.WHITE
+    );
 
     rl.EndTextureMode();
 
@@ -595,6 +666,153 @@ allocate_mesh :: proc(mesh: ^rl.Mesh) {
     mesh.texcoords = raw_data(make([]f32, mesh.vertexCount * 2));
     mesh.normals = raw_data(make([]f32, mesh.vertexCount * 3));
     mesh.colors = raw_data(make([]u8, mesh.vertexCount * 4));
+}
+
+SkyBoxMesh :: struct {
+    mesh: rl.Mesh,
+    material: rl.Material,
+};
+
+gen_skybox :: proc(c_map: Texture, size: f32 = 400) -> SkyBoxMesh {
+    mesh := gen_mesh_cubemap(vec3_one() * size, c_map);
+    material := rl.LoadMaterialDefault();
+    rl.SetMaterialTexture(&material, .ALBEDO, c_map);
+    return {mesh, material};
+}
+
+draw_skybox_mesh :: proc(skybox: SkyBoxMesh) {
+    rl.rlPushMatrix();
+    pos := ecs_world.camera.position;
+    rl.rlTranslatef(pos.x, pos.y, pos.z);
+    rl.DrawMesh(skybox.mesh, skybox.material, rl.Matrix(1));
+    rl.rlPopMatrix();
+}
+
+gen_mesh_cubemap :: proc(scale: Vec3, c_map: Texture) -> (mesh: rl.Mesh) {
+    width := scale.x;
+    height := scale.y;
+    length := scale.z;
+
+    vertices := [?]f32{
+        -width/2, -height/2, length/2,
+        width/2, -height/2, length/2,
+        width/2, height/2, length/2,
+        -width/2, height/2, length/2,
+        -width/2, -height/2, -length/2,
+        -width/2, height/2, -length/2,
+        width/2, height/2, -length/2,
+        width/2, -height/2, -length/2,
+        -width/2, height/2, -length/2,
+        -width/2, height/2, length/2,
+        width/2, height/2, length/2,
+        width/2, height/2, -length/2,
+        -width/2, -height/2, -length/2,
+        width/2, -height/2, -length/2,
+        width/2, -height/2, length/2,
+        -width/2, -height/2, length/2,
+        width/2, -height/2, -length/2,
+        width/2, height/2, -length/2,
+        width/2, height/2, length/2,
+        width/2, -height/2, length/2,
+        -width/2, -height/2, -length/2,
+        -width/2, -height/2, length/2,
+        -width/2, height/2, length/2,
+        -width/2, height/2, -length/2
+    };
+
+    texcoords := [?]f32{
+        // Front face (1,1)
+        0.25, 1.0/3.0,
+        0.50, 1.0/3.0,
+        0.50, 2.0/3.0,
+        0.25, 2.0/3.0,
+
+        // Back face (3,1)
+        0.75, 1.0/3.0,
+        0.75, 2.0/3.0,
+        1.00, 2.0/3.0,
+        1.00, 1.0/3.0,
+
+        // Top face (1,0)
+        0.25, 0.0,
+        0.25, 1.0/3.0,
+        0.50, 1.0/3.0,
+        0.50, 0.0,
+
+        // Bottom face (1,2)
+        0.50, 2.0/3.0,
+        0.25, 2.0/3.0,
+        0.25, 1.0,
+        0.50, 1.0,
+
+        // Right face (2,1)
+        0.50, 1.0/3.0,
+        0.50, 2.0/3.0,
+        0.75, 2.0/3.0,
+        0.75, 1.0/3.0,
+
+        // Left face (0,1)
+        0.00, 1.0/3.0,
+        0.25, 1.0/3.0,
+        0.25, 2.0/3.0,
+        0.00, 2.0/3.0,
+    };
+
+    normals := [?]f32{
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0,-1.0,
+        0.0, 0.0,-1.0,
+        0.0, 0.0,-1.0,
+        0.0, 0.0,-1.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0,-1.0, 0.0,
+        0.0,-1.0, 0.0,
+        0.0,-1.0, 0.0,
+        0.0,-1.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0
+    };
+
+    mesh.vertexCount = 24;
+    mesh.triangleCount = 12;
+
+    mesh.vertices = raw_data(make([]f32, mesh.vertexCount * 3));
+    mem.copy(mesh.vertices, &vertices, 24 * 3 * size_of(f32));
+
+    mesh.texcoords = raw_data(make([]f32, mesh.vertexCount * 2));
+    mem.copy(mesh.texcoords, &texcoords, 24 * 2 * size_of(f32));
+
+    mesh.normals = raw_data(make([]f32, mesh.vertexCount * 3));
+    mem.copy(mesh.normals, &normals, 24 * 3 * size_of(f32));
+
+    mesh.indices = raw_data(make([]u16, 36));
+
+    k: u16 = 0;
+    for i: u16 = 0;i < 36; i += 6 {
+        mesh.indices[i] = 4*k;
+        mesh.indices[i + 1] = 4*k + 1;
+        mesh.indices[i + 2] = 4*k + 2;
+        mesh.indices[i + 3] = 4*k;
+        mesh.indices[i + 4] = 4*k + 2;
+        mesh.indices[i + 5] = 4*k + 3;
+
+        k += 1;
+    }
+
+    rl.UploadMesh(&mesh, false);
+    return;
 }
 
 gen_mesh_triangle :: proc(verts: [3]Vec3, #any_int uv_rot: i32 = 0) -> rl.Mesh {

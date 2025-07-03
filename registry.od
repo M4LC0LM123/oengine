@@ -96,7 +96,7 @@ object csg_box_rb {
 }
 
 object csg_box_sm {
-	i32 shape = 12
+	i32 shape = 0
 	string texture = "albedo"
 	object color {
 		i32 r = 255

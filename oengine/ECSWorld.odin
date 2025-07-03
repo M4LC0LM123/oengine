@@ -84,6 +84,8 @@ ew_init :: proc(s_gravity: Vec3, s_iter: i32 = 8) {
     }
 
     physics_thread = thread.create_and_start(ew_fixed_thread);
+
+    cache_init();
 }
 
 ew_toggle_physics :: proc() {
