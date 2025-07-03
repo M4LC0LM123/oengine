@@ -9,7 +9,9 @@ import od "object_data"
 Light :: struct {
     id: u32,
     transform: Transform,
+    offset: Vec3,
     data: RayLight,
+    locked_pos: bool,
 }
 
 @(private = "file")
@@ -21,6 +23,7 @@ lc_init_all :: proc(
     intensity: f32 = 1.0
 ) {
     transform = transform_default();
+    locked_pos = true;
 
     data = ray_create_light(
         lc.id,
@@ -86,7 +89,10 @@ lc_update :: proc(ctx: ^ecs.Context, ent: ^ecs.Entity) {
     using lc;
 
     transform = t^;
-    data.position = transform.position;
+
+    if (locked_pos) {
+        data.position = transform.position + offset;
+    }
 
     update_light_values(ecs_world.ray_ctx.shader, data);
 }
