@@ -361,9 +361,7 @@ sm_loader :: proc(ent: AEntity, tag: string) {
         }
 
         if (clone.shape == .MODEL) {
-            start := time.now();
             clone.tex = model_clone(comp.tex.(Model));
-            fmt.println(time.since(start));
         }
     }
 
