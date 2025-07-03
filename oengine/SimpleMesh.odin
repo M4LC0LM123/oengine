@@ -8,6 +8,7 @@ import rl "vendor:raylib"
 import ecs "ecs"
 import "core:encoding/json"
 import od "object_data"
+import "core:time"
 
 Sprite :: struct {
     src: rl.Rectangle,
@@ -59,6 +60,7 @@ SimpleMesh :: struct {
     color: Color,
     starting_color: Color,
     shader: Shader,
+    cached: bool, // internal loading stuff
     user_call: bool, // allows the user to specify when to render it using the render func
 }
 
@@ -86,6 +88,7 @@ sm_init_all :: proc(using sm: ^SimpleMesh, s_shape: ShapeType, s_color: Color) {
     texture = load_texture(rl.LoadTextureFromImage(rl.GenImageColor(16, 16, WHITE)));
     color = s_color;
     starting_color = color;
+    cached = true;
 }
 
 sm_init_def :: proc(s_shape: ShapeType = .BOX, s_color: Color = rl.WHITE) -> SimpleMesh {
@@ -305,6 +308,11 @@ sm_parse :: proc(asset: od.Object) -> rawptr {
         texture = tile_texture(texture, tiling);
     }
 
+    cached := true;
+    if (od_contains(asset, "cached")) {
+        cached = asset["cached"].(bool);
+    }
+
     color := od_color(asset["color"].(od.Object));
 
     if (shape == .MODEL) {
@@ -314,6 +322,7 @@ sm_parse :: proc(asset: od.Object) -> rawptr {
         sm := sm_init(model, color);
         sm.is_lit = is_lit;
         sm.use_fog = use_fog;
+        sm.cached = cached;
 
         return new_clone(sm);
     } else if (shape == .CUBEMAP) {
@@ -328,6 +337,7 @@ sm_parse :: proc(asset: od.Object) -> rawptr {
         sm.is_lit = is_lit;
         sm.use_fog = use_fog;
         sm.texture = texture;
+        sm.cached = cached;
 
         return new_clone(sm);
     }
@@ -335,6 +345,7 @@ sm_parse :: proc(asset: od.Object) -> rawptr {
     sm := sm_init(texture, shape, color);
     sm.is_lit = is_lit;
     sm.use_fog = use_fog;
+    sm.cached = cached;
 
     return new_clone(sm);
 }
@@ -343,13 +354,17 @@ sm_loader :: proc(ent: AEntity, tag: string) {
     comp := get_component_data(tag, SimpleMesh);
     clone := comp^;
 
-    if (int(clone.shape) < 10) {
-        clone.tex = mesh_loaders[int(clone.shape)]();
-        sm_set_texture(&clone, clone.texture);
-    }
+    if (!clone.cached) {
+        if (int(clone.shape) < 10) {
+            clone.tex = mesh_loaders[int(clone.shape)]();
+            sm_set_texture(&clone, clone.texture);
+        }
 
-    if (clone.shape == .MODEL) {
-        clone.tex = model_clone(comp.tex.(Model));
+        if (clone.shape == .MODEL) {
+            start := time.now();
+            clone.tex = model_clone(comp.tex.(Model));
+            fmt.println(time.since(start));
+        }
     }
 
     if (tag == CSG_SM) {

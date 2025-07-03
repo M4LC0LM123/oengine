@@ -2,6 +2,7 @@ package oengine
 
 import rl "vendor:raylib"
 import str "core:strings"
+import "core:mem"
 
 Model :: struct {
     using data: rl.Model,

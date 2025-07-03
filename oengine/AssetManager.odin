@@ -283,9 +283,9 @@ load_asset_job :: proc(_data: rawptr) {
     }
 }
 
-load_registry :: proc(path: string) {
+load_registry :: proc(path: string, threaded := false) {
     if (filepath.ext(path) == ".od") {
-        load_registry_od(path);
+        load_registry_od(path, threaded);
         return;
     }
 
