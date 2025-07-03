@@ -45,6 +45,13 @@ main :: proc() {
 
     start := time.now(); 
     oe.ew_init(oe.vec3_y() * 50);
+
+    oe.loading_screen(
+        text = "Loading registry...",
+        bg_color = oe.BLACK,
+        text_color = oe.WHITE,
+        text_pos = {.LEFT, .BOTTOM},
+    );
     oe.load_registry("../registry.od");
     fmt.println(time.since(start));
 
@@ -130,6 +137,12 @@ main :: proc() {
     s := time.now();
     msc := oe.msc_init();
     // oe.msc_from_json(msc, "../assets/maps/test.json");
+    oe.loading_screen(
+        text = "Loading msc...",
+        bg_color = oe.BLACK,
+        text_color = oe.WHITE,
+        text_pos = {.LEFT, .BOTTOM},
+    );
     oe.load_msc(msc, "../assets/maps/test.od", load_dids = true);
     msc.atlas = oe.load_atlas("../assets/atlas");
     // msc.atlas = oe.am_texture_atlas();
@@ -173,10 +186,8 @@ main :: proc() {
 
     flashlight := oe.aent_init("flashlight");
     flashlight_tr := oe.get_component(flashlight, oe.Transform);
-    flashlight_tr.position = {15, 5, 15};
-    flashlight_lc := oe.add_component(flashlight, oe.lc_init(.Spot));
-    flashlight_lc.data.target = {15, 0, 15};
-    oe.ray_light_cutoffs(oe.world().ray_ctx.shader, flashlight_lc.data, 37.5, 47.5);
+    flashlight_lc := oe.add_component(flashlight, oe.lc_init(.Spot, oe.GREEN));
+    oe.ray_light_cutoffs(oe.ecs_world.ray_ctx.shader, flashlight_lc.data, 12.5, 17.5);
 
     // reset_track_allocator(&track_allocator);
     for (oe.w_tick()) {
@@ -194,9 +205,8 @@ main :: proc() {
         oe.cm_default_fps_matrix(&camera);
         oe.cm_update(&camera);
 
-        // flashlight_tr := oe.get_component(flashlight, oe.Light);
-        // flashlight_tr.transform.position = camera.position;
-        // flashlight_lc.data.target = camera.raycast.position - camera.raycast.target;
+        flashlight_tr.position = camera.position;
+        flashlight_lc.data.target = camera.target;
 
         if (oe.key_pressed(oe.Key.RIGHT_SHIFT)) {
             player_rb.velocity.y = 15;

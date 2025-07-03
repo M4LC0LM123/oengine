@@ -123,7 +123,7 @@ gui_text_active :: proc() -> bool {
     return false;
 }
 
-gui_text :: proc(text: string, size: f32, x: f32 = 10, y: f32 = 10, standalone: bool = false) {
+gui_text :: proc(text: string, size: f32, x: f32 = 10, y: f32 = 10, standalone: bool = false, color := rl.WHITE) {
     active := gui_active();
     if (active != nil && !active.active && !standalone) do return;
 
@@ -139,7 +139,7 @@ gui_text :: proc(text: string, size: f32, x: f32 = 10, y: f32 = 10, standalone: 
         gui_default_font, 
         to_cstr(text), 
         Vec2 {rx + x, ry + y}, 
-        size, gui_text_spacing, rl.WHITE
+        size, gui_text_spacing, color
     );
 }
 

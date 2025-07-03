@@ -143,9 +143,10 @@ void main()
                 vec3 spotDir = normalize(lights[i].target - lights[i].position);
                 vec3 fragToLight = normalize(fragPosition - lights[i].position);
 
-                float theta = dot(spotDir, -fragToLight);
+                float theta = dot(spotDir, fragToLight);  // Don't invert fragToLight
                 float epsilon = max(0.001, lights[i].inner_cutoff - lights[i].outer_cutoff);
-                intensity *= clamp((theta - lights[i].outer_cutoff) / epsilon, 0.0, 1.0);
+                float spotlightIntensity = clamp((theta - lights[i].outer_cutoff) / epsilon, 0.0, 1.0);
+                intensity *= spotlightIntensity;
             }
 
             // Simple distance attenuation

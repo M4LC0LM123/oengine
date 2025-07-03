@@ -228,6 +228,63 @@ gen_cubemap_texture :: proc(cubemap: CubeMap, fullres := true) -> Texture {
     return load_texture(target.texture);
 }
 
+TextPosition :: enum {
+    LEFT,
+    RIGHT,
+    TOP,
+    BOTTOM,
+}
+
+loading_screen :: proc(
+    text: string = "Loading", 
+    bg: Texture = {},
+    bg_color := WHITE,
+    text_color := BLACK,
+    text_size: f32 = 20,
+    text_pos: bit_set[TextPosition] = {}) {
+    rl.BeginDrawing();
+    rl.ClearBackground(bg_color);
+    if (bg != {}) {
+        rl.DrawTexturePro(
+            bg, 
+            {0, 0, f32(bg.width), f32(bg.height)},
+            {0, 0, f32(w_render_width()), f32(w_render_height())},
+            {0, 0},
+            0,
+            bg_color
+        );
+    }
+
+    text_scale := rl.MeasureTextEx(
+        gui_default_font, 
+        strs.clone_to_cstring(text), 
+        text_size, gui_text_spacing
+    );
+
+    text_position := Vec2 {
+        (f32(w_render_width()) - text_scale.x) * 0.5,
+        (f32(w_render_height()) - text_scale.y) * 0.5,
+    };
+
+    padding: f32 = 10;
+    if (TextPosition.LEFT in text_pos) {
+        text_position.x = padding;
+    }
+    if (TextPosition.RIGHT in text_pos) {
+        text_position.x = f32(w_render_width()) - text_scale.x - padding;
+    }
+    if (TextPosition.TOP in text_pos) {
+        text_position.y = padding;
+    }
+    if (TextPosition.BOTTOM in text_pos) {
+        text_position.y = f32(w_render_height()) - text_scale.y - padding;
+    }
+
+    gui_text(text, text_size, text_position.x, text_position.y, true, text_color);
+
+    rl.EndDrawing();
+}
+
 draw_aabb_wires :: proc(aabb: AABB, color: Color) {
     rl.DrawCubeWires({aabb.x, aabb.y, aabb.z}, aabb.width, aabb.height, aabb.depth, color);
 }
