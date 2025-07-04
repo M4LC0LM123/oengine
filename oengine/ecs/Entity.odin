@@ -33,7 +33,8 @@ Entity :: struct {
 
 entity_init :: proc(ctx: ^Context, transparent := true) -> ^Entity {
     res := new(Entity);
-    res.id = u32(ctx.entities.len);
+    res.id = ctx.last_id;
+    ctx.last_id += 1;
     res.components = fa.fixed_map(typeid, rawptr, MAX_CMPNTS);
     res.tag = "Entity";
     

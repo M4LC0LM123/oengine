@@ -101,6 +101,7 @@ ew_clear :: proc() {
     using ecs_world;
 
     ray_ctx.light_count = 0;
+    ecs_ctx.last_id = 0;
 
     pw_deinit(&physics);
 
@@ -169,7 +170,6 @@ ew_get_ent_tag :: proc(tag: string) -> AEntity {
 ew_remove_ent :: proc(#any_int id: u32) {
     ent := ew_get_ent(id);
     if (ent == nil) { return; }
-    fmt.println(ent.tag, ent.id, fa.get_id(ecs_world.ecs_ctx.entities, ent));
 
     if (has_component(ent, RigidBody)) {
         rb := get_component(ent, RigidBody);

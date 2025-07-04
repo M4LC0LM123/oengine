@@ -10,6 +10,7 @@ MAX_SYS :: 64
 Context :: struct {
     entities: fa.FixedArray(^Entity, MAX_ENTS),
     removed_ents: [dynamic]i32,
+    last_id: u32,
     _update_systems: fa.FixedArray(SystemFunc, MAX_SYS),
     _render_systems: fa.FixedArray(SystemFunc, MAX_SYS),
     _fixed_update_systems: fa.FixedArray(SystemFunc, MAX_SYS),
