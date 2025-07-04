@@ -102,6 +102,7 @@ struct Light {
     float inner_cutoff;
     float outer_cutoff;
     float intensity;
+    float range;
 };
 
 uniform Light lights[MAX_LIGHTS];
@@ -152,6 +153,9 @@ void main()
             // Simple distance attenuation
             float dist = length(lights[i].position - fragPosition);
             attenuation = 1.0 / (0.5 + 0.025 * dist + 0.005 * dist * dist);
+
+            float fade = clamp(1.0 - dist / lights[i].range, 0.0, 1.0);
+            attenuation *= fade;
         }
 
         float NdotL = max(dot(normal, lightDir), 0.0);

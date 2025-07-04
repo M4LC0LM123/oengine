@@ -16,6 +16,7 @@ RayLight :: struct {
     position:       [3]f32,
     target:         [3]f32,
     color:          rl.Color,
+    range:          f32,
     intensity:      f32,
     attenuation:    f32,
     enabledLoc:     i32,
@@ -27,6 +28,7 @@ RayLight :: struct {
     inner_loc:      i32,
     outer_loc:      i32,
     intensity_loc:  i32,
+    range_loc:      i32,
 }
 
 RayLightType :: enum i32 {
@@ -35,7 +37,15 @@ RayLightType :: enum i32 {
     Spot,
 }
 
-ray_create_light :: proc(#any_int id: i32, type: RayLightType, position, target: [3]f32, color: rl.Color, shader: rl.Shader, intensity: f32 = 1) -> (light: RayLight) {
+ray_create_light :: proc(
+    #any_int id: i32, 
+    type: RayLightType, 
+    position, 
+    target: [3]f32, 
+    color: rl.Color, 
+    shader: rl.Shader, 
+    intensity: f32 = 1,
+    range: f32 = 20.0) -> (light: RayLight) {
     if id < RAY_MAX_LIGHTS {
         light.enabled = true
         light.type = type
@@ -43,6 +53,7 @@ ray_create_light :: proc(#any_int id: i32, type: RayLightType, position, target:
         light.target = target
         light.color = color
         light.intensity = intensity;
+        light.range = range;
 
         light.enabledLoc = i32(rl.GetShaderLocation(shader, rl.TextFormat("lights[%i].enabled", id)))
         light.typeLoc = i32(rl.GetShaderLocation(shader, rl.TextFormat("lights[%i].type", id)))
@@ -52,6 +63,7 @@ ray_create_light :: proc(#any_int id: i32, type: RayLightType, position, target:
         light.inner_loc = i32(rl.GetShaderLocation(shader, rl.TextFormat("lights[%i].inner_cutoff", id)));
         light.outer_loc = i32(rl.GetShaderLocation(shader, rl.TextFormat("lights[%i].outer_cutoff", id)));
         light.intensity_loc = i32(rl.GetShaderLocation(shader, rl.TextFormat("lights[%i].intensity", id)));
+        light.range_loc = i32(rl.GetShaderLocation(shader, rl.TextFormat("lights[%i].range", id)));
 
         update_light_values(shader, light)
     }
@@ -131,6 +143,8 @@ update_light_values :: proc(shader: rl.Shader, light: RayLight) {
     rl.SetShaderValue(shader, rl.ShaderLocationIndex(light.targetLoc), &light.target, .VEC3)
 
     rl.SetShaderValue(shader, rl.ShaderLocationIndex(light.intensity_loc), &light.intensity, .FLOAT);
+
+    rl.SetShaderValue(shader, rl.ShaderLocationIndex(light.range_loc), &light.range, .FLOAT);
 
     color := [4]f32{ f32(light.color.r)/255, f32(light.color.g)/255, f32(light.color.b)/255, f32(light.color.a)/255 }
     rl.SetShaderValue(shader, rl.ShaderLocationIndex(light.colorLoc), &color, .VEC4)
