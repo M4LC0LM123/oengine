@@ -1,6 +1,7 @@
 package oengine
 
 import "core:math"
+import "core:fmt"
 
 BO_AABB :: struct {
     min, max: Vec3,
@@ -128,6 +129,14 @@ bo_clear_tree :: proc(node: ^BodyOctreeNode) {
 
 get_aabb :: proc(id: int) -> BO_AABB {
     rb := ecs_world.physics.bodies.data[id];
+
+    if (rb == nil) {
+        return BO_AABB {
+            min = {F32_MAX, F32_MAX, F32_MAX},
+            max = {F32_MIN, F32_MIN, F32_MIN},
+        };
+    }
+
     return make_aabb(rb.transform.position, rb.transform.scale * 0.5);
 }
 
