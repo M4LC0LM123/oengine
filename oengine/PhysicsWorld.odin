@@ -29,6 +29,7 @@ TriangleCollider :: struct {
     is_lit: bool,
     use_fog: bool,
     flipped: bool,
+    division_level: i32,
 }
 
 PhysicsWorld :: struct {

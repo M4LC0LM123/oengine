@@ -220,6 +220,7 @@ MSCObject :: struct {
     mesh: rl.Mesh,
     atlas: Atlas,
     render: bool,
+    mesh_tri_count: i32,
 }
 
 msc_init :: proc() -> ^MSCObject {
@@ -255,7 +256,7 @@ msc_append_tri :: proc(
         texture_tag: string = "", 
         is_lit: bool = true, 
         use_fog: bool = OE_FAE, rot: i32 = 0, normal: Vec3 = {},
-        flipped := false) {
+        flipped := false, division_level: i32 = 0) {
     t := new(TriangleCollider);
     t.pts = {a + offs, b + offs, c + offs};
     t.normal = normal;
@@ -265,6 +266,7 @@ msc_append_tri :: proc(
     t.is_lit = is_lit;
     t.use_fog = use_fog;
     t.flipped = flipped;
+    t.division_level = division_level;
 
     if (flipped) {
         t.normal = -t.normal;
@@ -281,6 +283,7 @@ msc_append_tri :: proc(
 
     if (add) { append(&tris, t); }
     tri_count += 1;
+    mesh_tri_count += i32(math.pow(4.0, f32(t.division_level)));
 
     _aabb = tris_to_aabb(tris);
 }
@@ -291,7 +294,7 @@ msc_append_quad :: proc(
     offs: Vec3 = {}, color: Color = WHITE, 
     texture_tag: string = "", is_lit: bool = true, 
     use_fog: bool = OE_FAE, rot: i32 = 0,
-    flipped: bool = false) {
+    flipped: bool = false, division_level: i32 = 0) {
     t := new(TriangleCollider);
     t.pts = {b + offs, a + offs, c + offs};
     t.normal = surface_normal(t.pts);
@@ -301,6 +304,7 @@ msc_append_quad :: proc(
     t.is_lit = is_lit;
     t.use_fog = use_fog;
     t.flipped = flipped;
+    t.division_level = division_level;
 
     if (flipped) {
         t.normal = -t.normal;
@@ -326,6 +330,7 @@ msc_append_quad :: proc(
     t2.is_lit = is_lit;
     t2.use_fog = use_fog;
     t2.flipped = flipped;
+    t2.division_level = division_level;
 
     if (flipped) {
         t2.normal = -t2.normal;
@@ -343,6 +348,7 @@ msc_append_quad :: proc(
     if (add2) { append(&tris, t2); }
 
     tri_count += 2;
+    mesh_tri_count += 2 * (i32(math.pow(4.0, f32(t.division_level))));
 
     _aabb = tris_to_aabb(tris);
 }
@@ -352,12 +358,18 @@ tri_recalc_uvs :: proc(t: ^TriangleCollider, #any_int uv_rot: i32 = 0) {
 }
 
 msc_gen_mesh :: proc(using self: ^MSCObject, gen_tree := true) {
-    mesh.triangleCount = i32(len(tris));
+    mesh_tris := make([dynamic]TriangleCollider, mesh_tri_count);
+    defer delete(mesh_tris);
+    for i in 0..<len(tris) {
+        subdivide_triangle_coll(tris[i]^, tris[i].division_level, &mesh_tris);
+    }
+
+    mesh.triangleCount = i32(len(mesh_tris));
     mesh.vertexCount = mesh.triangleCount * 3;
     allocate_mesh(&mesh);
 
-    for i in 0..<len(tris) {
-        gen_tri(self, tris[i], i);
+    for i in 0..<len(mesh_tris) {
+        gen_tri(self, &mesh_tris[i], i);
     }
 
     rl.UploadMesh(&mesh, false);
@@ -519,6 +531,7 @@ save_msc :: proc(
         rot: i32,
         flipped: bool,
         normal: ODVec3,
+        division_level: i32,
     }
 
     i := 0;
@@ -532,6 +545,7 @@ save_msc :: proc(
             rot = t.rot,
             flipped = t.flipped,
             normal = vec3_to_od(t.normal),
+            division_level = t.division_level,
         };
         data := od.marshal(tm, TriangleColliderMarshal, str_add("triangle", i));
 
@@ -619,6 +633,7 @@ msc_to_json :: proc(
         rot: i32,
         flipped: bool,
         normal: Vec3,
+        division_level: i32,
     }
 
     i := 0;
@@ -632,6 +647,7 @@ msc_to_json :: proc(
             rot = t.rot,
             flipped = t.flipped,
             normal = t.normal,
+            division_level = t.division_level,
         };
         data, ok := json.marshal(tm, {pretty = true});
 
@@ -892,11 +908,13 @@ load_map :: proc(path: string, atlas: Atlas, use_json := false) {
 update_msc :: proc(old, new: ^MSCObject) {
     res := make([dynamic]^TriangleCollider);
     tri_count -= i32(len(old.tris));
+    old.mesh_tri_count = 0;
 
     for i in 0..<len(old.tris) {
         tri_i := old.tris[i];
         append(&res, new_clone(tri_i^));
         tri_count += 1;
+        old.mesh_tri_count += (i32(math.pow(4.0, f32(tri_i.division_level))));
     }
 
     for i in 0..<len(new.tris) {
@@ -912,6 +930,7 @@ update_msc :: proc(old, new: ^MSCObject) {
         if (add) {
             append(&res, new_clone(tri_i^));
             tri_count += 1;
+            old.mesh_tri_count += (i32(math.pow(4.0, f32(tri_i.division_level))));
         }
     }
 
@@ -1157,6 +1176,11 @@ msc_load_tri_od :: proc(using self: ^MSCObject, obj: od.Object) {
         flipped = obj["flipped"].(bool);
     }
 
+    division_level: i32;
+    if (od_contains(obj, "division")) {
+        division_level = od.target_type(obj["division"], i32);
+    }
+
     normal: Vec3;
     set_normal := false;
     if (od_contains(obj, "normal")) {
@@ -1170,7 +1194,7 @@ msc_load_tri_od :: proc(using self: ^MSCObject, obj: od.Object) {
             color = color, texture_tag = strs.clone(tex_tag), 
             is_lit = is_lit, use_fog = use_fog, 
             rot = rot, normal = normal, 
-            flipped = flipped
+            flipped = flipped, division_level = division_level,
         );
     } else {
         msc_append_tri(
@@ -1178,7 +1202,7 @@ msc_load_tri_od :: proc(using self: ^MSCObject, obj: od.Object) {
             color = color, texture_tag = strs.clone(tex_tag), 
             is_lit = is_lit, use_fog = use_fog, 
             rot = rot, normal = surface_normal(tri), 
-            flipped = flipped
+            flipped = flipped, division_level = division_level,
         );
     }
 }
@@ -1240,6 +1264,11 @@ msc_load_tri_json :: proc(using self: ^MSCObject, obj: json.Value) {
         flipped = obj.(json.Object)["flipped"].(json.Boolean);
     }
 
+    division_level: i32;
+    if (obj.(json.Object)["division"] != nil) {
+        division_level = i32(obj.(json.Object)["division"].(json.Float));
+    }
+
     normal: Vec3;
     set_normal := false;
     if (obj.(json.Object)["normal"] != nil) {
@@ -1253,7 +1282,7 @@ msc_load_tri_json :: proc(using self: ^MSCObject, obj: json.Value) {
             color = color, texture_tag = strs.clone(tex_tag), 
             is_lit = is_lit, use_fog = use_fog, 
             rot = rot, normal = normal, 
-            flipped = flipped
+            flipped = flipped, division_level = division_level,
         );
     } else {
         msc_append_tri(
@@ -1261,7 +1290,7 @@ msc_load_tri_json :: proc(using self: ^MSCObject, obj: json.Value) {
             color = color, texture_tag = strs.clone(tex_tag), 
             is_lit = is_lit, use_fog = use_fog, 
             rot = rot, normal = surface_normal(tri), 
-            flipped = flipped
+            flipped = flipped, division_level = division_level,
         );
     }
 }

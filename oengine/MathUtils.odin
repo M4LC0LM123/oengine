@@ -263,6 +263,65 @@ triangle_uvs :: proc(v1, v2, v3: Vec3, #any_int rotation_steps: i32 = 0) -> (Vec
     return uv1, uv2, uv3;
 }
 
+subdivide_triangle :: proc(
+    v0, v1, v2: Vec3,
+    level: i32,
+    output: ^[dynamic][3]Vec3
+) {
+    if level == 0 {
+        append(output, [3]Vec3{v0, v1, v2});
+        return;
+    }
+
+    m0 := (v0 + v1) * 0.5;
+    m1 := (v1 + v2) * 0.5;
+    m2 := (v2 + v0) * 0.5;
+
+    subdivide_triangle(v0, m0, m2, level - 1, output);
+    subdivide_triangle(m0, v1, m1, level - 1, output);
+    subdivide_triangle(m2, m1, v2, level - 1, output);
+    subdivide_triangle(m0, m1, m2, level - 1, output);
+}
+
+subdivide_triangle_coll :: proc(
+    tri: TriangleCollider,
+    level: i32,
+    output: ^[dynamic]TriangleCollider,
+) {
+    if level == 0 {
+        append(output, tri);
+        return;
+    }
+
+    v0 := tri.pts[0];
+    v1 := tri.pts[1];
+    v2 := tri.pts[2];
+
+    m0 := (v0 + v1) * 0.5;
+    m1 := (v1 + v2) * 0.5;
+    m2 := (v2 + v0) * 0.5;
+
+    tri_0 := tri;
+    tri_0.pts = {v0, m0, m2};
+    tri_0.division_level = 0;
+    subdivide_triangle_coll(tri_0, level - 1, output);
+
+    tri_1 := tri;
+    tri_1.pts = {m0, v1, m1};
+    tri_1.division_level = 0;
+    subdivide_triangle_coll(tri_1, level - 1, output);
+
+    tri_2 := tri;
+    tri_2.pts = {m2, m1, v2};
+    tri_2.division_level = 0;
+    subdivide_triangle_coll(tri_2, level - 1, output);
+
+    tri_3 := tri;
+    tri_3.pts = {m0, m1, m2};
+    tri_3.division_level = 0;
+    subdivide_triangle_coll(tri_3, level - 1, output);
+}
+
 atlas_triangle_uvs :: proc(
     v1, v2, v3: Vec3, 
     region_uvs: [4]Vec2, 

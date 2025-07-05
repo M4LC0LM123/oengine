@@ -189,6 +189,9 @@ main :: proc() {
     flashlight_lc := oe.add_component(flashlight, oe.lc_init(.Spot, oe.GREEN));
     oe.ray_light_cutoffs(oe.ecs_world.ray_ctx.shader, flashlight_lc.data, 12.5, 17.5);
 
+    s_triangles := make([dynamic][3]oe.Vec3);
+    oe.subdivide_triangle(test_tri.x, test_tri.y, test_tri.z, 2, &s_triangles);
+
     // reset_track_allocator(&track_allocator);
     for (oe.w_tick()) {
         oe.ew_update();
@@ -302,6 +305,11 @@ main :: proc() {
         for i in 0..<len(test_subdivided) {
             aabb := test_subdivided[i];
             oe.draw_aabb_wires(aabb, oe.ORANGE);
+        }
+
+        for i in 0..<len(s_triangles) {
+            tri := s_triangles[i];
+            rl.DrawTriangle3D(tri.x, tri.y, tri.z, {0, u8(i) * 50, 100, 255});
         }
 
         rl.EndMode3D();

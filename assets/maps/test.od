@@ -133,6 +133,7 @@ object triangle3 {
     bool use_fog = false
     i32 rot = 2
     bool flipped = true
+    i32 division = 1
     object normal {
         f32 x = -0
         f32 y = -0
@@ -159,7 +160,7 @@ object triangle4 {
     }
     object color {
         i32 r = 255
-        i32 g = 255
+        i32 g = 0
         i32 b = 255
         i32 a = 255
     }
@@ -168,6 +169,7 @@ object triangle4 {
     bool use_fog = false
     i32 rot = 0
     bool flipped = false
+    i32 division = 1
     object normal {
         f32 x = 0
         f32 y = 1
