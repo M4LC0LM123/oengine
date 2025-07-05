@@ -219,12 +219,14 @@ MSCObject :: struct {
     tree: ^OctreeNode,
     mesh: rl.Mesh,
     atlas: Atlas,
+    render: bool,
 }
 
 msc_init :: proc() -> ^MSCObject {
     using self := new(MSCObject);
 
     tris = make([dynamic]^TriangleCollider);
+    render = true;
 
     fa.append(&ecs_world.physics.mscs, self);
 
@@ -427,9 +429,9 @@ gen_tri :: proc(using self: ^MSCObject, t: ^TriangleCollider, #any_int index: i3
     mesh.colors[clr_offset + 11] = t.color.a;
 }
 
-// supports only .obj wavefront and tested with trenchbroom models
+// .obj recommended
 // work in progress
-msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}) {
+msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}, scale: f32 = 1) {
     for i in 0..<model.meshCount {
         mesh := model.meshes[i];
 
@@ -441,9 +443,9 @@ msc_from_model :: proc(using self: ^MSCObject, model: Model, offs: Vec3 = {}) {
 
         vertices := mesh.vertices;
         for j := 0; j < int(mesh.vertexCount); j += 3 {
-            v0 := Vec3 { vertices[j * 3], vertices[j * 3 + 1], vertices[j * 3 + 2] };
-            v1 := Vec3 { vertices[(j + 1) * 3], vertices[(j + 1) * 3 + 1], vertices[(j + 1) * 3 + 2] };
-            v2 := Vec3 { vertices[(j + 2) * 3], vertices[(j + 2) * 3 + 1], vertices[(j + 2) * 3 + 2] };
+            v0 := scale * Vec3 { vertices[j * 3], vertices[j * 3 + 1], vertices[j * 3 + 2] };
+            v1 := scale * Vec3 { vertices[(j + 1) * 3], vertices[(j + 1) * 3 + 1], vertices[(j + 1) * 3 + 2] };
+            v2 := scale * Vec3 { vertices[(j + 2) * 3], vertices[(j + 2) * 3 + 1], vertices[(j + 2) * 3 + 2] };
 
             normal := Vec3 { 
                 mesh.normals[j * 3], 
@@ -1265,6 +1267,8 @@ msc_load_tri_json :: proc(using self: ^MSCObject, obj: json.Value) {
 }
 
 msc_render :: proc(using self: ^MSCObject) {
+    if (!render) { return; }
+
     m := DEFAULT_MATERIAL;
     m.maps[rl.MaterialMapIndex.ALBEDO].texture = atlas;
     m.shader = ecs_world.ray_ctx.shader;
